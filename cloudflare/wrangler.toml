@@ -1,0 +1,96 @@
+# =============================================================================
+# Etoile Video Worker - Cloudflare Wrangler Configuration
+# =============================================================================
+
+name = "etoile-video-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Account ID (set via environment or wrangler login)
+# account_id = "your-account-id"
+
+# =============================================================================
+# R2 Buckets
+# =============================================================================
+
+[[r2_buckets]]
+binding = "VIDEOS"
+bucket_name = "etoile-videos-prod"
+
+[[r2_buckets]]
+binding = "THUMBNAILS"
+bucket_name = "etoile-thumbnails-prod"
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+
+[vars]
+ENVIRONMENT = "development"
+ALLOWED_ORIGINS = "http://localhost:3000,https://etoile-app.fr"
+MAX_VIDEO_SIZE_MB = "50"
+VIDEO_DURATION_SECONDS = "40"
+PRESIGNED_URL_EXPIRY_SECONDS = "3600"
+
+# =============================================================================
+# Secrets (set via wrangler secret put)
+# =============================================================================
+# SUPABASE_JWT_SECRET - JWT secret for token validation
+# Run: wrangler secret put SUPABASE_JWT_SECRET
+
+# =============================================================================
+# Development Environment
+# =============================================================================
+
+[env.development]
+name = "etoile-video-worker-dev"
+
+[[env.development.r2_buckets]]
+binding = "VIDEOS"
+bucket_name = "etoile-videos-dev"
+
+[[env.development.r2_buckets]]
+binding = "THUMBNAILS"
+bucket_name = "etoile-thumbnails-dev"
+
+[env.development.vars]
+ENVIRONMENT = "development"
+ALLOWED_ORIGINS = "*"
+
+# =============================================================================
+# Staging Environment
+# =============================================================================
+
+[env.staging]
+name = "etoile-video-worker-staging"
+
+[[env.staging.r2_buckets]]
+binding = "VIDEOS"
+bucket_name = "etoile-videos-staging"
+
+[[env.staging.r2_buckets]]
+binding = "THUMBNAILS"
+bucket_name = "etoile-thumbnails-staging"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+ALLOWED_ORIGINS = "https://staging.etoile-app.fr"
+
+# =============================================================================
+# Production Environment
+# =============================================================================
+
+[env.production]
+name = "etoile-video-worker"
+
+[[env.production.r2_buckets]]
+binding = "VIDEOS"
+bucket_name = "etoile-videos-prod"
+
+[[env.production.r2_buckets]]
+binding = "THUMBNAILS"
+bucket_name = "etoile-thumbnails-prod"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://etoile-app.fr,https://api.etoile-app.fr"

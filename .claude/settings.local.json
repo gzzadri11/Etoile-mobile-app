@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd.exe /c \"dir C:\\\\Users\\\\gzzad\\\\Documents\\\\MonProjetBmad\")",
+      "Bash(powershell.exe -Command \"& ''C:\\\\src\\\\flutter\\\\bin\\\\flutter.bat'' --version\")",
+      "Bash(powershell.exe -Command:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(cmd.exe /c \"cd /d C:\\\\Users\\\\gzzad\\\\Documents\\\\MonProjetBmad && npx bmad-method install\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"Set-Location ''C:\\\\Users\\\\gzzad\\\\Documents\\\\MonProjetBmad''; npx bmad-method install\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"npx bmad-method --help\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"npx bmad-method install --help\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"Copy-Item -Path ''C:\\\\Users\\\\gzzad\\\\Documents\\\\MonProjetBmad\\\\.bmad-temp\\\\src\\\\core\\\\tasks\\\\*'' -Destination ''C:\\\\Users\\\\gzzad\\\\Documents\\\\MonProjetBmad\\\\_bmad\\\\tasks\\\\'' -Recurse -Force\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"Copy-Item -Path ''C:\\\\Users\\\\gzzad\\\\Documents\\\\MonProjetBmad\\\\.bmad-temp\\\\src\\\\bmm\\\\data\\\\*'' -Destination ''C:\\\\Users\\\\gzzad\\\\Documents\\\\MonProjetBmad\\\\_bmad\\\\data\\\\'' -Recurse -Force\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"& ''C:\\\\src\\\\flutter\\\\bin\\\\flutter.bat'' create --project-name mon_projet_bmad ''C:\\\\Users\\\\gzzad\\\\Documents\\\\MonProjetBmad\\\\app'' 2>&1\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"Copy-Item -Path ''C:\\\\Users\\\\gzzad\\\\Documents\\\\MonProjetBmad\\\\.claude'' -Destination ''C:\\\\Users\\\\gzzad\\\\Documents\\\\IDEES\\\\ETOILE\\\\Etoile-mobile-app\\\\'' -Recurse -Force\")",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)",
+      "Bash(if not exist \"C:\\\\Users\\\\gzzad\\\\Documents\\\\IDEES\\\\ETOILE\\\\Etoile-mobile-app\\\\_bmad-output\" mkdir \"C:\\\\Users\\\\gzzad\\\\Documents\\\\IDEES\\\\ETOILE\\\\Etoile-mobile-app\\\\_bmad-output\")",
+      "Bash(flutter clean:*)",
+      "Bash(flutter pub:*)",
+      "Bash(where:*)",
+      "Bash(cmd /c \"dir D:\\\\ /b\")",
+      "Bash(cmd /c \"echo %PATH%\")",
+      "Bash(cmd /c \"dir D:\\\\ /b & echo --- & echo %PATH%\")",
+      "Bash(powershell:*)",
+      "Bash(cmd /c \"C:\\\\Users\\\\gzzad\\\\flutter\\\\bin\\\\flutter.bat doctor -v\")",
+      "Bash(cmd /c:*)",
+      "Bash(cd \"C:\\\\Users\\\\gzzad\\\\Documents\\\\IDEES\\\\ETOILE\\\\Etoile-mobile-app\\\\flutter_application_1\"\" && find . -type f -name \"*.dart \")"
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+# BMAD Project Configuration
+# Projet Etoile - Application Mobile Flutter
+
+project:
+  name: "Etoile Mobile App"
+  type: "flutter"
+  output_folder: "_bmad-output"
+
+user:
+  name: "Developer"
+  communication_language: "French"
+  document_output_language: "French"
+
+modules:
+  - core
+  - bmm
+
+agents:
+  pm: "John - Product Manager"
+  architect: "Winston - Architect"
+  dev: "Amelia - Developer"
+  analyst: "Mary - Business Analyst"
+  sm: "Bob - Scrum Master"
+  ux: "Sally - UX Designer"
+  qa: "Quinn - QA Engineer"
