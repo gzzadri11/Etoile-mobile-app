@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/seeker_profile_model.dart';
@@ -132,6 +134,52 @@ class ProfileRepository {
         profile.sector!.isNotEmpty &&
         profile.description != null &&
         profile.description!.isNotEmpty;
+  }
+
+  /// Upload company logo to Supabase Storage and return public URL
+  Future<String> uploadLogo(Uint8List bytes, String extension) async {
+    final userId = currentUserId;
+    if (userId == null) throw Exception('Utilisateur non connecte');
+
+    final path = '$userId/logo.$extension';
+
+    await _supabaseClient.storage.from('company-logos').uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: 'image/$extension',
+          ),
+        );
+
+    final url = _supabaseClient.storage
+        .from('company-logos')
+        .getPublicUrl(path);
+
+    return url;
+  }
+
+  /// Upload cover photo to Supabase Storage and return public URL
+  Future<String> uploadCover(Uint8List bytes, String extension) async {
+    final userId = currentUserId;
+    if (userId == null) throw Exception('Utilisateur non connecte');
+
+    final path = '$userId/cover.$extension';
+
+    await _supabaseClient.storage.from('company-logos').uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: 'image/$extension',
+          ),
+        );
+
+    final url = _supabaseClient.storage
+        .from('company-logos')
+        .getPublicUrl(path);
+
+    return url;
   }
 
   // ===========================================================================

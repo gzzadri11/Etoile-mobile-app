@@ -1,12 +1,17 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
 import '../../data/models/recruiter_profile_model.dart';
+import '../../data/repositories/profile_repository.dart';
 import '../bloc/profile_bloc.dart';
 
 /// Page for editing recruiter company profile
@@ -29,6 +34,16 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
   String? _selectedSector;
   String? _selectedCompanySize;
   List<String> _locations = [];
+
+  // Logo state
+  Uint8List? _pickedLogoBytes;
+  String? _pickedLogoExtension;
+  String? _existingLogoUrl;
+
+  // Cover state
+  Uint8List? _pickedCoverBytes;
+  String? _pickedCoverExtension;
+  String? _existingCoverUrl;
 
   bool _isInitialized = false;
 
@@ -92,6 +107,8 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
         ? profile.companySize
         : null;
     _locations = List.from(profile.locations);
+    _existingLogoUrl = profile.logoUrl;
+    _existingCoverUrl = profile.coverUrl;
 
     _isInitialized = true;
   }
@@ -113,8 +130,90 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
     });
   }
 
-  void _onSave(RecruiterProfile currentProfile) {
+  Future<void> _pickLogo() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+
+    final bytes = await picked.readAsBytes();
+    final ext = picked.name.split('.').last.toLowerCase();
+
+    setState(() {
+      _pickedLogoBytes = bytes;
+      _pickedLogoExtension = (ext == 'png') ? 'png' : 'jpeg';
+    });
+  }
+
+  Future<void> _pickCover() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1280,
+      maxHeight: 720,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+
+    final bytes = await picked.readAsBytes();
+    final ext = picked.name.split('.').last.toLowerCase();
+
+    setState(() {
+      _pickedCoverBytes = bytes;
+      _pickedCoverExtension = (ext == 'png') ? 'png' : 'jpeg';
+    });
+  }
+
+  Future<void> _onSave(RecruiterProfile currentProfile) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final repo = GetIt.I<ProfileRepository>();
+
+    // Upload logo if a new one was picked
+    String? logoUrl = currentProfile.logoUrl;
+    if (_pickedLogoBytes != null) {
+      try {
+        logoUrl = await repo.uploadLogo(
+          _pickedLogoBytes!,
+          _pickedLogoExtension ?? 'jpeg',
+        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur upload logo: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    // Upload cover if a new one was picked
+    String? coverUrl = currentProfile.coverUrl;
+    if (_pickedCoverBytes != null) {
+      try {
+        coverUrl = await repo.uploadCover(
+          _pickedCoverBytes!,
+          _pickedCoverExtension ?? 'jpeg',
+        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur upload couverture: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+    }
 
     final updatedProfile = currentProfile.copyWith(
       companyName: _companyNameController.text.trim(),
@@ -123,11 +222,15 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
       sector: _selectedSector,
       companySize: _selectedCompanySize,
       locations: _locations,
+      logoUrl: logoUrl,
+      coverUrl: coverUrl,
     );
 
-    context.read<ProfileBloc>().add(
-          ProfileUpdateRequested(recruiterProfile: updatedProfile),
-        );
+    if (mounted) {
+      context.read<ProfileBloc>().add(
+            ProfileUpdateRequested(recruiterProfile: updatedProfile),
+          );
+    }
   }
 
   @override
@@ -174,12 +277,22 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
           final isSaving = state is ProfileSaving;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppTheme.spaceMd),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // === Cover + Logo header ===
+                  _buildHeaderSection(isSaving),
+                  const SizedBox(height: AppTheme.spaceLg),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.spaceMd),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
                   // === Informations entreprise ===
                   _buildSectionTitle('Informations entreprise'),
                   const SizedBox(height: AppTheme.spaceMd),
@@ -348,11 +461,133 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                   ),
 
                   const SizedBox(height: AppTheme.spaceLg),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildHeaderSection(bool isSaving) {
+    final hasPickedLogo = _pickedLogoBytes != null;
+    final hasExistingLogo =
+        _existingLogoUrl != null && _existingLogoUrl!.isNotEmpty;
+    final hasPickedCover = _pickedCoverBytes != null;
+    final hasExistingCover =
+        _existingCoverUrl != null && _existingCoverUrl!.isNotEmpty;
+
+    return SizedBox(
+      height: 220,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Cover photo
+          GestureDetector(
+            onTap: isSaving ? null : _pickCover,
+            child: Container(
+              height: 160,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.greyLight,
+                image: hasPickedCover
+                    ? DecorationImage(
+                        image: MemoryImage(_pickedCoverBytes!),
+                        fit: BoxFit.cover,
+                      )
+                    : hasExistingCover
+                        ? DecorationImage(
+                            image: NetworkImage(_existingCoverUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+              ),
+              child: (!hasPickedCover && !hasExistingCover)
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.photo_camera_outlined,
+                              size: 36, color: AppColors.greyWarm),
+                          const SizedBox(height: AppTheme.spaceXs),
+                          Text(
+                            'Ajouter une couverture',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: AppColors.greyWarm),
+                          ),
+                        ],
+                      ),
+                    )
+                  : null,
+            ),
+          ),
+          // Cover edit badge
+          Positioned(
+            top: AppTheme.spaceSm,
+            right: AppTheme.spaceSm,
+            child: GestureDetector(
+              onTap: isSaving ? null : _pickCover,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ),
+                child: const Icon(Icons.edit, size: 18, color: AppColors.white),
+              ),
+            ),
+          ),
+          // Logo
+          Positioned(
+            bottom: 0,
+            left: AppTheme.spaceMd,
+            child: GestureDetector(
+              onTap: isSaving ? null : _pickLogo,
+              child: Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.white, width: 3),
+                    ),
+                    child: CircleAvatar(
+                      radius: 40,
+                      backgroundColor: AppColors.tagBackground,
+                      backgroundImage: hasPickedLogo
+                          ? MemoryImage(_pickedLogoBytes!)
+                          : hasExistingLogo
+                              ? NetworkImage(_existingLogoUrl!)
+                              : null,
+                      child: (!hasPickedLogo && !hasExistingLogo)
+                          ? const Icon(Icons.business,
+                              size: 36, color: AppColors.greyWarm)
+                          : null,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryOrange,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.camera_alt,
+                          size: 16, color: AppColors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

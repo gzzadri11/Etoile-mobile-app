@@ -199,76 +199,106 @@ class _RecruiterProfileView extends StatelessWidget {
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(AppTheme.spaceMd),
           child: Column(
             children: [
-              // Company card
-              _CompanyCard(
-                name: profile.companyName,
+              // === Cover + Logo header ===
+              _RecruiterHeader(
+                coverUrl: profile.coverUrl,
+                logoUrl: profile.logoUrl,
+                companyName: profile.companyName,
                 sector: profile.sector ?? 'Non defini',
-                description: profile.description ?? '',
                 isVerified: profile.isVerified,
               ),
 
-              const SizedBox(height: AppTheme.spaceLg),
+              Padding(
+                padding: const EdgeInsets.all(AppTheme.spaceMd),
+                child: Column(
+                  children: [
+                    // Description
+                    if (profile.description != null &&
+                        profile.description!.isNotEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppTheme.spaceMd),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusLg),
+                          border: Border.all(color: AppColors.greyLight),
+                        ),
+                        child: Text(
+                          profile.description!,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
 
-              // Verification status
-              if (!profile.isVerified)
-                _VerificationStatusCard(
-                  status: profile.verificationStatus,
-                  rejectionReason: profile.rejectionReason,
+                    if (profile.description != null &&
+                        profile.description!.isNotEmpty)
+                      const SizedBox(height: AppTheme.spaceLg),
+
+                    // Verification status
+                    if (!profile.isVerified)
+                      _VerificationStatusCard(
+                        status: profile.verificationStatus,
+                        rejectionReason: profile.rejectionReason,
+                      ),
+
+                    if (!profile.isVerified)
+                      const SizedBox(height: AppTheme.spaceLg),
+
+                    // Publications summary
+                    _PublicationsCard(
+                      videoCount: 0,
+                      posterCount: 0,
+                      videoCredits: profile.videoCredits,
+                      posterCredits: profile.posterCredits,
+                    ),
+
+                    const SizedBox(height: AppTheme.spaceLg),
+
+                    // Statistics card
+                    _StatisticsCard(isPremium: false),
+
+                    const SizedBox(height: AppTheme.spaceLg),
+
+                    // Action buttons
+                    EtoileButton(
+                      label: 'Publier une offre',
+                      icon: Icons.add,
+                      onPressed: () {
+                        // TODO: Navigate to publish
+                      },
+                    ),
+
+                    const SizedBox(height: AppTheme.spaceMd),
+
+                    EtoileButton.outlined(
+                      label: AppStrings.editProfile,
+                      icon: Icons.edit_outlined,
+                      onPressed: () =>
+                          context.push(AppRoutes.editRecruiterProfile),
+                    ),
+
+                    const SizedBox(height: AppTheme.spaceLg),
+
+                    // Logout button
+                    TextButton.icon(
+                      onPressed: () {
+                        context
+                            .read<AuthBloc>()
+                            .add(const AuthLogoutRequested());
+                      },
+                      icon: const Icon(Icons.logout, color: AppColors.error),
+                      label: Text(
+                        AppStrings.logout,
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppTheme.spaceLg),
+                  ],
                 ),
-
-              if (!profile.isVerified)
-                const SizedBox(height: AppTheme.spaceLg),
-
-              // Publications summary
-              _PublicationsCard(
-                videoCount: 0, // TODO: Get from videos table
-                posterCount: 0,
-                videoCredits: profile.videoCredits,
-                posterCredits: profile.posterCredits,
               ),
-
-              const SizedBox(height: AppTheme.spaceLg),
-
-              // Statistics card
-              _StatisticsCard(isPremium: false),
-
-              const SizedBox(height: AppTheme.spaceLg),
-
-              // Action buttons
-              EtoileButton(
-                label: 'Publier une offre',
-                icon: Icons.add,
-                onPressed: () {
-                  // TODO: Navigate to publish
-                },
-              ),
-
-              const SizedBox(height: AppTheme.spaceMd),
-
-              EtoileButton.outlined(
-                label: AppStrings.editProfile,
-                icon: Icons.edit_outlined,
-                onPressed: () => context.push(AppRoutes.editRecruiterProfile),
-              ),
-
-              const SizedBox(height: AppTheme.spaceLg),
-
-              // Logout button
-              TextButton.icon(
-                onPressed: () {
-                  context.read<AuthBloc>().add(const AuthLogoutRequested());
-                },
-                icon: const Icon(Icons.logout, color: AppColors.error),
-                label: Text(
-                  AppStrings.logout,
-                  style: TextStyle(color: AppColors.error),
-                ),
-              ),
-
-              const SizedBox(height: AppTheme.spaceLg),
             ],
           ),
         ),
@@ -524,93 +554,134 @@ class _ProfileInfoCard extends StatelessWidget {
   }
 }
 
-/// Company card for recruiters
-class _CompanyCard extends StatelessWidget {
-  final String name;
+/// Recruiter header with cover photo + logo overlay
+class _RecruiterHeader extends StatelessWidget {
+  final String? coverUrl;
+  final String? logoUrl;
+  final String companyName;
   final String sector;
-  final String description;
   final bool isVerified;
 
-  const _CompanyCard({
-    required this.name,
+  const _RecruiterHeader({
+    this.coverUrl,
+    this.logoUrl,
+    required this.companyName,
     required this.sector,
-    required this.description,
     required this.isVerified,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppTheme.spaceMd),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppColors.greyLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final hasCover = coverUrl != null && coverUrl!.isNotEmpty;
+    final hasLogo = logoUrl != null && logoUrl!.isNotEmpty;
+
+    return SizedBox(
+      height: 240,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.greyLight,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                ),
-                child: const Icon(
-                  Icons.business,
-                  color: AppColors.greyWarm,
+          // Cover photo
+          Container(
+            height: 180,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.greyLight,
+              image: hasCover
+                  ? DecorationImage(
+                      image: NetworkImage(coverUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: !hasCover
+                ? const Center(
+                    child: Icon(
+                      Icons.photo_camera_outlined,
+                      size: 40,
+                      color: AppColors.greyMedium,
+                    ),
+                  )
+                : null,
+          ),
+          // Gradient overlay for text readability
+          Positioned(
+            bottom: 60,
+            left: 0,
+            right: 0,
+            height: 120,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black54],
                 ),
               ),
-              const SizedBox(width: AppTheme.spaceMd),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+          ),
+          // Logo
+          Positioned(
+            bottom: 0,
+            left: AppTheme.spaceMd,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.white, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(40),
+                    blurRadius: 8,
+                  ),
+                ],
+              ),
+              child: CircleAvatar(
+                radius: 40,
+                backgroundColor: AppColors.white,
+                backgroundImage: hasLogo ? NetworkImage(logoUrl!) : null,
+                child: !hasLogo
+                    ? const Icon(Icons.business, size: 36, color: AppColors.greyWarm)
+                    : null,
+              ),
+            ),
+          ),
+          // Company name + sector
+          Positioned(
+            bottom: 16,
+            left: 100,
+            right: AppTheme.spaceMd,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            name,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isVerified) ...[
-                          const SizedBox(width: AppTheme.spaceSm),
-                          const Icon(
-                            Icons.check_circle,
-                            size: 16,
-                            color: AppColors.primaryYellow,
-                          ),
-                        ],
-                      ],
+                    Flexible(
+                      child: Text(
+                        companyName,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    Text(
-                      sector,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.greyWarm,
-                          ),
-                    ),
+                    if (isVerified) ...[
+                      const SizedBox(width: AppTheme.spaceSm),
+                      const Icon(
+                        Icons.check_circle,
+                        size: 18,
+                        color: AppColors.primaryYellow,
+                      ),
+                    ],
                   ],
                 ),
-              ),
-            ],
-          ),
-          if (description.isNotEmpty) ...[
-            const SizedBox(height: AppTheme.spaceMd),
-            Text(
-              description,
-              style: Theme.of(context).textTheme.bodyMedium,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
+                Text(
+                  sector,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.greyWarm,
+                      ),
+                ),
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -22,19 +23,58 @@ class _ConversationsPageState extends State<ConversationsPage> {
   List<Conversation> _conversations = [];
   bool _isLoading = true;
   String? _error;
+  RealtimeChannel? _conversationsChannel;
 
   @override
   void initState() {
     super.initState();
     _loadConversations();
+    _subscribeToConversations();
   }
 
-  Future<void> _loadConversations() async {
+  @override
+  void dispose() {
+    _unsubscribe();
+    super.dispose();
+  }
+
+  /// Subscribe to realtime changes on conversations table
+  void _subscribeToConversations() {
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    debugPrint('[ConversationsPage] Subscribing to realtime conversations...');
+    _conversationsChannel = supabase
+        .channel('conversations:list:$userId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'conversations',
+          callback: (payload) {
+            debugPrint('[ConversationsPage] Realtime event: ${payload.eventType}');
+            // Reload full list to get enriched data
+            _loadConversations(silent: true);
+          },
+        )
+        .subscribe();
+  }
+
+  void _unsubscribe() {
+    if (_conversationsChannel != null) {
+      Supabase.instance.client.removeChannel(_conversationsChannel!);
+      _conversationsChannel = null;
+    }
+  }
+
+  Future<void> _loadConversations({bool silent = false}) async {
     debugPrint('[ConversationsPage] Loading conversations...');
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     try {
       final messageRepository = GetIt.I<MessageRepository>();
@@ -51,7 +91,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
     } catch (e, stackTrace) {
       debugPrint('[ConversationsPage] Error: $e');
       debugPrint('[ConversationsPage] Stack: $stackTrace');
-      if (mounted) {
+      if (mounted && !silent) {
         setState(() {
           _error = e.toString();
           _isLoading = false;
