@@ -251,9 +251,7 @@ class _RecruiterProfileView extends StatelessWidget {
               EtoileButton.outlined(
                 label: AppStrings.editProfile,
                 icon: Icons.edit_outlined,
-                onPressed: () {
-                  // TODO: Navigate to edit recruiter profile
-                },
+                onPressed: () => context.push(AppRoutes.editRecruiterProfile),
               ),
 
               const SizedBox(height: AppTheme.spaceLg),

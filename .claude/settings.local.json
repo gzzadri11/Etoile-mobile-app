@@ -26,7 +26,8 @@
       "Bash(powershell:*)",
       "Bash(cmd /c \"C:\\\\Users\\\\gzzad\\\\flutter\\\\bin\\\\flutter.bat doctor -v\")",
       "Bash(cmd /c:*)",
-      "Bash(cd \"C:\\\\Users\\\\gzzad\\\\Documents\\\\IDEES\\\\ETOILE\\\\Etoile-mobile-app\\\\flutter_application_1\"\" && find . -type f -name \"*.dart \")"
+      "Bash(cd \"C:\\\\Users\\\\gzzad\\\\Documents\\\\IDEES\\\\ETOILE\\\\Etoile-mobile-app\\\\flutter_application_1\"\" && find . -type f -name \"*.dart \")",
+      "Bash(C:Usersgzzadflutterbinflutter.bat pub get)"
     ]
   }
 }

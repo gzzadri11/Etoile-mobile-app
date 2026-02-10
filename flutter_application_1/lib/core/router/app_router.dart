@@ -13,6 +13,7 @@ import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/edit_seeker_profile_page.dart';
+import '../../features/profile/presentation/pages/edit_recruiter_profile_page.dart';
 import '../../features/video/presentation/pages/video_record_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
 
@@ -42,6 +43,7 @@ abstract class AppRoutes {
 
   // Profile edit routes
   static const String editProfile = '/profile/edit';
+  static const String editRecruiterProfile = '/profile/edit-recruiter';
 
   // Settings routes
   static const String settings = '/settings';
@@ -182,6 +184,15 @@ class AppRouter {
         builder: (context, state) => BlocProvider(
           create: (_) => GetIt.I<ProfileBloc>()..add(const ProfileLoadRequested()),
           child: const EditSeekerProfilePage(),
+        ),
+      ),
+
+      // Edit recruiter profile page
+      GoRoute(
+        path: AppRoutes.editRecruiterProfile,
+        builder: (context, state) => BlocProvider(
+          create: (_) => GetIt.I<ProfileBloc>()..add(const ProfileLoadRequested()),
+          child: const EditRecruiterProfilePage(),
         ),
       ),
 
