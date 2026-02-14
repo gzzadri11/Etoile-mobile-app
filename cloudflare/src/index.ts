@@ -337,6 +337,57 @@ async function handleVideoStream(
   env: Env,
   key: string
 ): Promise<Response> {
+  // Support range requests for video seeking
+  const range = request.headers.get('Range');
+
+  if (range) {
+    // First get object metadata (HEAD)
+    const head = await env.VIDEOS.head(key);
+    if (!head) {
+      return new Response(JSON.stringify({ error: 'Video not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCorsHeaders(request, env),
+        },
+      });
+    }
+
+    const size = head.size;
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : size - 1;
+    const chunkSize = end - start + 1;
+
+    // Get partial content using R2 range option
+    const object = await env.VIDEOS.get(key, {
+      range: { offset: start, length: chunkSize },
+    });
+
+    if (!object) {
+      return new Response(JSON.stringify({ error: 'Video not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCorsHeaders(request, env),
+        },
+      });
+    }
+
+    return new Response(object.body, {
+      status: 206,
+      headers: {
+        'Content-Type': head.httpMetadata?.contentType || 'video/mp4',
+        'Content-Length': chunkSize.toString(),
+        'Content-Range': `bytes ${start}-${end}/${size}`,
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        ...getCorsHeaders(request, env),
+      },
+    });
+  }
+
+  // No range - return full video
   const object = await env.VIDEOS.get(key);
 
   if (!object) {
@@ -349,38 +400,11 @@ async function handleVideoStream(
     });
   }
 
-  // Support range requests for video seeking
-  const range = request.headers.get('Range');
-  const size = object.size;
-
-  if (range) {
-    const parts = range.replace(/bytes=/, '').split('-');
-    const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : size - 1;
-    const chunkSize = end - start + 1;
-
-    // Get partial content
-    const slice = await object.slice(start, end + 1).arrayBuffer();
-
-    return new Response(slice, {
-      status: 206,
-      headers: {
-        'Content-Type': object.httpMetadata?.contentType || 'video/mp4',
-        'Content-Length': chunkSize.toString(),
-        'Content-Range': `bytes ${start}-${end}/${size}`,
-        'Accept-Ranges': 'bytes',
-        'Cache-Control': 'public, max-age=31536000, immutable',
-        ...getCorsHeaders(request, env),
-      },
-    });
-  }
-
-  // Return full video
   return new Response(object.body, {
     status: 200,
     headers: {
       'Content-Type': object.httpMetadata?.contentType || 'video/mp4',
-      'Content-Length': size.toString(),
+      'Content-Length': object.size.toString(),
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'public, max-age=31536000, immutable',
       ...getCorsHeaders(request, env),
@@ -535,9 +559,9 @@ export default {
         return await handleUpload(request, env, uploadMatch[1]);
       }
 
-      // Video streaming
+      // Video streaming (GET and HEAD)
       const videoMatch = path.match(/^\/video\/(.+)$/);
-      if (videoMatch && method === 'GET') {
+      if (videoMatch && (method === 'GET' || method === 'HEAD')) {
         return await handleVideoStream(request, env, videoMatch[1]);
       }
 
@@ -546,9 +570,9 @@ export default {
         return await handleDelete(request, env, videoMatch[1], 'video');
       }
 
-      // Thumbnail
+      // Thumbnail (GET and HEAD)
       const thumbnailMatch = path.match(/^\/thumbnail\/(.+)$/);
-      if (thumbnailMatch && method === 'GET') {
+      if (thumbnailMatch && (method === 'GET' || method === 'HEAD')) {
         return await handleThumbnail(request, env, thumbnailMatch[1]);
       }
 

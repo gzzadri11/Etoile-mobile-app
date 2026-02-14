@@ -1,7 +1,10 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../../core/services/push_notification_service.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -80,6 +83,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (response.user != null) {
+        // Register FCM token for push notifications
+        _registerPushToken();
+
         emit(AuthAuthenticated(
           userId: response.user!.id,
           email: response.user!.email ?? '',
@@ -115,6 +121,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (response.user != null) {
         // Check if email confirmation is required
         if (response.session != null) {
+          // Register FCM token for push notifications
+          _registerPushToken();
+
           emit(AuthAuthenticated(
             userId: response.user!.id,
             email: response.user!.email ?? '',
@@ -141,6 +150,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
 
     try {
+      // Remove FCM token before logout
+      await _removePushToken();
+
       await _supabaseClient.auth.signOut();
       emit(const AuthUnauthenticated());
     } catch (e) {
@@ -207,5 +219,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
 
     return e.message;
+  }
+
+  /// Register FCM push token (fire and forget)
+  void _registerPushToken() {
+    try {
+      final pushService = GetIt.I<PushNotificationService>();
+      pushService.registerToken();
+    } catch (e) {
+      debugPrint('[AuthBloc] Error registering push token: $e');
+    }
+  }
+
+  /// Remove FCM push token before logout
+  Future<void> _removePushToken() async {
+    try {
+      final pushService = GetIt.I<PushNotificationService>();
+      await pushService.removeToken();
+    } catch (e) {
+      debugPrint('[AuthBloc] Error removing push token: $e');
+    }
   }
 }

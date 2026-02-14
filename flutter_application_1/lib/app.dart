@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'core/constants/app_colors.dart';
 import 'core/router/app_router.dart';
+import 'core/services/push_notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 
@@ -96,6 +97,16 @@ class _EtoileAppState extends State<EtoileApp> {
     // Create router AFTER auth state is determined
     _router = AppRouter.createRouter(_authBloc!);
     debugPrint('[App] Router created');
+
+    // Initialize push notifications with router reference
+    final pushService = GetIt.I<PushNotificationService>();
+    await pushService.initialize(router: _router);
+    debugPrint('[App] Push notifications initialized');
+
+    // If user is already authenticated, register FCM token
+    if (_authBloc!.state is AuthAuthenticated) {
+      pushService.registerToken();
+    }
 
     if (mounted) {
       setState(() {

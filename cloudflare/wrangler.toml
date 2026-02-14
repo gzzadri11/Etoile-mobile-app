@@ -15,11 +15,11 @@ compatibility_date = "2024-01-01"
 
 [[r2_buckets]]
 binding = "VIDEOS"
-bucket_name = "etoile-videos-prod"
+bucket_name = "etoile-videos"
 
 [[r2_buckets]]
 binding = "THUMBNAILS"
-bucket_name = "etoile-thumbnails-prod"
+bucket_name = "etoile-thumnails"
 
 # =============================================================================
 # Environment Variables
@@ -47,11 +47,11 @@ name = "etoile-video-worker-dev"
 
 [[env.development.r2_buckets]]
 binding = "VIDEOS"
-bucket_name = "etoile-videos-dev"
+bucket_name = "etoile-videos"
 
 [[env.development.r2_buckets]]
 binding = "THUMBNAILS"
-bucket_name = "etoile-thumbnails-dev"
+bucket_name = "etoile-thumnails"
 
 [env.development.vars]
 ENVIRONMENT = "development"
@@ -66,11 +66,11 @@ name = "etoile-video-worker-staging"
 
 [[env.staging.r2_buckets]]
 binding = "VIDEOS"
-bucket_name = "etoile-videos-staging"
+bucket_name = "etoile-videos"
 
 [[env.staging.r2_buckets]]
 binding = "THUMBNAILS"
-bucket_name = "etoile-thumbnails-staging"
+bucket_name = "etoile-thumnails"
 
 [env.staging.vars]
 ENVIRONMENT = "staging"
@@ -85,11 +85,11 @@ name = "etoile-video-worker"
 
 [[env.production.r2_buckets]]
 binding = "VIDEOS"
-bucket_name = "etoile-videos-prod"
+bucket_name = "etoile-videos"
 
 [[env.production.r2_buckets]]
 binding = "THUMBNAILS"
-bucket_name = "etoile-thumbnails-prod"
+bucket_name = "etoile-thumnails"
 
 [env.production.vars]
 ENVIRONMENT = "production"

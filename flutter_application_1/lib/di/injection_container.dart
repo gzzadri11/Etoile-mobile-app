@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/services/push_notification_service.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/feed/data/repositories/feed_repository.dart';
 import '../features/feed/presentation/bloc/feed_bloc.dart';
@@ -24,6 +25,15 @@ Future<void> init() async {
   // Supabase client
   sl.registerLazySingleton<SupabaseClient>(
     () => Supabase.instance.client,
+  );
+
+  // ============================================
+  // SERVICES
+  // ============================================
+
+  // Push Notification Service - SINGLETON
+  sl.registerLazySingleton<PushNotificationService>(
+    () => PushNotificationService(supabaseClient: sl()),
   );
 
   // ============================================

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "925143163820",
+    "project_id": "etoile-app-b80e2",
+    "storage_bucket": "etoile-app-b80e2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:925143163820:android:094bb68b1d706fc15f1009",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJDQvLbU5XkKkJ3cPoTtu8P2RAC5eIIho"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

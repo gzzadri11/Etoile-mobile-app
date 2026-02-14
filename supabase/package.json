@@ -1,0 +1,16 @@
+{
+  "name": "supabase",
+  "version": "1.0.0",
+  "description": "```\r supabase/\r ├── migrations/\r │   └── 20260202000000_initial_schema.sql   # Schema initial complet\r ├── functions/\r │   ├── stripe-webhook/                      # Webhook Stripe\r │   ├── create-payment-intent/               # Achats unitaires\r │   └── create-subscription-intent/          # Abonnements\r ├── config.toml                              # Configuration (a creer)\r └── README.md                                # Ce fichier\r ```",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "supabase": "^2.76.8"
+  }
+}

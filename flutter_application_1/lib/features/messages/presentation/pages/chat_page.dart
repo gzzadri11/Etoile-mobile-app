@@ -4,12 +4,13 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/services/push_notification_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/message_model.dart';
 import '../bloc/message_bloc.dart';
 
 /// Individual chat/conversation page
-class ChatPage extends StatelessWidget {
+class ChatPage extends StatefulWidget {
   final String conversationId;
 
   const ChatPage({
@@ -18,10 +19,29 @@ class ChatPage extends StatelessWidget {
   });
 
   @override
+  State<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Tell PushNotificationService which chat is active (suppress notifications)
+    GetIt.I<PushNotificationService>().activeConversationId = widget.conversationId;
+  }
+
+  @override
+  void dispose() {
+    // Clear active conversation on exit
+    GetIt.I<PushNotificationService>().activeConversationId = null;
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => GetIt.I<MessageBloc>()
-        ..add(MessageLoadRequested(conversationId: conversationId)),
+        ..add(MessageLoadRequested(conversationId: widget.conversationId)),
       child: const _ChatView(),
     );
   }

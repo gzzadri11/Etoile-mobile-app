@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
+import 'core/services/push_notification_service.dart';
 import 'di/injection_container.dart' as di;
 
 Future<void> main() async {
@@ -32,6 +35,13 @@ Future<void> main() async {
     await AppConfig.initialize();
     debugPrint('[Main] Configuration loaded');
     debugPrint('[Main] Supabase URL: ${AppConfig.supabaseUrl}');
+
+    // Initialize Firebase (skip on web for now)
+    if (!kIsWeb) {
+      await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+      debugPrint('[Main] Firebase initialized');
+    }
 
     // Initialize Supabase with auth persistence
     await Supabase.initialize(
