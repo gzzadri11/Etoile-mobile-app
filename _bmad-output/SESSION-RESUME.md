@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-02-14
-**Statut** : Sprint 9 - Notifications Push en cours. Edge Function deployee + secrets configures. Reste: Database Webhooks + test Android.
+**Date de mise a jour** : 2026-02-16
+**Statut** : Sprint 9 - Notifications Push quasi termine. Webhooks + CRON configures. Reste: activeConversationId + test Android.
 
 ---
 
@@ -42,15 +42,17 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | 12 | **Edge Function deployee sur Supabase** | **Done** |
 | 13 | **Secret `FIREBASE_SERVICE_ACCOUNT_KEY` configure** | **Done** |
 | 14 | **Supabase CLI installe** (local dans `supabase/node_modules`) | **Done** |
+| 15 | **Database Webhooks (2 triggers SQL)** | **Done** (2026-02-16) |
+| 16 | **CRON `profile-reminder-daily`** (pg_cron, 10h UTC) | **Done** (2026-02-16) |
+| 17 | **CRON `cleanup-notification-logs`** (pg_cron, dimanche 3h) | **Done** (2026-02-16) |
+| 18 | **Migration `20260216000000_cron_profile_reminder.sql`** | **Done** |
 
 ### Ce qui RESTE a faire
 
 | # | Tache | Description | Priorite |
 |---|-------|-------------|----------|
-| 1 | **Database Webhooks Supabase** | Configurer 2 webhooks dans Dashboard Supabase | **NEXT** |
+| 1 | **Chat page: activeConversationId** | Tracker la conversation active pour eviter notifs quand on est deja sur le chat | **NEXT** |
 | 2 | **Test sur emulateur Android** | Build + verifier reception notifications push | Haute |
-| 3 | **Chat page: activeConversationId** | Tracker la conversation active pour eviter notifs quand on est deja sur le chat | Moyenne |
-| 4 | **CRON rappel profil incomplet** (optionnel) | pg_cron pour appeler send-push quotidiennement | Basse |
 
 ### Details Webhook a configurer
 
