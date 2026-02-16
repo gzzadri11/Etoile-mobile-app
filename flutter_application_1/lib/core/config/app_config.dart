@@ -73,9 +73,8 @@ class AppConfig {
       'https://$r2AccountId.r2.cloudflarestorage.com';
 
   /// R2 Worker base URL for video operations
-  /// This will be configured once the Cloudflare Worker is deployed
   static String get r2BaseUrl =>
-      dotenv.env['R2_WORKER_URL'] ?? 'https://video-worker.etoile-app.workers.dev';
+      dotenv.env['R2_WORKER_URL'] ?? 'https://etoile-video-worker.gzzadri11.workers.dev';
 
   /// R2 bucket for videos
   static String get r2BucketVideos =>

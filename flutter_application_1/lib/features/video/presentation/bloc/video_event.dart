@@ -32,13 +32,15 @@ class VideoRecordingCompleted extends VideoEvent {
   List<Object?> get props => [videoFile, thumbnailFile];
 }
 
-/// Request to upload video
+/// Request to upload video to R2 and create DB entry
 class VideoUploadRequested extends VideoEvent {
   final File videoFile;
   final File? thumbnailFile;
   final String? categoryId;
   final String? title;
   final String? description;
+  /// Video type: 'presentation' (seeker), 'offer' (recruiter video), 'poster' (recruiter image)
+  final String? type;
 
   const VideoUploadRequested({
     required this.videoFile,
@@ -46,10 +48,11 @@ class VideoUploadRequested extends VideoEvent {
     this.categoryId,
     this.title,
     this.description,
+    this.type,
   });
 
   @override
-  List<Object?> get props => [videoFile, thumbnailFile, categoryId, title, description];
+  List<Object?> get props => [videoFile, thumbnailFile, categoryId, title, description, type];
 }
 
 /// Request to publish video
@@ -69,9 +72,14 @@ class VideoPublishRequested extends VideoEvent {
 /// Request to delete video
 class VideoDeleteRequested extends VideoEvent {
   final String videoId;
+  /// R2 key for cleanup (optional, best-effort)
+  final String? videoKey;
 
-  const VideoDeleteRequested({required this.videoId});
+  const VideoDeleteRequested({
+    required this.videoId,
+    this.videoKey,
+  });
 
   @override
-  List<Object?> get props => [videoId];
+  List<Object?> get props => [videoId, videoKey];
 }

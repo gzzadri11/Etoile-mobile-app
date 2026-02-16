@@ -221,8 +221,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     return e.message;
   }
 
-  /// Register FCM push token (fire and forget)
+  /// Register FCM push token (fire and forget, skip on web)
   void _registerPushToken() {
+    if (kIsWeb) return;
     try {
       final pushService = GetIt.I<PushNotificationService>();
       pushService.registerToken();
@@ -231,8 +232,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Remove FCM push token before logout
+  /// Remove FCM push token before logout (skip on web)
   Future<void> _removePushToken() async {
+    if (kIsWeb) return;
     try {
       final pushService = GetIt.I<PushNotificationService>();
       await pushService.removeToken();

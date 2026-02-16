@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/services/video_upload_service.dart';
 import '../../data/models/video_model.dart';
 import '../../data/repositories/video_repository.dart';
 
@@ -12,9 +14,13 @@ part 'video_state.dart';
 /// BLoC for managing video recording and upload
 class VideoBloc extends Bloc<VideoEvent, VideoState> {
   final VideoRepository _videoRepository;
+  final VideoUploadService _uploadService;
 
-  VideoBloc({required VideoRepository videoRepository})
-      : _videoRepository = videoRepository,
+  VideoBloc({
+    required VideoRepository videoRepository,
+    required VideoUploadService uploadService,
+  })  : _videoRepository = videoRepository,
+        _uploadService = uploadService,
         super(const VideoInitial()) {
     on<VideoLoadMyVideo>(_onLoadMyVideo);
     on<VideoRecordingStarted>(_onRecordingStarted);
@@ -62,7 +68,7 @@ class VideoBloc extends Bloc<VideoEvent, VideoState> {
     ));
   }
 
-  /// Upload video to R2
+  /// Upload video to R2 via Cloudflare Worker
   Future<void> _onUploadRequested(
     VideoUploadRequested event,
     Emitter<VideoState> emit,
@@ -70,39 +76,52 @@ class VideoBloc extends Bloc<VideoEvent, VideoState> {
     emit(VideoUploading(progress: 0));
 
     try {
-      // Generate keys
-      final videoKey = _videoRepository.generateVideoKey();
-      final thumbnailKey = _videoRepository.generateThumbnailKey(videoKey);
+      // Read file bytes
+      final videoBytes = await event.videoFile.readAsBytes();
+
+      // Upload video to R2
+      final videoResult = await _uploadService.uploadVideo(
+        fileBytes: videoBytes,
+        filename: event.videoFile.path.split('/').last,
+        onProgress: (progress) {
+          // Weight: video = 90% of total progress
+          emit(VideoUploading(progress: (progress * 0.9).round()));
+        },
+      );
+
+      // Upload thumbnail if available
+      String? thumbnailUrl;
+      if (event.thumbnailFile != null) {
+        final thumbBytes = await event.thumbnailFile!.readAsBytes();
+        final thumbResult = await _uploadService.uploadThumbnail(
+          fileBytes: thumbBytes,
+          filename: event.thumbnailFile!.path.split('/').last,
+        );
+        thumbnailUrl = thumbResult.url;
+      }
+
+      emit(VideoUploading(progress: 95));
 
       // Create video entry in database
       final video = await _videoRepository.createVideo(
-        type: 'presentation',
-        videoKey: videoKey,
+        type: event.type ?? 'presentation',
+        videoKey: videoResult.key,
         categoryId: event.categoryId,
         title: event.title,
         description: event.description,
+        fileSizeBytes: videoResult.size,
       );
 
-      // TODO: Upload to R2
-      // For now, simulate upload progress
-      for (int i = 1; i <= 10; i++) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        emit(VideoUploading(progress: i * 10));
-      }
-
-      // TODO: Get actual URLs from R2
-      final videoUrl = 'https://example.com/$videoKey';
-      final thumbnailUrl = 'https://example.com/$thumbnailKey';
-
-      // Update video with URLs
+      // Update with public URLs and set active
       final updatedVideo = await _videoRepository.updateVideoAfterUpload(
         videoId: video.id,
-        videoUrl: videoUrl,
+        videoUrl: videoResult.url,
         thumbnailUrl: thumbnailUrl,
       );
 
       emit(VideoUploadSuccess(video: updatedVideo));
     } catch (e) {
+      debugPrint('[VideoBloc] Upload error: $e');
       emit(VideoError(message: 'Erreur upload: ${e.toString()}'));
     }
   }
@@ -125,13 +144,27 @@ class VideoBloc extends Bloc<VideoEvent, VideoState> {
     }
   }
 
-  /// Delete video
+  /// Delete video (soft delete in DB + delete from R2)
   Future<void> _onDeleteRequested(
     VideoDeleteRequested event,
     Emitter<VideoState> emit,
   ) async {
     try {
+      // Soft delete in DB
       await _videoRepository.deleteVideo(event.videoId);
+
+      // Delete from R2 if key is provided
+      if (event.videoKey != null) {
+        try {
+          await _uploadService.deleteFile(
+            key: event.videoKey!,
+            type: 'video',
+          );
+        } catch (e) {
+          debugPrint('[VideoBloc] R2 delete failed (non-blocking): $e');
+        }
+      }
+
       emit(const VideoEmpty());
     } catch (e) {
       emit(VideoError(message: 'Erreur suppression: ${e.toString()}'));

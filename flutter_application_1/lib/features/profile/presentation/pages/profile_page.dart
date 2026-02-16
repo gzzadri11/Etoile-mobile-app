@@ -246,12 +246,13 @@ class _RecruiterProfileView extends StatelessWidget {
                     if (!profile.isVerified)
                       const SizedBox(height: AppTheme.spaceLg),
 
-                    // Publications summary
-                    _PublicationsCard(
-                      videoCount: 0,
-                      posterCount: 0,
-                      videoCredits: profile.videoCredits,
-                      posterCredits: profile.posterCredits,
+                    // Publications summary (tappable)
+                    GestureDetector(
+                      onTap: () => context.push(AppRoutes.myPublications),
+                      child: _PublicationsCard(
+                        videoCredits: profile.videoCredits,
+                        posterCredits: profile.posterCredits,
+                      ),
                     ),
 
                     const SizedBox(height: AppTheme.spaceLg),
@@ -265,9 +266,7 @@ class _RecruiterProfileView extends StatelessWidget {
                     EtoileButton(
                       label: 'Publier une offre',
                       icon: Icons.add,
-                      onPressed: () {
-                        // TODO: Navigate to publish
-                      },
+                      onPressed: () => context.go(AppRoutes.publish),
                     ),
 
                     const SizedBox(height: AppTheme.spaceMd),
@@ -690,14 +689,10 @@ class _RecruiterHeader extends StatelessWidget {
 
 /// Publications card for recruiters
 class _PublicationsCard extends StatelessWidget {
-  final int videoCount;
-  final int posterCount;
   final int videoCredits;
   final int posterCredits;
 
   const _PublicationsCard({
-    required this.videoCount,
-    required this.posterCount,
     required this.videoCredits,
     required this.posterCredits,
   });
@@ -725,7 +720,6 @@ class _PublicationsCard extends StatelessWidget {
               Expanded(
                 child: _PublicationStat(
                   icon: Icons.videocam_outlined,
-                  count: videoCount,
                   label: 'Videos',
                   credits: videoCredits,
                 ),
@@ -734,10 +728,28 @@ class _PublicationsCard extends StatelessWidget {
               Expanded(
                 child: _PublicationStat(
                   icon: Icons.image_outlined,
-                  count: posterCount,
                   label: 'Affiches',
                   credits: posterCredits,
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spaceMd),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Voir mes publications',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.primaryOrange,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 12,
+                color: AppColors.primaryOrange,
               ),
             ],
           ),
@@ -749,13 +761,11 @@ class _PublicationsCard extends StatelessWidget {
 
 class _PublicationStat extends StatelessWidget {
   final IconData icon;
-  final int count;
   final String label;
   final int credits;
 
   const _PublicationStat({
     required this.icon,
-    required this.count,
     required this.label,
     required this.credits,
   });
@@ -773,12 +783,6 @@ class _PublicationStat extends StatelessWidget {
           Icon(icon, color: AppColors.primaryOrange),
           const SizedBox(height: AppTheme.spaceSm),
           Text(
-            count.toString(),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.greyWarm,
@@ -787,7 +791,7 @@ class _PublicationStat extends StatelessWidget {
           if (credits > 0) ...[
             const SizedBox(height: AppTheme.spaceXs),
             Text(
-              '+$credits credits',
+              '$credits credits',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: AppColors.success,
                   ),

@@ -14,6 +14,8 @@ import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/edit_seeker_profile_page.dart';
 import '../../features/profile/presentation/pages/edit_recruiter_profile_page.dart';
+import '../../features/video/presentation/pages/my_publications_page.dart';
+import '../../features/video/presentation/pages/publish_offer_page.dart';
 import '../../features/video/presentation/pages/video_record_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
 
@@ -35,6 +37,7 @@ abstract class AppRoutes {
   static const String messages = '/messages';
   static const String profile = '/profile';
   static const String record = '/record';
+  static const String publish = '/publish';
 
   // Detail routes
   static const String chat = '/messages/:conversationId';
@@ -44,6 +47,7 @@ abstract class AppRoutes {
   // Profile edit routes
   static const String editProfile = '/profile/edit';
   static const String editRecruiterProfile = '/profile/edit-recruiter';
+  static const String myPublications = '/my-publications';
 
   // Settings routes
   static const String settings = '/settings';
@@ -166,6 +170,12 @@ class AppRouter {
               child: VideoRecordPage(),
             ),
           ),
+          GoRoute(
+            path: AppRoutes.publish,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: PublishOfferPage(),
+            ),
+          ),
         ],
       ),
 
@@ -194,6 +204,12 @@ class AppRouter {
           create: (_) => GetIt.I<ProfileBloc>()..add(const ProfileLoadRequested()),
           child: const EditRecruiterProfilePage(),
         ),
+      ),
+
+      // My publications page
+      GoRoute(
+        path: AppRoutes.myPublications,
+        builder: (context, state) => const MyPublicationsPage(),
       ),
 
       // Premium page

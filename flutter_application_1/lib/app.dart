@@ -98,14 +98,22 @@ class _EtoileAppState extends State<EtoileApp> {
     _router = AppRouter.createRouter(_authBloc!);
     debugPrint('[App] Router created');
 
-    // Initialize push notifications with router reference
-    final pushService = GetIt.I<PushNotificationService>();
-    await pushService.initialize(router: _router);
-    debugPrint('[App] Push notifications initialized');
+    // Initialize push notifications (skip on web - Firebase Messaging not supported)
+    if (!kIsWeb) {
+      try {
+        final pushService = GetIt.I<PushNotificationService>();
+        await pushService.initialize(router: _router);
+        debugPrint('[App] Push notifications initialized');
 
-    // If user is already authenticated, register FCM token
-    if (_authBloc!.state is AuthAuthenticated) {
-      pushService.registerToken();
+        // If user is already authenticated, register FCM token
+        if (_authBloc!.state is AuthAuthenticated) {
+          pushService.registerToken();
+        }
+      } catch (e) {
+        debugPrint('[App] Push notifications init failed (non-blocking): $e');
+      }
+    } else {
+      debugPrint('[App] Skipping push notifications on web');
     }
 
     if (mounted) {

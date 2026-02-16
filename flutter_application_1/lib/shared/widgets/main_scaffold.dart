@@ -12,7 +12,7 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 /// - Feed
 /// - Messages
 /// - Profile
-/// - Record (for seekers)
+/// - Record (for seekers) / Publish (for recruiters)
 class MainScaffold extends StatelessWidget {
   final Widget child;
 
@@ -26,11 +26,13 @@ class MainScaffold extends StatelessWidget {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         final isSeeker = state is AuthAuthenticated && state.isSeeker;
+        final isRecruiter = state is AuthAuthenticated && state.isRecruiter;
 
         return Scaffold(
           body: child,
           bottomNavigationBar: _EtoileBottomNavBar(
             showRecordTab: isSeeker,
+            showPublishTab: isRecruiter,
           ),
         );
       },
@@ -40,9 +42,11 @@ class MainScaffold extends StatelessWidget {
 
 class _EtoileBottomNavBar extends StatelessWidget {
   final bool showRecordTab;
+  final bool showPublishTab;
 
   const _EtoileBottomNavBar({
     required this.showRecordTab,
+    required this.showPublishTab,
   });
 
   int _getCurrentIndex(BuildContext context) {
@@ -52,6 +56,7 @@ class _EtoileBottomNavBar extends StatelessWidget {
     if (location.startsWith(AppRoutes.messages)) return 1;
     if (location.startsWith(AppRoutes.profile)) return 2;
     if (location.startsWith(AppRoutes.record)) return 3;
+    if (location.startsWith(AppRoutes.publish)) return 3;
 
     return 0;
   }
@@ -68,7 +73,11 @@ class _EtoileBottomNavBar extends StatelessWidget {
         context.go(AppRoutes.profile);
         break;
       case 3:
-        context.go(AppRoutes.record);
+        if (showPublishTab) {
+          context.go(AppRoutes.publish);
+        } else {
+          context.go(AppRoutes.record);
+        }
         break;
     }
   }
@@ -98,6 +107,12 @@ class _EtoileBottomNavBar extends StatelessWidget {
           icon: Icon(Icons.videocam_outlined),
           activeIcon: Icon(Icons.videocam),
           label: 'Enregistrer',
+        ),
+      if (showPublishTab)
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.add_circle_outline),
+          activeIcon: Icon(Icons.add_circle),
+          label: 'Publier',
         ),
     ];
 
