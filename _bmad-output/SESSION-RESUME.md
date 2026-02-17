@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
 **Date de mise a jour** : 2026-02-16
-**Statut** : Sprint 11 (feed 2 onglets + presentation entreprise) implemente, en attente de test. Sprint 10 termine.
+**Statut** : Sprint 11 termine et teste. Prochaine etape : planifier Sprint 12.
 
 ---
 
@@ -22,7 +22,7 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-## Sprint 11 - Feed 2 onglets + Presentation entreprise (IMPLEMENTE, A TESTER)
+## Sprint 11 - Feed 2 onglets + Presentation entreprise (TERMINE)
 
 ### Ce qui a ete fait
 
@@ -91,7 +91,7 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | 1-8 | Auth, Profil, Feed, Messages, etc. | Done |
 | 9 | Notifications Push | **Done** |
 | 10 | Import video + Affiche + Publications | **Done** (sauf S3 camera) |
-| 11 | Feed 2 onglets + Presentation entreprise | **Implemente, a tester** |
+| 11 | Feed 2 onglets + Presentation entreprise | **Done** |
 | 12 | A planifier - Features restantes du backlog | **NEXT** |
 
 ### Features disponibles pour Sprint 12
@@ -173,11 +173,11 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | Page Mes publications (liste + edit/delete) | OK | 10 |
 | Onglet Publier (bottom nav recruteur) | OK | 10 |
 | Fix Firebase web (kIsWeb guard) | OK | 10 |
-| **Feed 2 onglets chercheur (Entreprises/Offres)** | **A tester** | **11** |
-| **Publication presentation entreprise (gratuit)** | **A tester** | **11** |
-| **Profil recruteur 2 sections publications** | **A tester** | **11** |
-| **Mes publications avec tabs** | **A tester** | **11** |
-| **Affiches en image plein ecran dans feed** | **A tester** | **11** |
+| Feed 2 onglets chercheur (Entreprises/Offres) | OK | 11 |
+| Publication presentation entreprise (gratuit) | OK | 11 |
+| Profil recruteur 2 sections publications | OK | 11 |
+| Mes publications avec tabs | OK | 11 |
+| Affiches en image plein ecran dans feed | OK | 11 |
 
 ---
 
@@ -251,4 +251,4 @@ ETOILE/Etoile-mobile-app/
 ---
 
 *Sauvegarde mise a jour le 2026-02-16*
-*Sprint 11 implemente (feed 2 onglets + presentation entreprise). A tester sur Edge puis valider.*
+*Sprint 11 termine et teste. Prochaine etape : planifier Sprint 12.*
