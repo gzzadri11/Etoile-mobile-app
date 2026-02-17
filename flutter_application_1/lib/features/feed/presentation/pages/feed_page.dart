@@ -44,7 +44,7 @@ class _FeedView extends StatefulWidget {
 }
 
 class _FeedViewState extends State<_FeedView> {
-  final PageController _pageController = PageController();
+  PageController _pageController = PageController();
   VideoPreloadManager _preloadManager = VideoPreloadManager(preloadCount: 2);
   int _currentPage = 0;
   bool _isRefreshing = false;
@@ -60,13 +60,15 @@ class _FeedViewState extends State<_FeedView> {
 
   void _switchTab(String tab) {
     if (tab == _selectedTab) return;
+    _pageController.dispose();
+    _preloadManager.dispose();
     setState(() {
       _selectedTab = tab;
       _currentPage = 0;
+      _videoUrls = [];
+      _pageController = PageController();
+      _preloadManager = VideoPreloadManager(preloadCount: 2);
     });
-    _pageController.jumpTo(0);
-    _preloadManager.dispose();
-    _preloadManager = VideoPreloadManager(preloadCount: 2);
     final authState = context.read<AuthBloc>().state;
     final role = authState is AuthAuthenticated ? authState.role : 'seeker';
     context.read<FeedBloc>().add(FeedLoadRequested(userRole: role, feedTab: tab));
