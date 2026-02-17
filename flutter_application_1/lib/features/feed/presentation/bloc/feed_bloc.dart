@@ -34,6 +34,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     try {
       final items = await _getFeedByRole(
         role: event.userRole,
+        feedTab: event.feedTab,
         limit: _pageSize,
         offset: 0,
       );
@@ -46,6 +47,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         hasMore: items.length >= _pageSize,
         filters: const FeedFilters.empty(),
         userRole: event.userRole,
+        feedTab: event.feedTab,
       ));
     } catch (e) {
       emit(FeedError(message: 'Erreur de chargement: ${e.toString()}'));
@@ -65,6 +67,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     try {
       final newItems = await _getFeedByRole(
         role: currentState.userRole,
+        feedTab: currentState.feedTab,
         limit: _pageSize,
         offset: currentState.items.length,
         filters: currentState.filters,
@@ -92,10 +95,14 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     final role = currentState is FeedLoaded
         ? currentState.userRole
         : 'seeker';
+    final feedTab = currentState is FeedLoaded
+        ? currentState.feedTab
+        : 'offers';
 
     try {
       final items = await _getFeedByRole(
         role: role,
+        feedTab: feedTab,
         limit: _pageSize,
         offset: 0,
         filters: filters,
@@ -111,6 +118,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         hasMore: items.length >= _pageSize,
         filters: filters,
         userRole: role,
+        feedTab: feedTab,
       ));
     } catch (e) {
       if (currentState is FeedLoaded) {
@@ -130,12 +138,16 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     final role = currentState is FeedLoaded
         ? currentState.userRole
         : 'seeker';
+    final feedTab = currentState is FeedLoaded
+        ? currentState.feedTab
+        : 'offers';
 
     emit(const FeedLoading());
 
     try {
       final items = await _getFeedByRole(
         role: role,
+        feedTab: feedTab,
         limit: _pageSize,
         offset: 0,
         filters: event.filters,
@@ -149,6 +161,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         hasMore: items.length >= _pageSize,
         filters: event.filters,
         userRole: role,
+        feedTab: feedTab,
       ));
     } catch (e) {
       emit(FeedError(message: 'Erreur de filtrage: ${e.toString()}'));
@@ -163,15 +176,20 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     add(const FeedFiltersChanged(filters: FeedFilters.empty()));
   }
 
-  /// Route feed loading to the correct repository method based on role
+  /// Route feed loading to the correct repository method based on role and tab
   Future<List<FeedItem>> _getFeedByRole({
     required String role,
+    String feedTab = 'offers',
     required int limit,
     required int offset,
     FeedFilters? filters,
   }) async {
+    if (role == 'seeker' && feedTab == 'discover') {
+      return _feedRepository.getSeekerDiscoverFeed(
+          limit: limit, offset: offset, filters: filters);
+    }
     return switch (role) {
-      'seeker' => _feedRepository.getSeekerFeed(
+      'seeker' => _feedRepository.getSeekerOffersFeed(
           limit: limit, offset: offset, filters: filters),
       'recruiter' => _feedRepository.getRecruiterFeed(
           limit: limit, offset: offset, filters: filters),

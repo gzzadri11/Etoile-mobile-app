@@ -11,11 +11,12 @@ sealed class FeedEvent extends Equatable {
 /// Load initial feed with role-specific content
 class FeedLoadRequested extends FeedEvent {
   final String userRole;
+  final String feedTab;
 
-  const FeedLoadRequested({required this.userRole});
+  const FeedLoadRequested({required this.userRole, this.feedTab = 'offers'});
 
   @override
-  List<Object?> get props => [userRole];
+  List<Object?> get props => [userRole, feedTab];
 }
 
 /// Load more items (pagination)

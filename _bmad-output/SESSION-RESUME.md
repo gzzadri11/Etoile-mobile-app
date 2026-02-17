@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
 **Date de mise a jour** : 2026-02-16
-**Statut** : Sprint 9 - Notifications Push quasi termine. Webhooks + CRON configures. Reste: activeConversationId + test Android.
+**Statut** : Sprint 11 (feed 2 onglets + presentation entreprise) implemente, en attente de test. Sprint 10 termine.
 
 ---
 
@@ -11,9 +11,9 @@
 # 1. Ouvrir le terminal dans le projet
 cd C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app\flutter_application_1
 
-# 2. Lancer l'app sur Edge (test rapide) ou emulateur (test push)
+# 2. Lancer l'app sur Edge (test rapide) ou emulateur (test push/camera)
 flutter run -d edge
-# OU pour tester les notifications push:
+# OU pour tester les notifications push / camera:
 flutter emulators --launch Medium_Phone_API_36.1
 flutter run -d emulator-5554
 ```
@@ -22,53 +22,85 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-## Sprint 9 - Notifications Push (EN COURS)
+## Sprint 11 - Feed 2 onglets + Presentation entreprise (IMPLEMENTE, A TESTER)
 
-### Ce qui est FAIT
+### Ce qui a ete fait
+
+| Changement | Fichier(s) | Description |
+|------------|-----------|-------------|
+| Feed 2 onglets (seeker) | feed_page.dart, feed_bloc.dart, feed_event.dart, feed_state.dart | Onglets "Entreprises" (discover) et "Offres" style TikTok dans l'AppBar |
+| Nouveau feed discover | feed_repository.dart | `getSeekerDiscoverFeed()` : presentations des recruteurs verifies |
+| Rename feed offers | feed_repository.dart | `getSeekerFeed()` → `getSeekerOffersFeed()` |
+| Affiches en image | feed_page.dart | Les posters s'affichent en `Image.network` plein ecran au lieu du video player |
+| Publication 3 choix | publish_offer_page.dart | "Presentation entreprise" (gratuit) / "Offre video" / "Offre affiche" |
+| Credits gratuits | publish_offer_page.dart | `decrementCredits()` skip quand `_publishType == 'presentation'` |
+| Profil 2 sections | profile_page.dart, profile_state.dart, profile_bloc.dart | 2 cards : "Presentations entreprise" + "Publications de recrutement" avec compteurs |
+| Mes publications tabs | my_publications_page.dart | TabBar "Presentations" / "Recrutement" avec filtre par type |
+| Type badge 3 types | my_publications_page.dart | Badge "Presentation" (vert), "Video" (bleu), "Affiche" (orange) |
+| Router query param | app_router.dart | `?tab=presentations` ou `?tab=recruitment` passe a MyPublicationsPage |
+| DI update | injection_container.dart | ProfileBloc recoit VideoRepository pour compter les publications |
+
+### Tests a effectuer
+
+1. **Recruteur (emma@gmail.com)** :
+   - Page Publier : 3 boutons visibles (Presentation / Offre video / Offre affiche)
+   - Publier une presentation entreprise → credits NON decrementes
+   - Publier une offre video/affiche → credits decrementes
+   - Profil : 2 sections avec compteurs corrects
+   - Mes publications : 2 onglets filtres correctement
+
+2. **Chercheur** :
+   - Feed : 2 onglets "Entreprises" / "Offres" dans l'AppBar
+   - Entreprises → presentations des recruteurs
+   - Offres → offres video + affiches
+   - Affiches → image plein ecran (pas video player)
+
+3. **Feed recruteur** : doit toujours montrer les videos de seekers
+
+### flutter analyze : 0 erreurs (31 info/warning pre-existants)
+
+---
+
+## Sprint 10 - Import Video + Affiche + Publications (TERMINE)
+
+### Stories completees
+
+| Story | Description | Commit |
+|-------|-------------|--------|
+| S1 | VideoUploadService (upload R2 via Worker) | a82c2c7 |
+| S2 | Import video galerie (PublishOfferPage) | a82c2c7 |
+| S3 | Enregistrement video in-app (camera) | **DEFERRED** (mobile only) |
+| S4 | Publication affiche image (poster) | a82c2c7 |
+| S5 | Page "Mes publications" (liste) | a82c2c7 |
+| S6 | Modification / Suppression publications | a82c2c7 |
+
+---
+
+## Sprint 9 - Notifications Push (TERMINE)
 
 | # | Composant | Statut |
 |---|-----------|--------|
-| 1 | PRD (`prd-notifications-push.md`) | Done |
-| 2 | Architecture (`architecture-notifications-push.md`) | Done |
-| 3 | Migration SQL (`device_tokens` + `notification_log`) | Done (execute sur Supabase) |
-| 4 | Flutter: `push_notification_service.dart` | Done |
-| 5 | Flutter: `main.dart` (Firebase init + background handler) | Done |
-| 6 | Flutter: `injection_container.dart` (PushNotificationService) | Done |
-| 7 | Flutter: `auth_bloc.dart` (registerToken/removeToken) | Done |
-| 8 | Flutter: `app.dart` (pushService.initialize + registerToken) | Done |
-| 9 | Edge Function `send-push/index.ts` (FCM v1, dedup, 3 types notifs) | Done |
-| 10 | Android: `google-services.json` | Done |
-| 11 | Android: Gradle + Manifest modifies | Done |
-| 12 | **Edge Function deployee sur Supabase** | **Done** |
-| 13 | **Secret `FIREBASE_SERVICE_ACCOUNT_KEY` configure** | **Done** |
-| 14 | **Supabase CLI installe** (local dans `supabase/node_modules`) | **Done** |
-| 15 | **Database Webhooks (2 triggers SQL)** | **Done** (2026-02-16) |
-| 16 | **CRON `profile-reminder-daily`** (pg_cron, 10h UTC) | **Done** (2026-02-16) |
-| 17 | **CRON `cleanup-notification-logs`** (pg_cron, dimanche 3h) | **Done** (2026-02-16) |
-| 18 | **Migration `20260216000000_cron_profile_reminder.sql`** | **Done** |
+| 1-18 | Tous composants (PRD, archi, SQL, Flutter, Edge Function, Webhooks, CRON) | Done |
 
-### Ce qui RESTE a faire
+---
 
-| # | Tache | Description | Priorite |
-|---|-------|-------------|----------|
-| 1 | **Chat page: activeConversationId** | Tracker la conversation active pour eviter notifs quand on est deja sur le chat | **NEXT** |
-| 2 | **Test sur emulateur Android** | Build + verifier reception notifications push | Haute |
+## Sprints restants (depuis sprint-plan.md)
 
-### Details Webhook a configurer
+| Sprint | Contenu | Statut |
+|--------|---------|--------|
+| 1-8 | Auth, Profil, Feed, Messages, etc. | Done |
+| 9 | Notifications Push | **Done** |
+| 10 | Import video + Affiche + Publications | **Done** (sauf S3 camera) |
+| 11 | Feed 2 onglets + Presentation entreprise | **Implemente, a tester** |
+| 12 | A planifier - Features restantes du backlog | **NEXT** |
 
-Dashboard : https://supabase.com/dashboard/project/ojslqytmuifaofojutgb/database/hooks
+### Features disponibles pour Sprint 12
 
-**Webhook 1 : `on-new-message`**
-- Table : `messages`
-- Events : `INSERT`
-- Type : Supabase Edge Function
-- Function : `send-push`
-
-**Webhook 2 : `on-new-conversation`**
-- Table : `conversations`
-- Events : `INSERT`
-- Type : Supabase Edge Function
-- Function : `send-push`
+1. Carte interactive OpenStreetMap (FR29, Phase 3)
+2. Statistiques avancees (vues, engagement)
+3. Systeme de paiement Stripe (premium)
+4. Recherche avancee candidats
+5. S3: Camera in-app (report du Sprint 10)
 
 ---
 
@@ -79,7 +111,6 @@ Dashboard : https://supabase.com/dashboard/project/ojslqytmuifaofojutgb/database
 - OU depuis la racine : `npx --prefix supabase supabase <commande> --project-ref ojslqytmuifaofojutgb`
 - Access Token Supabase : `sbp_9ab83a87cc77ec01e864f0400f77d364572650dd`
 - Project Ref : `ojslqytmuifaofojutgb`
-- Projet link OK (fait le 2026-02-14)
 
 ---
 
@@ -92,37 +123,13 @@ Dashboard : https://supabase.com/dashboard/project/ojslqytmuifaofojutgb/database
 
 ---
 
-## Cloudflare Worker (Session precedente)
+## Cloudflare Worker
 
 - **Worker deploye** : `https://etoile-video-worker.gzzadri11.workers.dev`
 - **Health check** : `GET /health` → OK
 - **Buckets R2** : `etoile-videos` + `etoile-thumnails`
 - **Token API** : set via `$env:CLOUDFLARE_API_TOKEN` en PowerShell
-
----
-
-## Historique des changements
-
-### 2026-02-14 - Sprint 9 : Notifications Push (en cours)
-- PRD + Architecture notifications push crees
-- Migration SQL executee (tables `device_tokens` + `notification_log`)
-- Code Flutter complet : PushNotificationService, Firebase init, token management, snackbar in-app, deep linking
-- Edge Function `send-push` deployee sur Supabase (FCM v1, dedup, 3 types)
-- Secret Firebase configure sur Supabase
-- Supabase CLI installe localement
-- **Reste** : Database Webhooks + test Android + activeConversationId
-
-### 2026-02-13 - Messagerie temps reel + Worker Cloudflare
-- Messagerie temps reel validee (test E2E OK entre 2 utilisateurs)
-- Worker Cloudflare deploye (`etoile-video-worker`)
-- 5 videos test uploadees sur R2
-- Feed video 100% fonctionnel sur Edge avec preload
-
-### 2026-02-10 - Edition Profil Recruteur
-- Edition profil recruteur : logo, couverture, vue profil visuelle
-
-### 2026-02-07/08 - Feed par Profil
-- Feed specifique par role, filtres, boutons contextuels
+- **Account ID** : 91852e840042405a28e7ad2dd08d4fa8
 
 ---
 
@@ -154,21 +161,23 @@ Dashboard : https://supabase.com/dashboard/project/ojslqytmuifaofojutgb/database
 | Messagerie temps reel (Realtime) | OK | 8 |
 | Worker Cloudflare deploye | OK | 8 |
 | Video test sur R2 | OK | 8 |
-| **Tables device_tokens + notification_log** | **OK** | **9** |
-| **Edge Function send-push deployee** | **OK** | **9** |
-| **Secret Firebase configure** | **OK** | **9** |
-| **Code Flutter push notifications** | **OK** | **9** |
-
-### Ce qui reste a faire
-
-| # | Tache | Priorite | Prerequis |
-|---|-------|----------|-----------|
-| 1 | Database Webhooks Supabase (2 triggers) | **NEXT** | Dashboard |
-| 2 | Test notifications push Android | Haute | Emulateur |
-| 3 | activeConversationId dans ChatPage | Moyenne | - |
-| 4 | CRON rappel profil incomplet | Basse | pg_cron |
-| 5 | Test camera + upload R2 depuis app | Moyenne | Mobile Android |
-| 6 | Configuration Stripe | Basse | Compte Stripe |
+| Tables device_tokens + notification_log | OK | 9 |
+| Edge Function send-push deployee | OK | 9 |
+| Secret Firebase configure | OK | 9 |
+| Code Flutter push notifications | OK | 9 |
+| Database Webhooks (messages + conversations) | OK | 9 |
+| CRON rappel profil + cleanup logs | OK | 9 |
+| VideoUploadService (upload R2 reel) | OK | 10 |
+| Import video galerie (recruteur) | OK | 10 |
+| Publication affiche image (poster) | OK | 10 |
+| Page Mes publications (liste + edit/delete) | OK | 10 |
+| Onglet Publier (bottom nav recruteur) | OK | 10 |
+| Fix Firebase web (kIsWeb guard) | OK | 10 |
+| **Feed 2 onglets chercheur (Entreprises/Offres)** | **A tester** | **11** |
+| **Publication presentation entreprise (gratuit)** | **A tester** | **11** |
+| **Profil recruteur 2 sections publications** | **A tester** | **11** |
+| **Mes publications avec tabs** | **A tester** | **11** |
+| **Affiches en image plein ecran dans feed** | **A tester** | **11** |
 
 ---
 
@@ -183,34 +192,37 @@ ETOILE/Etoile-mobile-app/
 │   ├── lib/
 │   │   ├── app.dart                    # Widget principal + GoRouter + Push init
 │   │   ├── main.dart                   # Firebase init + background handler
-│   │   ├── di/injection_container.dart # DI (PushNotificationService inclus)
+│   │   ├── di/injection_container.dart # DI (tous les services)
 │   │   ├── core/
 │   │   │   ├── config/app_config.dart
 │   │   │   ├── router/app_router.dart
-│   │   │   └── services/push_notification_service.dart  # NOUVEAU Sprint 9
+│   │   │   ├── services/push_notification_service.dart
+│   │   │   └── services/video_upload_service.dart
 │   │   └── features/
-│   │       ├── auth/presentation/bloc/auth_bloc.dart  # + registerToken/removeToken
+│   │       ├── auth/presentation/bloc/auth_bloc.dart
 │   │       ├── profile/
 │   │       ├── feed/
 │   │       ├── messages/
 │   │       └── video/
-│   ├── android/app/google-services.json  # Config Firebase Android
-│   └── pubspec.yaml                       # + firebase_core, firebase_messaging, flutter_local_notifications
+│   │           ├── data/models/video_model.dart
+│   │           ├── data/repositories/video_repository.dart
+│   │           ├── presentation/bloc/video_bloc.dart
+│   │           └── presentation/pages/
+│   │               ├── publish_offer_page.dart
+│   │               ├── my_publications_page.dart
+│   │               └── video_record_page.dart
+│   ├── android/app/google-services.json
+│   └── pubspec.yaml
 ├── supabase/
-│   ├── package.json                       # Supabase CLI local
+│   ├── package.json
 │   ├── migrations/
-│   │   ├── 20260202000000_initial_schema.sql
-│   │   ├── 20260210000000_enable_realtime_messages.sql
-│   │   └── 20260214000000_device_tokens.sql  # NOUVEAU Sprint 9
-│   └── functions/
-│       ├── send-push/index.ts              # NOUVEAU Sprint 9 - FCM notifications
-│       ├── create-payment-intent/index.ts
-│       ├── create-subscription-intent/index.ts
-│       └── stripe-webhook/index.ts
+│   └── functions/send-push/index.ts
 └── _bmad-output/
     ├── SESSION-RESUME.md
-    ├── prd-notifications-push.md           # NOUVEAU Sprint 9
-    └── architecture-notifications-push.md  # NOUVEAU Sprint 9
+    ├── sprint-plan.md
+    ├── epics.md
+    ├── prd-notifications-push.md
+    └── architecture-notifications-push.md
 ```
 
 ---
@@ -221,8 +233,6 @@ ETOILE/Etoile-mobile-app/
 - **Dashboard** : https://supabase.com/dashboard
 - **Projet** : etoile-app (ref: `ojslqytmuifaofojutgb`)
 - **Region** : West EU (Paris)
-- **Edge Functions** : https://supabase.com/dashboard/project/ojslqytmuifaofojutgb/functions
-- **Database Hooks** : https://supabase.com/dashboard/project/ojslqytmuifaofojutgb/database/hooks
 - **Access Token CLI** : `sbp_9ab83a87cc77ec01e864f0400f77d364572650dd`
 
 ### Firebase
@@ -240,5 +250,5 @@ ETOILE/Etoile-mobile-app/
 
 ---
 
-*Sauvegarde mise a jour le 2026-02-14*
-*Prochaine etape : Configurer Database Webhooks dans le Dashboard Supabase*
+*Sauvegarde mise a jour le 2026-02-16*
+*Sprint 11 implemente (feed 2 onglets + presentation entreprise). A tester sur Edge puis valider.*

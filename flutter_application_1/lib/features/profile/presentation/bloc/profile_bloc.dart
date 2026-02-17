@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/seeker_profile_model.dart';
 import '../../data/models/recruiter_profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
+import '../../../video/data/repositories/video_repository.dart';
 
 part 'profile_event.dart';
 part 'profile_state.dart';
@@ -11,9 +12,13 @@ part 'profile_state.dart';
 /// BLoC for managing user profile state
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final ProfileRepository _profileRepository;
+  final VideoRepository _videoRepository;
 
-  ProfileBloc({required ProfileRepository profileRepository})
-      : _profileRepository = profileRepository,
+  ProfileBloc({
+    required ProfileRepository profileRepository,
+    required VideoRepository videoRepository,
+  })  : _profileRepository = profileRepository,
+        _videoRepository = videoRepository,
         super(const ProfileInitial()) {
     on<ProfileLoadRequested>(_onLoadRequested);
     on<ProfileUpdateRequested>(_onUpdateRequested);
@@ -46,7 +51,33 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         final profile = await _profileRepository.getRecruiterProfile();
 
         if (profile != null) {
-          emit(RecruiterProfileLoaded(profile: profile));
+          // Count publications by type
+          int presentationCount = 0;
+          int offerCount = 0;
+          int posterCount = 0;
+          try {
+            final userId = _videoRepository.currentUserId;
+            if (userId != null) {
+              final videos = await _videoRepository.getVideosForUser(userId);
+              for (final video in videos) {
+                switch (video.type) {
+                  case 'presentation':
+                    presentationCount++;
+                  case 'offer':
+                    offerCount++;
+                  case 'poster':
+                    posterCount++;
+                }
+              }
+            }
+          } catch (_) {}
+
+          emit(RecruiterProfileLoaded(
+            profile: profile,
+            presentationCount: presentationCount,
+            offerCount: offerCount,
+            posterCount: posterCount,
+          ));
         } else {
           emit(const ProfileError(message: 'Profil non trouve'));
         }
@@ -82,7 +113,18 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
             .updateRecruiterProfile(event.recruiterProfile!);
 
         emit(ProfileSaveSuccess());
-        emit(RecruiterProfileLoaded(profile: updated));
+        // Preserve counters from previous state
+        final prevState = currentState;
+        if (prevState is RecruiterProfileLoaded) {
+          emit(RecruiterProfileLoaded(
+            profile: updated,
+            presentationCount: prevState.presentationCount,
+            offerCount: prevState.offerCount,
+            posterCount: prevState.posterCount,
+          ));
+        } else {
+          emit(RecruiterProfileLoaded(profile: updated));
+        }
       }
     } catch (e) {
       emit(ProfileError(message: 'Erreur de sauvegarde: ${e.toString()}'));

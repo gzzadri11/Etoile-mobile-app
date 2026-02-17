@@ -209,7 +209,10 @@ class AppRouter {
       // My publications page
       GoRoute(
         path: AppRoutes.myPublications,
-        builder: (context, state) => const MyPublicationsPage(),
+        builder: (context, state) {
+          final tab = state.uri.queryParameters['tab'] ?? 'recruitment';
+          return MyPublicationsPage(initialTab: tab);
+        },
       ),
 
       // Premium page

@@ -44,7 +44,12 @@ class _ProfilePageContent extends StatelessWidget {
         }
 
         if (state is RecruiterProfileLoaded) {
-          return _RecruiterProfileView(profile: state.profile);
+          return _RecruiterProfileView(
+            profile: state.profile,
+            presentationCount: state.presentationCount,
+            offerCount: state.offerCount,
+            posterCount: state.posterCount,
+          );
         }
 
         if (state is ProfileError) {
@@ -178,8 +183,16 @@ class _SeekerProfileView extends StatelessWidget {
 /// Recruiter profile view
 class _RecruiterProfileView extends StatelessWidget {
   final RecruiterProfile profile;
+  final int presentationCount;
+  final int offerCount;
+  final int posterCount;
 
-  const _RecruiterProfileView({required this.profile});
+  const _RecruiterProfileView({
+    required this.profile,
+    this.presentationCount = 0,
+    this.offerCount = 0,
+    this.posterCount = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -246,12 +259,27 @@ class _RecruiterProfileView extends StatelessWidget {
                     if (!profile.isVerified)
                       const SizedBox(height: AppTheme.spaceLg),
 
-                    // Publications summary (tappable)
+                    // Presentations section
                     GestureDetector(
-                      onTap: () => context.push(AppRoutes.myPublications),
-                      child: _PublicationsCard(
-                        videoCredits: profile.videoCredits,
-                        posterCredits: profile.posterCredits,
+                      onTap: () => context.push('${AppRoutes.myPublications}?tab=presentations'),
+                      child: _PublicationSectionCard(
+                        icon: Icons.business,
+                        title: 'Presentations entreprise',
+                        subtitle: 'Videos de presentation',
+                        count: presentationCount,
+                      ),
+                    ),
+
+                    const SizedBox(height: AppTheme.spaceMd),
+
+                    // Recruitment publications section
+                    GestureDetector(
+                      onTap: () => context.push('${AppRoutes.myPublications}?tab=recruitment'),
+                      child: _PublicationSectionCard(
+                        icon: Icons.work,
+                        title: 'Publications de recrutement',
+                        subtitle: '${profile.videoCredits} credits video, ${profile.posterCredits} credits affiche',
+                        count: offerCount + posterCount,
                       ),
                     ),
 
@@ -264,7 +292,7 @@ class _RecruiterProfileView extends StatelessWidget {
 
                     // Action buttons
                     EtoileButton(
-                      label: 'Publier une offre',
+                      label: 'Publier',
                       icon: Icons.add,
                       onPressed: () => context.go(AppRoutes.publish),
                     ),
@@ -687,14 +715,18 @@ class _RecruiterHeader extends StatelessWidget {
   }
 }
 
-/// Publications card for recruiters
-class _PublicationsCard extends StatelessWidget {
-  final int videoCredits;
-  final int posterCredits;
+/// Publication section card for recruiter profile
+class _PublicationSectionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final int count;
 
-  const _PublicationsCard({
-    required this.videoCredits,
-    required this.posterCredits,
+  const _PublicationSectionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.count,
   });
 
   @override
@@ -707,96 +739,58 @@ class _PublicationsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(color: AppColors.greyLight),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Mes publications',
-            style: Theme.of(context).textTheme.titleMedium,
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primaryOrange.withAlpha(25),
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            ),
+            child: Icon(icon, color: AppColors.primaryOrange),
           ),
-          const SizedBox(height: AppTheme.spaceMd),
-          Row(
-            children: [
-              Expanded(
-                child: _PublicationStat(
-                  icon: Icons.videocam_outlined,
-                  label: 'Videos',
-                  credits: videoCredits,
+          const SizedBox(width: AppTheme.spaceMd),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
-              ),
-              const SizedBox(width: AppTheme.spaceMd),
-              Expanded(
-                child: _PublicationStat(
-                  icon: Icons.image_outlined,
-                  label: 'Affiches',
-                  credits: posterCredits,
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.greyWarm,
+                      ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: AppTheme.spaceMd),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Voir mes publications',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.primaryOrange,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 12,
-                color: AppColors.primaryOrange,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PublicationStat extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int credits;
-
-  const _PublicationStat({
-    required this.icon,
-    required this.label,
-    required this.credits,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppTheme.spaceMd),
-      decoration: BoxDecoration(
-        color: AppColors.greyLight,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.primaryOrange),
-          const SizedBox(height: AppTheme.spaceSm),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.greyWarm,
-                ),
-          ),
-          if (credits > 0) ...[
-            const SizedBox(height: AppTheme.spaceXs),
-            Text(
-              '$credits credits',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.success,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.tagBackground,
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+            ),
+            child: Text(
+              '$count',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryOrange,
                   ),
             ),
-          ],
+          ),
+          const SizedBox(width: AppTheme.spaceSm),
+          const Icon(
+            Icons.arrow_forward_ios,
+            size: 14,
+            color: AppColors.greyWarm,
+          ),
         ],
       ),
     );

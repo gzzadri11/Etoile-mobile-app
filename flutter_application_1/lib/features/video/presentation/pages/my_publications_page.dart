@@ -14,22 +14,43 @@ import '../../data/repositories/video_repository.dart';
 
 /// Page listing all publications (videos + posters) for the current recruiter.
 class MyPublicationsPage extends StatefulWidget {
-  const MyPublicationsPage({super.key});
+  final String initialTab;
+
+  const MyPublicationsPage({super.key, this.initialTab = 'recruitment'});
 
   @override
   State<MyPublicationsPage> createState() => _MyPublicationsPageState();
 }
 
-class _MyPublicationsPageState extends State<MyPublicationsPage> {
+class _MyPublicationsPageState extends State<MyPublicationsPage>
+    with SingleTickerProviderStateMixin {
   List<Video> _publications = [];
   bool _isLoading = true;
   String? _error;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTab == 'presentations' ? 0 : 1,
+    );
     _loadPublications();
   }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  List<Video> get _presentations =>
+      _publications.where((v) => v.type == 'presentation').toList();
+
+  List<Video> get _recruitment =>
+      _publications.where((v) => v.type == 'offer' || v.type == 'poster').toList();
 
   Future<void> _loadPublications() async {
     setState(() {
@@ -124,34 +145,55 @@ class _MyPublicationsPageState extends State<MyPublicationsPage> {
     }
   }
 
+  Widget _buildPublicationList(List<Video> items) {
+    if (items.isEmpty) {
+      return _EmptyView(onPublish: () => context.go(AppRoutes.publish));
+    }
+    return RefreshIndicator(
+      onRefresh: _loadPublications,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        itemCount: items.length,
+        separatorBuilder: (context, index) =>
+            const SizedBox(height: AppTheme.spaceMd),
+        itemBuilder: (context, index) {
+          return _PublicationCard(
+            video: items[index],
+            onEdit: () => _editPublication(items[index]),
+            onDelete: () => _deletePublication(items[index]),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes publications'),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: AppColors.primaryYellow,
+          labelColor: AppColors.primaryOrange,
+          unselectedLabelColor: AppColors.greyWarm,
+          tabs: const [
+            Tab(text: 'Presentations'),
+            Tab(text: 'Recrutement'),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? _ErrorView(error: _error!, onRetry: _loadPublications)
-              : _publications.isEmpty
-                  ? _EmptyView(onPublish: () => context.go(AppRoutes.publish))
-                  : RefreshIndicator(
-                      onRefresh: _loadPublications,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.all(AppTheme.spaceMd),
-                        itemCount: _publications.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: AppTheme.spaceMd),
-                        itemBuilder: (context, index) {
-                          return _PublicationCard(
-                            video: _publications[index],
-                            onEdit: () => _editPublication(_publications[index]),
-                            onDelete: () => _deletePublication(_publications[index]),
-                          );
-                        },
-                      ),
-                    ),
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildPublicationList(_presentations),
+                    _buildPublicationList(_recruitment),
+                  ],
+                ),
       floatingActionButton: _publications.isNotEmpty
           ? FloatingActionButton(
               onPressed: () => context.go(AppRoutes.publish),
@@ -210,7 +252,7 @@ class _PublicationCard extends StatelessWidget {
                   // Type badge + status + menu
                   Row(
                     children: [
-                      _TypeBadge(isPoster: _isPoster),
+                      _TypeBadge(type: video.type),
                       const Spacer(),
                       _StatusBadge(status: video.status),
                       const SizedBox(width: 4),
@@ -330,35 +372,35 @@ class _PublicationCard extends StatelessWidget {
   }
 }
 
-/// Type badge (video / poster)
+/// Type badge (presentation / video / poster)
 class _TypeBadge extends StatelessWidget {
-  final bool isPoster;
+  final String type;
 
-  const _TypeBadge({required this.isPoster});
+  const _TypeBadge({required this.type});
 
   @override
   Widget build(BuildContext context) {
+    final (IconData icon, String label, Color color) = switch (type) {
+      'presentation' => (Icons.business, 'Presentation', AppColors.success),
+      'poster' => (Icons.image, 'Affiche', AppColors.primaryOrange),
+      _ => (Icons.videocam, 'Video', AppColors.info),
+    };
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: isPoster
-            ? AppColors.primaryOrange.withAlpha(25)
-            : AppColors.info.withAlpha(25),
+        color: color.withAlpha(25),
         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            isPoster ? Icons.image : Icons.videocam,
-            size: 12,
-            color: isPoster ? AppColors.primaryOrange : AppColors.info,
-          ),
+          Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
           Text(
-            isPoster ? 'Affiche' : 'Video',
+            label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: isPoster ? AppColors.primaryOrange : AppColors.info,
+                  color: color,
                   fontWeight: FontWeight.w600,
                 ),
           ),

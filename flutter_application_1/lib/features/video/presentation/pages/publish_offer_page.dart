@@ -29,8 +29,8 @@ class PublishOfferPage extends StatefulWidget {
 class _PublishOfferPageState extends State<PublishOfferPage> {
   _PublishStep _step = _PublishStep.pick;
 
-  // Mode: video or poster (image)
-  bool _isPosterMode = false;
+  // Publish type: 'presentation', 'offer', or 'poster'
+  String _publishType = 'offer';
 
   // Video
   XFile? _pickedVideo;
@@ -43,6 +43,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // Form
   final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
   String? _selectedCategory;
   final _formKey = GlobalKey<FormState>();
 
@@ -63,6 +64,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   void dispose() {
     _titleController.dispose();
+    _descriptionController.dispose();
     _videoController?.dispose();
     super.dispose();
   }
@@ -85,7 +87,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
+  Future<void> _pickPresentation() async {
+    _publishType = 'presentation';
+    await _pickVideoFile();
+  }
+
   Future<void> _pickVideo() async {
+    _publishType = 'offer';
+    await _pickVideoFile();
+  }
+
+  Future<void> _pickVideoFile() async {
     final picker = ImagePicker();
     final video = await picker.pickVideo(
       source: ImageSource.gallery,
@@ -122,25 +134,32 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _pickPoster() async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1920,
-      maxHeight: 1920,
-      imageQuality: 85,
-    );
+    try {
+      final image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
 
-    if (image == null) return;
+      if (image == null) return;
 
-    setState(() {
-      _pickedImage = image;
-      _isPosterMode = true;
-      _errorMessage = null;
-    });
+      setState(() {
+        _pickedImage = image;
+        _publishType = 'poster';
+        _errorMessage = null;
+      });
 
-    _imageBytes = await image.readAsBytes();
+      _imageBytes = await image.readAsBytes();
 
-    if (mounted) {
-      setState(() => _step = _PublishStep.preview);
+      if (mounted) {
+        setState(() => _step = _PublishStep.preview);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Erreur lors de la selection de l\'image: $e';
+        });
+      }
     }
   }
 
@@ -152,7 +171,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _upload() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_isPosterMode) {
+    if (_publishType == 'poster') {
       if (_imageBytes == null || _pickedImage == null) return;
     } else {
       if (_videoBytes == null || _pickedVideo == null) return;
@@ -168,15 +187,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final uploadService = GetIt.I<VideoUploadService>();
       final videoRepo = GetIt.I<VideoRepository>();
 
-      if (_isPosterMode) {
+      if (_publishType == 'poster') {
         // Upload image to R2 (thumbnail bucket)
         final filename = _pickedImage!.name;
+        final mime = _pickedImage!.mimeType;
         final ext = filename.split('.').last.toLowerCase();
-        final contentType = ext == 'png'
-            ? 'image/png'
-            : ext == 'webp'
-                ? 'image/webp'
-                : 'image/jpeg';
+        final contentType = mime ??
+            switch (ext) {
+              'png' => 'image/png',
+              'webp' => 'image/webp',
+              _ => 'image/jpeg',
+            };
 
         final imageResult = await uploadService.uploadThumbnail(
           fileBytes: _imageBytes!,
@@ -197,6 +218,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           videoKey: imageResult.key,
           categoryId: _selectedCategory,
           title: _titleController.text.trim(),
+          description: _descriptionController.text.trim().isNotEmpty
+              ? _descriptionController.text.trim()
+              : null,
           fileSizeBytes: imageResult.size,
           durationSeconds: 0,
         );
@@ -228,10 +252,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         // Create DB entry
         final video = await videoRepo.createVideo(
-          type: 'offer',
+          type: _publishType,
           videoKey: videoResult.key,
           categoryId: _selectedCategory,
           title: _titleController.text.trim(),
+          description: _descriptionController.text.trim().isNotEmpty
+              ? _descriptionController.text.trim()
+              : null,
           fileSizeBytes: videoResult.size,
         );
 
@@ -240,6 +267,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           videoId: video.id,
           videoUrl: videoResult.url,
         );
+      }
+
+      // Decrement credits (presentations are free)
+      if (_publishType != 'presentation') {
+        await videoRepo.decrementCredits(type: _publishType == 'poster' ? 'poster' : 'offer');
       }
 
       if (mounted) {
@@ -265,8 +297,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _videoBytes = null;
     _pickedImage = null;
     _imageBytes = null;
-    _isPosterMode = false;
+    _publishType = 'offer';
     _titleController.clear();
+    _descriptionController.clear();
     _selectedCategory = null;
     setState(() {
       _step = _PublishStep.pick;
@@ -281,7 +314,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       appBar: _step == _PublishStep.success
           ? null
           : AppBar(
-              title: Text(_isPosterMode ? 'Publier une affiche' : 'Publier une offre'),
+              title: Text(switch (_publishType) {
+                'presentation' => 'Presentation entreprise',
+                'poster' => 'Publier une affiche',
+                _ => 'Publier une offre',
+              }),
               leading: _step == _PublishStep.pick
                   ? null
                   : IconButton(
@@ -309,11 +346,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     switch (_step) {
       case _PublishStep.pick:
         return _PickView(
+          onPickPresentation: _pickPresentation,
           onPickVideo: _pickVideo,
           onPickPoster: _pickPoster,
         );
       case _PublishStep.preview:
-        if (_isPosterMode) {
+        if (_publishType == 'poster') {
           return _ImagePreviewView(
             imageBytes: _imageBytes!,
             onConfirm: _goToForm,
@@ -329,11 +367,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return _FormView(
           formKey: _formKey,
           titleController: _titleController,
+          descriptionController: _descriptionController,
           selectedCategory: _selectedCategory,
           categories: _categories,
           categoriesLoading: _categoriesLoading,
           errorMessage: _errorMessage,
-          isPosterMode: _isPosterMode,
+          publishType: _publishType,
           onCategoryChanged: (v) => setState(() => _selectedCategory = v),
           onPublish: _upload,
         );
@@ -341,6 +380,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return _UploadingView(progress: _uploadProgress);
       case _PublishStep.success:
         return _SuccessView(
+          publishType: _publishType,
           onPublishAnother: _reset,
           onGoToFeed: () => context.go(AppRoutes.feed),
         );
@@ -355,10 +395,15 @@ enum _PublishStep { pick, preview, form, uploading, success }
 // =============================================================================
 
 class _PickView extends StatelessWidget {
+  final VoidCallback onPickPresentation;
   final VoidCallback onPickVideo;
   final VoidCallback? onPickPoster;
 
-  const _PickView({required this.onPickVideo, this.onPickPoster});
+  const _PickView({
+    required this.onPickPresentation,
+    required this.onPickVideo,
+    this.onPickPoster,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -374,12 +419,12 @@ class _PickView extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spaceLg),
           Text(
-            'Nouvelle offre',
+            'Nouvelle publication',
             style: Theme.of(context).textTheme.displayMedium,
           ),
           const SizedBox(height: AppTheme.spaceSm),
           Text(
-            'Publiez une video pour attirer les meilleurs candidats',
+            'Choisissez le type de publication',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.greyWarm,
                 ),
@@ -387,17 +432,32 @@ class _PickView extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.space2Xl),
 
-          // Import video
+          // Presentation entreprise (gratuit)
           EtoileButton(
-            label: 'Importer une video',
+            label: 'Presentation entreprise',
+            icon: Icons.business,
+            onPressed: onPickPresentation,
+          ),
+          const SizedBox(height: AppTheme.spaceXs),
+          Text(
+            'Gratuit - Presentez votre entreprise en 40s',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.success,
+                ),
+          ),
+          const SizedBox(height: AppTheme.spaceLg),
+
+          // Offre video
+          EtoileButton.outlined(
+            label: 'Offre video',
             icon: Icons.video_library,
             onPressed: onPickVideo,
           ),
           const SizedBox(height: AppTheme.spaceMd),
 
-          // Poster (image)
+          // Offre affiche
           EtoileButton.outlined(
-            label: 'Publier une affiche',
+            label: 'Offre affiche',
             icon: Icons.image,
             onPressed: onPickPoster,
           ),
@@ -591,28 +651,44 @@ class _ImagePreviewView extends StatelessWidget {
 class _FormView extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController titleController;
+  final TextEditingController descriptionController;
   final String? selectedCategory;
   final List<Map<String, dynamic>> categories;
   final bool categoriesLoading;
   final String? errorMessage;
-  final bool isPosterMode;
+  final String publishType;
   final ValueChanged<String?> onCategoryChanged;
   final VoidCallback onPublish;
 
   const _FormView({
     required this.formKey,
     required this.titleController,
+    required this.descriptionController,
     required this.selectedCategory,
     required this.categories,
     required this.categoriesLoading,
     required this.errorMessage,
-    this.isPosterMode = false,
+    this.publishType = 'offer',
     required this.onCategoryChanged,
     required this.onPublish,
   });
 
+  bool get _isPoster => publishType == 'poster';
+  bool get _isPresentation => publishType == 'presentation';
+
   @override
   Widget build(BuildContext context) {
+    final formTitle = _isPresentation
+        ? 'Details de la presentation'
+        : _isPoster
+            ? 'Details de l\'affiche'
+            : 'Details de l\'offre';
+    final formSubtitle = _isPresentation
+        ? 'Decrivez votre entreprise pour attirer des candidats'
+        : _isPoster
+            ? 'Ajoutez un titre et une categorie pour votre affiche'
+            : 'Ajoutez un titre et une categorie pour que les candidats trouvent votre offre';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.spaceLg),
       child: Form(
@@ -621,14 +697,12 @@ class _FormView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isPosterMode ? 'Details de l\'affiche' : 'Details de l\'offre',
+              formTitle,
               style: Theme.of(context).textTheme.displaySmall,
             ),
             const SizedBox(height: AppTheme.spaceSm),
             Text(
-              isPosterMode
-                  ? 'Ajoutez un titre et une categorie pour votre affiche'
-                  : 'Ajoutez un titre et une categorie pour que les candidats trouvent votre offre',
+              formSubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.greyWarm,
                   ),
@@ -638,10 +712,12 @@ class _FormView extends StatelessWidget {
             // Title
             TextFormField(
               controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'Titre du poste',
-                hintText: 'Ex: Developpeur Flutter Senior',
-                prefixIcon: Icon(Icons.work_outline),
+              decoration: InputDecoration(
+                labelText: _isPresentation ? 'Titre de la presentation' : 'Titre du poste',
+                hintText: _isPresentation
+                    ? 'Ex: Decouvrez notre entreprise'
+                    : 'Ex: Developpeur Flutter Senior',
+                prefixIcon: Icon(_isPresentation ? Icons.business : Icons.work_outline),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -652,6 +728,25 @@ class _FormView extends StatelessWidget {
                 }
                 return null;
               },
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: AppTheme.spaceMd),
+
+            // Description
+            TextFormField(
+              controller: descriptionController,
+              decoration: InputDecoration(
+                labelText: 'Description',
+                hintText: _isPresentation
+                    ? 'Presentez votre entreprise, vos valeurs...'
+                    : _isPoster
+                        ? 'Decrivez votre affiche...'
+                        : 'Decrivez le poste, les missions, les avantages...',
+                prefixIcon: const Icon(Icons.description_outlined),
+                alignLabelWithHint: true,
+              ),
+              maxLines: 4,
+              maxLength: 500,
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: AppTheme.spaceMd),
@@ -717,7 +812,11 @@ class _FormView extends StatelessWidget {
 
             // Publish button
             EtoileButton(
-              label: isPosterMode ? 'Publier l\'affiche' : 'Publier l\'offre',
+              label: _isPresentation
+                  ? 'Publier la presentation'
+                  : _isPoster
+                      ? 'Publier l\'affiche'
+                      : 'Publier l\'offre',
               icon: Icons.upload,
               onPressed: onPublish,
             ),
@@ -793,16 +892,29 @@ class _UploadingView extends StatelessWidget {
 // =============================================================================
 
 class _SuccessView extends StatelessWidget {
+  final String publishType;
   final VoidCallback onPublishAnother;
   final VoidCallback onGoToFeed;
 
   const _SuccessView({
+    this.publishType = 'offer',
     required this.onPublishAnother,
     required this.onGoToFeed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final title = switch (publishType) {
+      'presentation' => 'Presentation publiee !',
+      'poster' => 'Affiche publiee !',
+      _ => 'Offre publiee !',
+    };
+    final subtitle = switch (publishType) {
+      'presentation' => 'Votre presentation est maintenant visible par les candidats',
+      'poster' => 'Votre affiche est maintenant visible par les candidats',
+      _ => 'Votre offre est maintenant visible par les candidats',
+    };
+
     return Padding(
       padding: const EdgeInsets.all(AppTheme.spaceLg),
       child: Column(
@@ -823,12 +935,12 @@ class _SuccessView extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spaceLg),
           Text(
-            'Offre publiee !',
+            title,
             style: Theme.of(context).textTheme.displayMedium,
           ),
           const SizedBox(height: AppTheme.spaceSm),
           Text(
-            'Votre offre est maintenant visible par les candidats',
+            subtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.greyWarm,
                 ),
@@ -842,7 +954,7 @@ class _SuccessView extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spaceMd),
           EtoileButton.outlined(
-            label: 'Publier une autre offre',
+            label: 'Publier autre chose',
             icon: Icons.add,
             onPressed: onPublishAnother,
           ),

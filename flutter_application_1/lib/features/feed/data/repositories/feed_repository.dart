@@ -37,18 +37,18 @@ class FeedRepository {
     return null;
   }
 
-  /// Get feed for seekers: only recruiter offer videos (verified recruiters)
-  Future<List<FeedItem>> getSeekerFeed({
+  /// Get feed for seekers: only recruiter offer videos and posters (verified recruiters)
+  Future<List<FeedItem>> getSeekerOffersFeed({
     int limit = 20,
     int offset = 0,
     FeedFilters? filters,
   }) async {
-    // 1. Get active offer videos
+    // 1. Get active offer videos and posters
     final videosResponse = await _supabaseClient
         .from('videos')
         .select()
         .eq('status', 'active')
-        .eq('type', 'offer')
+        .inFilter('type', ['offer', 'poster'])
         .order('published_at', ascending: false)
         .range(offset, offset + limit - 1);
 
@@ -59,6 +59,73 @@ class FeedRepository {
     if (videos.isEmpty) return [];
 
     // 2. Get recruiter profiles for video authors
+    final userIds = videos.map((v) => v.userId).toSet().toList();
+    final recruiterProfilesResponse = await _supabaseClient
+        .from('recruiter_profiles')
+        .select()
+        .inFilter('user_id', userIds)
+        .eq('verification_status', 'verified');
+
+    final recruiterProfiles = <String, Map<String, dynamic>>{};
+    for (final profile in (recruiterProfilesResponse as List)) {
+      final p = profile as Map<String, dynamic>;
+      recruiterProfiles[p['user_id'] as String] = p;
+    }
+
+    // 3. Build FeedItems (only for verified recruiters)
+    final feedItems = <FeedItem>[];
+    for (final video in videos) {
+      final recruiterProfile = recruiterProfiles[video.userId];
+      if (recruiterProfile == null) continue;
+
+      feedItems.add(FeedItem(
+        video: video,
+        userName: (recruiterProfile['company_name'] as String?) ?? 'Entreprise',
+        userTitle: video.title ?? recruiterProfile['sector'] as String?,
+        userLocation: _buildRecruiterLocation(
+          recruiterProfile['locations'] as List<dynamic>?,
+        ),
+        userAvatarUrl: recruiterProfile['logo_url'] as String?,
+        isRecruiter: true,
+        isVerified: true,
+        region: _getFirstLocation(recruiterProfile['locations'] as List<dynamic>?),
+        sector: recruiterProfile['sector'] as String?,
+        categories: recruiterProfile['sector'] != null
+            ? [recruiterProfile['sector'] as String]
+            : [],
+      ));
+    }
+
+    // 4. Apply seeker-specific filters
+    if (filters != null && filters.hasFilters) {
+      return _applySeekerFilters(feedItems, filters);
+    }
+
+    return feedItems;
+  }
+
+  /// Get discover feed for seekers: recruiter presentation videos (verified recruiters)
+  Future<List<FeedItem>> getSeekerDiscoverFeed({
+    int limit = 20,
+    int offset = 0,
+    FeedFilters? filters,
+  }) async {
+    // 1. Get active presentation videos from recruiters
+    final videosResponse = await _supabaseClient
+        .from('videos')
+        .select()
+        .eq('status', 'active')
+        .eq('type', 'presentation')
+        .order('published_at', ascending: false)
+        .range(offset, offset + limit - 1);
+
+    final videos = (videosResponse as List)
+        .map((json) => Video.fromJson(json as Map<String, dynamic>))
+        .toList();
+
+    if (videos.isEmpty) return [];
+
+    // 2. Get recruiter profiles for video authors (verified only)
     final userIds = videos.map((v) => v.userId).toSet().toList();
     final recruiterProfilesResponse = await _supabaseClient
         .from('recruiter_profiles')

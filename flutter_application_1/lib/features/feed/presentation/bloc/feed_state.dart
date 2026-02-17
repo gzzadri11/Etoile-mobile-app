@@ -26,6 +26,7 @@ class FeedLoaded extends FeedState {
   final bool isLoadingMore;
   final FeedFilters filters;
   final String userRole;
+  final String feedTab;
 
   const FeedLoaded({
     required this.items,
@@ -34,6 +35,7 @@ class FeedLoaded extends FeedState {
     this.isLoadingMore = false,
     required this.filters,
     required this.userRole,
+    this.feedTab = 'offers',
   });
 
   /// Check if feed is empty
@@ -52,6 +54,7 @@ class FeedLoaded extends FeedState {
     bool? isLoadingMore,
     FeedFilters? filters,
     String? userRole,
+    String? feedTab,
   }) {
     return FeedLoaded(
       items: items ?? this.items,
@@ -60,11 +63,12 @@ class FeedLoaded extends FeedState {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       filters: filters ?? this.filters,
       userRole: userRole ?? this.userRole,
+      feedTab: feedTab ?? this.feedTab,
     );
   }
 
   @override
-  List<Object?> get props => [items, categories, hasMore, isLoadingMore, filters, userRole];
+  List<Object?> get props => [items, categories, hasMore, isLoadingMore, filters, userRole, feedTab];
 }
 
 /// Error state

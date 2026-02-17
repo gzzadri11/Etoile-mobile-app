@@ -40,11 +40,19 @@ class SeekerProfileLoaded extends ProfileState {
 /// Recruiter profile loaded successfully
 class RecruiterProfileLoaded extends ProfileState {
   final RecruiterProfile profile;
+  final int presentationCount;
+  final int offerCount;
+  final int posterCount;
 
-  const RecruiterProfileLoaded({required this.profile});
+  const RecruiterProfileLoaded({
+    required this.profile,
+    this.presentationCount = 0,
+    this.offerCount = 0,
+    this.posterCount = 0,
+  });
 
   @override
-  List<Object?> get props => [profile];
+  List<Object?> get props => [profile, presentationCount, offerCount, posterCount];
 }
 
 /// Profile saved successfully

@@ -95,7 +95,7 @@ Future<void> init() async {
 
   // ProfileBloc
   sl.registerFactory<ProfileBloc>(
-    () => ProfileBloc(profileRepository: sl()),
+    () => ProfileBloc(profileRepository: sl(), videoRepository: sl()),
   );
 
   // ============================================

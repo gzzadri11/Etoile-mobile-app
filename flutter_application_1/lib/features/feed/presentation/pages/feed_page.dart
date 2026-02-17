@@ -45,16 +45,31 @@ class _FeedView extends StatefulWidget {
 
 class _FeedViewState extends State<_FeedView> {
   final PageController _pageController = PageController();
-  final VideoPreloadManager _preloadManager = VideoPreloadManager(preloadCount: 2);
+  VideoPreloadManager _preloadManager = VideoPreloadManager(preloadCount: 2);
   int _currentPage = 0;
   bool _isRefreshing = false;
   List<String?> _videoUrls = [];
+  String _selectedTab = 'offers';
 
   @override
   void dispose() {
     _pageController.dispose();
     _preloadManager.dispose();
     super.dispose();
+  }
+
+  void _switchTab(String tab) {
+    if (tab == _selectedTab) return;
+    setState(() {
+      _selectedTab = tab;
+      _currentPage = 0;
+    });
+    _pageController.jumpTo(0);
+    _preloadManager.dispose();
+    _preloadManager = VideoPreloadManager(preloadCount: 2);
+    final authState = context.read<AuthBloc>().state;
+    final role = authState is AuthAuthenticated ? authState.role : 'seeker';
+    context.read<FeedBloc>().add(FeedLoadRequested(userRole: role, feedTab: tab));
   }
 
   /// Preload videos around current index
@@ -92,6 +107,77 @@ class _FeedViewState extends State<_FeedView> {
     setState(() => _isRefreshing = false);
   }
 
+  Widget _buildAppBarTitle(FeedState state) {
+    final authState = context.read<AuthBloc>().state;
+    final userRole = authState is AuthAuthenticated ? authState.role : 'seeker';
+
+    if (userRole != 'seeker') {
+      return const Text(
+        'ETOILE',
+        style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.white),
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: () => _switchTab('discover'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Entreprises',
+                style: TextStyle(
+                  fontWeight: _selectedTab == 'discover' ? FontWeight.bold : FontWeight.normal,
+                  color: _selectedTab == 'discover'
+                      ? AppColors.white
+                      : AppColors.white.withValues(alpha: 0.6),
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Container(
+                height: 2,
+                width: 60,
+                color: _selectedTab == 'discover'
+                    ? AppColors.primaryYellow
+                    : Colors.transparent,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 24),
+        GestureDetector(
+          onTap: () => _switchTab('offers'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Offres',
+                style: TextStyle(
+                  fontWeight: _selectedTab == 'offers' ? FontWeight.bold : FontWeight.normal,
+                  color: _selectedTab == 'offers'
+                      ? AppColors.white
+                      : AppColors.white.withValues(alpha: 0.6),
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Container(
+                height: 2,
+                width: 40,
+                color: _selectedTab == 'offers'
+                    ? AppColors.primaryYellow
+                    : Colors.transparent,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<FeedBloc, FeedState>(
@@ -101,13 +187,7 @@ class _FeedViewState extends State<_FeedView> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            title: const Text(
-              'ETOILE',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
-              ),
-            ),
+            title: _buildAppBarTitle(state),
             actions: [
               // Refresh button (since pull-to-refresh doesn't work with vertical PageView)
               if (state is FeedLoaded)
@@ -172,8 +252,11 @@ class _FeedViewState extends State<_FeedView> {
         return _buildEmptyState(context, state);
       }
 
-      // Update video URLs list for preloading
-      _videoUrls = state.items.map((item) => item.video.videoUrl).toList();
+      // Update video URLs list for preloading (null for posters to skip them)
+      _videoUrls = state.items.map((item) {
+        if (item.video.type == 'poster') return null;
+        return item.video.videoUrl;
+      }).toList();
 
       // Preload initial videos
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -343,13 +426,27 @@ class _VideoCard extends StatelessWidget {
     this.isControllerReady = false,
   });
 
+  bool get _isPoster => feedItem.video.type == 'poster';
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Video player or thumbnail fallback
-        if (feedItem.video.videoUrl != null)
+        // Poster: full-screen image; Video: video player or thumbnail fallback
+        if (_isPoster)
+          Container(
+            color: AppColors.black,
+            child: feedItem.video.videoUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: feedItem.video.videoUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => _buildPlaceholder(),
+                    errorWidget: (_, __, ___) => _buildPlaceholder(),
+                  )
+                : _buildPlaceholder(),
+          )
+        else if (feedItem.video.videoUrl != null)
           FeedVideoPlayer(
             videoUrl: feedItem.video.videoUrl!,
             thumbnailUrl: feedItem.video.thumbnailUrl,
