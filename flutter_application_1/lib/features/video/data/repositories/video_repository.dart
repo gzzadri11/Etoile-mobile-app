@@ -190,6 +190,36 @@ class VideoRepository {
   }
 
   // ===========================================================================
+  // CREDITS
+  // ===========================================================================
+
+  /// Decrement publication credits for the current recruiter.
+  /// [type] should be 'offer' (video) or 'poster' (image).
+  Future<void> decrementCredits({required String type}) async {
+    final userId = currentUserId;
+    if (userId == null) return;
+
+    final column = type == 'poster' ? 'poster_credits' : 'video_credits';
+
+    // Fetch current credits
+    final profile = await _supabaseClient
+        .from('recruiter_profiles')
+        .select(column)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (profile == null) return;
+
+    final current = (profile[column] as int?) ?? 0;
+    if (current <= 0) return;
+
+    await _supabaseClient
+        .from('recruiter_profiles')
+        .update({column: current - 1})
+        .eq('user_id', userId);
+  }
+
+  // ===========================================================================
   // VIDEO VIEWS
   // ===========================================================================
 

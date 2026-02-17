@@ -1,5 +1,35 @@
 import 'package:equatable/equatable.dart';
 
+/// A named marker on the map
+class MapMarker extends Equatable {
+  final String name;
+  final double latitude;
+  final double longitude;
+
+  const MapMarker({
+    required this.name,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  factory MapMarker.fromJson(Map<String, dynamic> json) {
+    return MapMarker(
+      name: json['name'] as String? ?? '',
+      latitude: (json['lat'] as num).toDouble(),
+      longitude: (json['lng'] as num).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'lat': latitude,
+        'lng': longitude,
+      };
+
+  @override
+  List<Object?> get props => [name, latitude, longitude];
+}
+
 /// Model representing a recruiter's company profile
 class RecruiterProfile extends Equatable {
   final String userId;
@@ -17,6 +47,7 @@ class RecruiterProfile extends Equatable {
   final String? sector;
   final String? companySize;
   final List<String> locations;
+  final List<MapMarker> mapMarkers;
   final String verificationStatus;
   final DateTime? verifiedAt;
   final String? rejectionReason;
@@ -41,6 +72,7 @@ class RecruiterProfile extends Equatable {
     this.sector,
     this.companySize,
     this.locations = const [],
+    this.mapMarkers = const [],
     this.verificationStatus = 'pending',
     this.verifiedAt,
     this.rejectionReason,
@@ -49,6 +81,8 @@ class RecruiterProfile extends Equatable {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  bool get hasMapMarkers => mapMarkers.isNotEmpty;
 
   /// Check if company is verified
   bool get isVerified => verificationStatus == 'verified';
@@ -82,6 +116,10 @@ class RecruiterProfile extends Equatable {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      mapMarkers: (json['map_markers'] as List<dynamic>?)
+              ?.map((e) => MapMarker.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
       verificationStatus: json['verification_status'] as String? ?? 'pending',
       verifiedAt: json['verified_at'] != null
           ? DateTime.parse(json['verified_at'] as String)
@@ -110,6 +148,7 @@ class RecruiterProfile extends Equatable {
       'sector': sector,
       'company_size': companySize,
       'locations': locations,
+      'map_markers': mapMarkers.map((m) => m.toJson()).toList(),
     };
   }
 
@@ -129,6 +168,7 @@ class RecruiterProfile extends Equatable {
     String? sector,
     String? companySize,
     List<String>? locations,
+    List<MapMarker>? mapMarkers,
     String? verificationStatus,
     int? videoCredits,
     int? posterCredits,
@@ -149,6 +189,7 @@ class RecruiterProfile extends Equatable {
       sector: sector ?? this.sector,
       companySize: companySize ?? this.companySize,
       locations: locations ?? this.locations,
+      mapMarkers: mapMarkers ?? this.mapMarkers,
       verificationStatus: verificationStatus ?? this.verificationStatus,
       verifiedAt: verifiedAt,
       rejectionReason: rejectionReason,
@@ -175,6 +216,7 @@ class RecruiterProfile extends Equatable {
         sector,
         companySize,
         locations,
+        mapMarkers,
         verificationStatus,
         videoCredits,
         posterCredits,

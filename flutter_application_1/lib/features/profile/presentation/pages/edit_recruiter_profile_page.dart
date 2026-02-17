@@ -10,6 +10,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
+import '../../../../shared/widgets/location_picker_widget.dart';
 import '../../data/models/recruiter_profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../bloc/profile_bloc.dart';
@@ -29,11 +30,9 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
   late TextEditingController _companyNameController;
   late TextEditingController _descriptionController;
   late TextEditingController _websiteController;
-  late TextEditingController _locationController;
 
   String? _selectedSector;
   String? _selectedCompanySize;
-  List<String> _locations = [];
 
   // Logo state
   Uint8List? _pickedLogoBytes;
@@ -44,6 +43,9 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
   Uint8List? _pickedCoverBytes;
   String? _pickedCoverExtension;
   String? _existingCoverUrl;
+
+  // Map markers
+  List<MapMarker> _mapMarkers = [];
 
   bool _isInitialized = false;
 
@@ -82,7 +84,6 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
     _companyNameController = TextEditingController();
     _descriptionController = TextEditingController();
     _websiteController = TextEditingController();
-    _locationController = TextEditingController();
   }
 
   @override
@@ -90,7 +91,6 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
     _companyNameController.dispose();
     _descriptionController.dispose();
     _websiteController.dispose();
-    _locationController.dispose();
     super.dispose();
   }
 
@@ -106,28 +106,11 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
     _selectedCompanySize = _companySizeLabels.containsKey(profile.companySize)
         ? profile.companySize
         : null;
-    _locations = List.from(profile.locations);
     _existingLogoUrl = profile.logoUrl;
     _existingCoverUrl = profile.coverUrl;
+    _mapMarkers = List.from(profile.mapMarkers);
 
     _isInitialized = true;
-  }
-
-  void _addLocation() {
-    final location = _locationController.text.trim();
-    if (location.isEmpty) return;
-    if (_locations.contains(location)) return;
-
-    setState(() {
-      _locations.add(location);
-      _locationController.clear();
-    });
-  }
-
-  void _removeLocation(String location) {
-    setState(() {
-      _locations.remove(location);
-    });
   }
 
   Future<void> _pickLogo() async {
@@ -221,7 +204,7 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
       website: _websiteController.text.trim(),
       sector: _selectedSector,
       companySize: _selectedCompanySize,
-      locations: _locations,
+      mapMarkers: _mapMarkers,
       logoUrl: logoUrl,
       coverUrl: coverUrl,
     );
@@ -380,55 +363,26 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
 
                   const SizedBox(height: AppTheme.spaceLg),
 
-                  // === Localisations ===
+                  // === Localisations sur la carte ===
                   _buildSectionTitle('Localisations'),
-                  const SizedBox(height: AppTheme.spaceSm),
-                  Text(
-                    'Ajoutez les villes ou vous recrutez',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.greyWarm,
-                        ),
-                  ),
                   const SizedBox(height: AppTheme.spaceMd),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: EtoileTextField(
-                          controller: _locationController,
-                          label: 'Ajouter une ville',
-                          prefixIcon: Icons.location_on_outlined,
-                          enabled: !isSaving,
-                          onSubmitted: (_) => _addLocation(),
-                        ),
-                      ),
-                      const SizedBox(width: AppTheme.spaceSm),
-                      IconButton(
-                        onPressed: isSaving ? null : _addLocation,
-                        icon: const Icon(Icons.add_circle),
-                        color: AppColors.primaryOrange,
-                        iconSize: 32,
-                      ),
-                    ],
-                  ),
-
-                  if (_locations.isNotEmpty) ...[
-                    const SizedBox(height: AppTheme.spaceMd),
-                    Wrap(
-                      spacing: AppTheme.spaceSm,
-                      runSpacing: AppTheme.spaceSm,
-                      children: _locations.map((loc) {
-                        return Chip(
-                          label: Text(loc),
-                          deleteIcon: const Icon(Icons.close, size: 18),
-                          onDeleted:
-                              isSaving ? null : () => _removeLocation(loc),
-                          backgroundColor: AppColors.tagBackground,
-                          side: BorderSide.none,
-                        );
-                      }).toList(),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius:
+                          BorderRadius.circular(AppTheme.radiusLg),
+                      border: Border.all(color: AppColors.greyLight),
                     ),
-                  ],
+                    clipBehavior: Clip.antiAlias,
+                    child: LocationPickerWidget(
+                      initialMarkers: _mapMarkers,
+                      onMarkersChanged: (markers) {
+                        setState(() {
+                          _mapMarkers = markers;
+                        });
+                      },
+                    ),
+                  ),
 
                   const SizedBox(height: AppTheme.spaceLg),
 

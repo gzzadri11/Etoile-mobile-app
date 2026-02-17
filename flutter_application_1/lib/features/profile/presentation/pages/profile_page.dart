@@ -8,6 +8,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
+import '../../../../shared/widgets/location_map_widget.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../data/models/seeker_profile_model.dart';
 import '../../data/models/recruiter_profile_model.dart';
@@ -248,6 +249,37 @@ class _RecruiterProfileView extends StatelessWidget {
                     if (profile.description != null &&
                         profile.description!.isNotEmpty)
                       const SizedBox(height: AppTheme.spaceLg),
+
+                    // Location map
+                    if (profile.hasMapMarkers) ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on,
+                              color: AppColors.primaryOrange, size: 20),
+                          const SizedBox(width: AppTheme.spaceXs),
+                          Text(
+                            'Localisation',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppTheme.spaceSm),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusLg),
+                          border: Border.all(color: AppColors.greyLight),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: LocationMapWidget(
+                          markers: profile.mapMarkers,
+                        ),
+                      ),
+                      const SizedBox(height: AppTheme.spaceLg),
+                    ],
 
                     // Verification status
                     if (!profile.isVerified)
