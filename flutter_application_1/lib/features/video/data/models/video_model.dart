@@ -21,6 +21,7 @@ class Video extends Equatable {
   final int uniqueViewers;
   final DateTime? publishedAt;
   final DateTime? expiresAt;
+  final String? contractType;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -44,6 +45,7 @@ class Video extends Equatable {
     this.uniqueViewers = 0,
     this.publishedAt,
     this.expiresAt,
+    this.contractType,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -77,6 +79,7 @@ class Video extends Equatable {
       processingError: json['processing_error'] as String?,
       viewsCount: json['views_count'] as int? ?? 0,
       uniqueViewers: json['unique_viewers'] as int? ?? 0,
+      contractType: json['contract_type'] as String?,
       publishedAt: json['published_at'] != null
           ? DateTime.parse(json['published_at'] as String)
           : null,
@@ -104,6 +107,7 @@ class Video extends Equatable {
       'file_size_bytes': fileSizeBytes,
       'resolution': resolution,
       'status': status,
+      'contract_type': contractType,
     };
   }
 
@@ -115,6 +119,7 @@ class Video extends Equatable {
     String? videoUrl,
     String? thumbnailUrl,
     String? status,
+    String? contractType,
     DateTime? publishedAt,
   }) {
     return Video(
@@ -135,6 +140,7 @@ class Video extends Equatable {
       processingError: processingError,
       viewsCount: viewsCount,
       uniqueViewers: uniqueViewers,
+      contractType: contractType ?? this.contractType,
       publishedAt: publishedAt ?? this.publishedAt,
       expiresAt: expiresAt,
       createdAt: createdAt,
@@ -153,6 +159,7 @@ class Video extends Equatable {
         videoKey,
         videoUrl,
         status,
+        contractType,
         viewsCount,
       ];
 }

@@ -100,6 +100,7 @@ class VideoRepository {
     int durationSeconds = 40,
     int? fileSizeBytes,
     String? resolution,
+    String? contractType,
   }) async {
     final userId = currentUserId;
     if (userId == null) {
@@ -116,6 +117,7 @@ class VideoRepository {
       'duration_seconds': durationSeconds,
       'file_size_bytes': fileSizeBytes,
       'resolution': resolution,
+      'contract_type': contractType,
       'status': 'processing',
     };
 

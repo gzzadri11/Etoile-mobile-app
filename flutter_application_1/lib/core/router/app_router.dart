@@ -17,6 +17,7 @@ import '../../features/profile/presentation/pages/edit_recruiter_profile_page.da
 import '../../features/video/presentation/pages/my_publications_page.dart';
 import '../../features/video/presentation/pages/publish_offer_page.dart';
 import '../../features/video/presentation/pages/video_record_page.dart';
+import '../../features/profile/presentation/pages/public_recruiter_profile_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
 
 /// Application route names
@@ -212,6 +213,15 @@ class AppRouter {
         builder: (context, state) {
           final tab = state.uri.queryParameters['tab'] ?? 'recruitment';
           return MyPublicationsPage(initialTab: tab);
+        },
+      ),
+
+      // Public recruiter profile (read-only, for seekers)
+      GoRoute(
+        path: AppRoutes.publicProfile,
+        builder: (context, state) {
+          final userId = state.pathParameters['userId']!;
+          return PublicRecruiterProfilePage(userId: userId);
         },
       ),
 

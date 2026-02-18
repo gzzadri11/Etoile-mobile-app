@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-02-16
-**Statut** : Sprint 11 termine et teste. Prochaine etape : planifier Sprint 12.
+**Date de mise a jour** : 2026-02-17
+**Statut** : FR29 carte OpenStreetMap terminee. Prochaine etape : planifier Sprint 12.
 
 ---
 
@@ -19,6 +19,28 @@ flutter run -d emulator-5554
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+---
+
+## FR29 - Carte interactive OpenStreetMap (TERMINE)
+
+### Ce qui a ete fait
+
+| Changement | Fichier(s) | Description |
+|------------|-----------|-------------|
+| Packages carte | pubspec.yaml | flutter_map, latlong2, geolocator |
+| Modele MapMarker | recruiter_profile_model.dart | Classe MapMarker (nom + lat/lng), champ mapMarkers dans RecruiterProfile |
+| Widget carte lecture | location_map_widget.dart | **NOUVEAU** - Carte avec markers batiment nommes |
+| Widget carte edition | location_picker_widget.dart | **NOUVEAU** - Bouton "Ajouter un emplacement" + autocompletion adresse Photon API |
+| Profil recruteur | profile_page.dart | Section "Localisation" avec carte si markers presents |
+| Edition profil | edit_recruiter_profile_page.dart | Section villes remplacee par carte interactive |
+| Migration SQL | 20260217000000_recruiter_coordinates.sql | Colonnes latitude, longitude, map_markers (JSONB) |
+
+### Points cles
+- Autocompletion adresse via **Photon API** (OpenStreetMap, gratuit, francais)
+- Markers avec icone batiment (`Icons.domain`) + label nom
+- Suppression marker : tap sur le marker ou croix sur le chip
+- Section "Villes" (ancien champ texte) supprimee du formulaire edition
 
 ---
 
@@ -96,7 +118,7 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ### Features disponibles pour Sprint 12
 
-1. Carte interactive OpenStreetMap (FR29, Phase 3)
+1. ~~Carte interactive OpenStreetMap (FR29)~~ **DONE**
 2. Statistiques avancees (vues, engagement)
 3. Systeme de paiement Stripe (premium)
 4. Recherche avancee candidats
@@ -178,6 +200,9 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | Profil recruteur 2 sections publications | OK | 11 |
 | Mes publications avec tabs | OK | 11 |
 | Affiches en image plein ecran dans feed | OK | 11 |
+| Carte OpenStreetMap profil recruteur | OK | FR29 |
+| Autocompletion adresse (Photon API) | OK | FR29 |
+| Markers batiment nommes (multi) | OK | FR29 |
 
 ---
 
@@ -250,5 +275,5 @@ ETOILE/Etoile-mobile-app/
 
 ---
 
-*Sauvegarde mise a jour le 2026-02-16*
-*Sprint 11 termine et teste. Prochaine etape : planifier Sprint 12.*
+*Sauvegarde mise a jour le 2026-02-17*
+*FR29 carte OpenStreetMap terminee. Prochaine etape : planifier Sprint 12.*

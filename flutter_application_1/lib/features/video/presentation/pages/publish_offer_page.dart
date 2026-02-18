@@ -45,6 +45,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   String? _selectedCategory;
+  String? _selectedContractType;
   final _formKey = GlobalKey<FormState>();
 
   // Upload
@@ -223,6 +224,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               : null,
           fileSizeBytes: imageResult.size,
           durationSeconds: 0,
+          contractType: _selectedContractType,
         );
 
         // Set active with URL (stored in video_url for consistency)
@@ -260,6 +262,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               ? _descriptionController.text.trim()
               : null,
           fileSizeBytes: videoResult.size,
+          contractType: _selectedContractType,
         );
 
         // Set active with URL
@@ -301,6 +304,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _titleController.clear();
     _descriptionController.clear();
     _selectedCategory = null;
+    _selectedContractType = null;
     setState(() {
       _step = _PublishStep.pick;
       _uploadProgress = 0;
@@ -369,11 +373,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           titleController: _titleController,
           descriptionController: _descriptionController,
           selectedCategory: _selectedCategory,
+          selectedContractType: _selectedContractType,
           categories: _categories,
           categoriesLoading: _categoriesLoading,
           errorMessage: _errorMessage,
           publishType: _publishType,
           onCategoryChanged: (v) => setState(() => _selectedCategory = v),
+          onContractTypeChanged: (v) => setState(() => _selectedContractType = v),
           onPublish: _upload,
         );
       case _PublishStep.uploading:
@@ -653,11 +659,13 @@ class _FormView extends StatelessWidget {
   final TextEditingController titleController;
   final TextEditingController descriptionController;
   final String? selectedCategory;
+  final String? selectedContractType;
   final List<Map<String, dynamic>> categories;
   final bool categoriesLoading;
   final String? errorMessage;
   final String publishType;
   final ValueChanged<String?> onCategoryChanged;
+  final ValueChanged<String?> onContractTypeChanged;
   final VoidCallback onPublish;
 
   const _FormView({
@@ -665,11 +673,13 @@ class _FormView extends StatelessWidget {
     required this.titleController,
     required this.descriptionController,
     required this.selectedCategory,
+    this.selectedContractType,
     required this.categories,
     required this.categoriesLoading,
     required this.errorMessage,
     this.publishType = 'offer',
     required this.onCategoryChanged,
+    required this.onContractTypeChanged,
     required this.onPublish,
   });
 
@@ -781,6 +791,34 @@ class _FormView extends StatelessWidget {
                   return null;
                 },
               ),
+
+            // Contract type (only for offers/posters, not presentations)
+            if (!_isPresentation) ...[
+              const SizedBox(height: AppTheme.spaceMd),
+              DropdownButtonFormField<String>(
+                initialValue: selectedContractType,
+                decoration: const InputDecoration(
+                  labelText: 'Type de contrat',
+                  hintText: 'Selectionnez un type de contrat',
+                  prefixIcon: Icon(Icons.description_outlined),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'cdi', child: Text('CDI')),
+                  DropdownMenuItem(value: 'cdd', child: Text('CDD')),
+                  DropdownMenuItem(value: 'interim', child: Text('Interim')),
+                  DropdownMenuItem(value: 'freelance', child: Text('Freelance')),
+                  DropdownMenuItem(value: 'alternance', child: Text('Alternance')),
+                  DropdownMenuItem(value: 'stage', child: Text('Stage')),
+                ],
+                onChanged: onContractTypeChanged,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Selectionnez un type de contrat';
+                  }
+                  return null;
+                },
+              ),
+            ],
 
             // Error message
             if (errorMessage != null) ...[

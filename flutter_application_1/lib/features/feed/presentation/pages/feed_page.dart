@@ -14,7 +14,6 @@ import '../../../messages/data/repositories/conversation_repository.dart';
 import '../../data/models/feed_item_model.dart';
 import '../bloc/feed_bloc.dart';
 import '../widgets/feed_video_player.dart';
-import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/video_preload_manager.dart';
 
 /// Main feed page with role-specific video content.
@@ -598,13 +597,9 @@ class _VideoCard extends StatelessWidget {
     );
   }
 
-  /// Open profile bottom sheet
+  /// Navigate to public recruiter profile
   void _onProfileTap(BuildContext context) {
-    ProfileBottomSheet.show(
-      context,
-      feedItem,
-      onMessageTap: () => _onMessageTap(context),
-    );
+    context.push(AppRoutes.publicProfileFor(feedItem.video.userId));
   }
 
   /// Open message / start conversation

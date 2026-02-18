@@ -29,7 +29,15 @@
       "Bash(cd \"C:\\\\Users\\\\gzzad\\\\Documents\\\\IDEES\\\\ETOILE\\\\Etoile-mobile-app\\\\flutter_application_1\"\" && find . -type f -name \"*.dart \")",
       "Bash(C:Usersgzzadflutterbinflutter.bat pub get)",
       "Bash(curl:*)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(flutter emulators:*)",
+      "Bash(flutter run:*)",
+      "Bash(du -sh:*)",
+      "Bash(du:*)",
+      "Bash(export JAVA_HOME:*)",
+      "Bash(yes:*)",
+      "Bash(\"C:\\\\Users\\\\gzzad\\\\AppData\\\\Local\\\\Android\\\\sdk\\\\cmdline-tools\\\\latest\\\\bin\\\\sdkmanager.bat\" \"system-images;android-34;google_apis_playstore;x86_64\")",
+      "Bash(python3 -c \"\nimport json, urllib.request\n\nsql = open\\(''C:/Users/gzzad/Documents/IDEES/ETOILE/Etoile-mobile-app/supabase/temp_cron.sql''\\).read\\(\\)\nbody = json.dumps\\({''query'': sql}\\).encode\\(''utf-8''\\)\n\nreq = urllib.request.Request\\(\n    ''https://api.supabase.com/v1/projects/ojslqytmuifaofojutgb/database/query'',\n    data=body,\n    headers={\n        ''Authorization'': ''Bearer sbp_9ab83a87cc77ec01e864f0400f77d364572650dd'',\n        ''Content-Type'': ''application/json''\n    },\n    method=''POST''\n\\)\n\ntry:\n    resp = urllib.request.urlopen\\(req\\)\n    print\\(resp.read\\(\\).decode\\(\\)\\)\nexcept urllib.error.HTTPError as e:\n    print\\(f''Error {e.code}: {e.read\\(\\).decode\\(\\)}''\\)\n\")"
     ]
   }
 }
