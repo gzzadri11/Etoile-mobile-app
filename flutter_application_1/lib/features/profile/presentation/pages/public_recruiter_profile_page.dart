@@ -39,6 +39,7 @@ class _PublicRecruiterProfilePageState
   RecruiterProfile? _profile;
   List<Video> _videos = [];
   bool _isLoading = true;
+  bool _isContacting = false;
   String? _error;
   // Reverse-geocoded addresses keyed by "lat,lng"
   final Map<String, String> _markerAddresses = {};
@@ -126,7 +127,18 @@ class _PublicRecruiterProfilePageState
         leading: const BackButton(),
         title: Text(_profile?.companyName ?? 'Profil entreprise'),
       ),
-      body: _buildBody(),
+      body: Stack(
+        children: [
+          _buildBody(),
+          if (_isContacting)
+            Container(
+              color: Colors.black26,
+              child: const Center(
+                child: CircularProgressIndicator(color: AppColors.primaryYellow),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -349,7 +361,7 @@ class _PublicRecruiterProfilePageState
   }
 
   Future<void> _startConversation(Video video) async {
-    if (!mounted) return;
+    if (!mounted || _isContacting) return;
 
     final conversationRepo = GetIt.I<ConversationRepository>();
     final currentUserId = conversationRepo.currentUserId;
@@ -365,16 +377,7 @@ class _PublicRecruiterProfilePageState
       return;
     }
 
-    // Show loading
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      useRootNavigator: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(color: AppColors.primaryYellow),
-      ),
-    );
+    setState(() => _isContacting = true);
 
     try {
       final conversationId = await conversationRepo.findOrCreateConversation(
@@ -383,18 +386,17 @@ class _PublicRecruiterProfilePageState
       );
 
       if (!mounted) return;
-      Navigator.of(context).pop(); // Pop loading dialog
+      setState(() => _isContacting = false);
       context.push(AppRoutes.chatWith(conversationId));
     } catch (e) {
       if (!mounted) return;
-      Navigator.of(context).pop(); // Pop loading dialog
+      setState(() => _isContacting = false);
 
       String errorMessage = e.toString();
       if (errorMessage.contains('Exception:')) {
         errorMessage = errorMessage.replaceAll('Exception:', '').trim();
       }
 
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),

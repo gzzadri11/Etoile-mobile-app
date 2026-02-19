@@ -58,12 +58,18 @@ class MessageRepository {
         .select()
         .single();
 
-    // Update conversation last message
-    final preview = content.length > 100 ? '${content.substring(0, 100)}...' : content;
-    await _supabaseClient.from('conversations').update({
-      'last_message_at': DateTime.now().toIso8601String(),
-      'last_message_preview': preview,
-    }).eq('id', conversationId);
+    debugPrint('[Messages] Message inserted successfully');
+
+    // Update conversation last message (non-critical, don't block message display)
+    try {
+      final preview = content.length > 100 ? '${content.substring(0, 100)}...' : content;
+      await _supabaseClient.from('conversations').update({
+        'last_message_at': DateTime.now().toIso8601String(),
+        'last_message_preview': preview,
+      }).eq('id', conversationId);
+    } catch (e) {
+      debugPrint('[Messages] Error updating conversation preview: $e');
+    }
 
     debugPrint('[Messages] Message sent successfully');
     return Message.fromJson(response);

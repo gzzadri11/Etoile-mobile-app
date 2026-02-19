@@ -17,9 +17,18 @@ class PushNotificationService {
   PushNotificationService({required SupabaseClient supabaseClient})
       : _supabaseClient = supabaseClient;
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+  // Lazy-init to avoid FirebaseException on web (JS interop type mismatch)
+  FirebaseMessaging? _messagingInstance;
+  FirebaseMessaging get _messaging {
+    _messagingInstance ??= FirebaseMessaging.instance;
+    return _messagingInstance!;
+  }
+
+  FlutterLocalNotificationsPlugin? _localNotificationsInstance;
+  FlutterLocalNotificationsPlugin get _localNotifications {
+    _localNotificationsInstance ??= FlutterLocalNotificationsPlugin();
+    return _localNotificationsInstance!;
+  }
 
   /// Current active conversation ID (set by ChatPage, null if not on a chat)
   String? activeConversationId;

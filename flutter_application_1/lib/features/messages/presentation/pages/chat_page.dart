@@ -27,13 +27,22 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     // Tell PushNotificationService which chat is active (suppress notifications)
-    GetIt.I<PushNotificationService>().activeConversationId = widget.conversationId;
+    // Wrapped in try-catch: FirebaseMessaging.instance can throw on web
+    try {
+      GetIt.I<PushNotificationService>().activeConversationId = widget.conversationId;
+    } catch (e) {
+      debugPrint('[ChatPage] PushNotif init error (web): $e');
+    }
   }
 
   @override
   void dispose() {
     // Clear active conversation on exit
-    GetIt.I<PushNotificationService>().activeConversationId = null;
+    try {
+      GetIt.I<PushNotificationService>().activeConversationId = null;
+    } catch (e) {
+      debugPrint('[ChatPage] PushNotif dispose error (web): $e');
+    }
     super.dispose();
   }
 

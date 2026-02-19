@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -71,6 +72,12 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
     final currentState = state;
     if (currentState is! MessageLoaded) return;
 
+    // Guard against double-send
+    if (currentState.isSending) {
+      debugPrint('[Messages] Already sending, ignoring duplicate');
+      return;
+    }
+
     try {
       // Optimistic UI: add message immediately
       final optimisticMessage = Message(
@@ -103,6 +110,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
         isSending: false,
       ));
     } catch (e) {
+      debugPrint('[Messages] Error sending message: $e');
       // Remove optimistic message on error
       final currentMessages = (state as MessageLoaded).messages;
       emit((state as MessageLoaded).copyWith(

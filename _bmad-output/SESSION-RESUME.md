@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-02-17
-**Statut** : FR29 carte OpenStreetMap terminee. Prochaine etape : planifier Sprint 12.
+**Date de mise a jour** : 2026-02-18
+**Statut** : Profil recruteur public TERMINE. Bugs Firebase web + trigger push corriges.
 
 ---
 
@@ -19,6 +19,27 @@ flutter run -d emulator-5554
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+---
+
+## Profil Recruteur Public (TERMINE)
+
+### Ce qui a ete fait
+| Changement | Fichier(s) | Statut |
+|------------|-----------|--------|
+| Migration SQL | 20260218000000_video_contract_type.sql | OK (appliquee via SQL Editor) |
+| Video model + repo | video_model.dart, video_repository.dart | OK - champ contractType |
+| Dropdown type contrat | publish_offer_page.dart | OK - CDI/CDD/Interim/Freelance/Alternance/Stage |
+| Page profil public | public_recruiter_profile_page.dart | OK - header, carte, adresses, publications |
+| Route GoRouter | app_router.dart | OK - /profile/:userId |
+| Navigation feed | feed_page.dart | OK - remplace bottom sheet par page |
+| Reverse geocoding | public_recruiter_profile_page.dart | OK - adresses via Photon API |
+
+### Bugs corriges
+| Bug | Cause | Fix |
+|-----|-------|-----|
+| Page rouge TypeError sur messagerie (web) | FirebaseMessaging.instance eager init crash JS interop | Lazy-init dans push_notification_service.dart + try-catch dans chat_page.dart |
+| Message envoye mais pas affiche | trigger_send_push() crash sur current_setting('supabase.service_role_key') bloquait INSERT | BEGIN...EXCEPTION dans trigger SQL + conversation update non-bloquant + garde double-envoi BLoC |
 
 ---
 
@@ -203,6 +224,9 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | Carte OpenStreetMap profil recruteur | OK | FR29 |
 | Autocompletion adresse (Photon API) | OK | FR29 |
 | Markers batiment nommes (multi) | OK | FR29 |
+| Profil recruteur public (page complete) | OK | - |
+| contract_type sur videos (migration + Flutter) | OK | - |
+| Dropdown type contrat publication | OK | - |
 
 ---
 
@@ -275,5 +299,5 @@ ETOILE/Etoile-mobile-app/
 
 ---
 
-*Sauvegarde mise a jour le 2026-02-17*
-*FR29 carte OpenStreetMap terminee. Prochaine etape : planifier Sprint 12.*
+*Sauvegarde mise a jour le 2026-02-18*
+*Profil recruteur public termine. Bugs Firebase web + trigger push corriges.*
