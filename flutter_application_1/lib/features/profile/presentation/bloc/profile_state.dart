@@ -27,14 +27,24 @@ class ProfileSaving extends ProfileState {
 class SeekerProfileLoaded extends ProfileState {
   final SeekerProfile profile;
   final List<Map<String, dynamic>> categories;
+  final bool isPremium;
+  final VideoStats stats;
 
   const SeekerProfileLoaded({
     required this.profile,
     required this.categories,
+    this.isPremium = false,
+    this.stats = const VideoStats(
+      totalViews: 0,
+      uniqueViewers: 0,
+      thisWeekViews: 0,
+      lastWeekViews: 0,
+      trendPercent: 0,
+    ),
   });
 
   @override
-  List<Object?> get props => [profile, categories];
+  List<Object?> get props => [profile, categories, isPremium, stats];
 }
 
 /// Recruiter profile loaded successfully
@@ -43,16 +53,26 @@ class RecruiterProfileLoaded extends ProfileState {
   final int presentationCount;
   final int offerCount;
   final int posterCount;
+  final bool isPremium;
+  final VideoStats stats;
 
   const RecruiterProfileLoaded({
     required this.profile,
     this.presentationCount = 0,
     this.offerCount = 0,
     this.posterCount = 0,
+    this.isPremium = false,
+    this.stats = const VideoStats(
+      totalViews: 0,
+      uniqueViewers: 0,
+      thisWeekViews: 0,
+      lastWeekViews: 0,
+      trendPercent: 0,
+    ),
   });
 
   @override
-  List<Object?> get props => [profile, presentationCount, offerCount, posterCount];
+  List<Object?> get props => [profile, presentationCount, offerCount, posterCount, isPremium, stats];
 }
 
 /// Profile saved successfully

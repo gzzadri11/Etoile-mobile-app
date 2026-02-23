@@ -1,14 +1,34 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9]
-status: validated
-lastStep: "Étape 9 - Validation Finale"
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 'e-01', 'e-02', 'e-03']
+status: edited
+lastStep: "Edit Step E-3"
 date: 2026-02-01
 validatedAt: 2026-02-01
+lastEdited: 2026-02-18
+editHistory:
+  - date: 2026-02-18
+    changes: "Refonte onboarding (mascotte, OTP, CGU), système complétude profil, dossiers candidature messagerie, alertes filtrées chercheur, mascotte & branding, enrichissement UX"
+  - date: 2026-02-18
+    changes: "Validation PRD round 1 (59→78): +Executive Summary, +User Journeys, +US Suppression compte, +US Signaler, +Conformité RGPD/HR Tech, +Spécificités mobile (IAP/offline/permissions/a11y), Epic 10 fusionnée, prix fixés, terminologie unifiée, specs techniques extraites vers architecture-etoile-draft.md"
+  - date: 2026-02-18
+    changes: "Validation PRD round 2 (78→85+): prix Executive Summary alignés (4,99€/499€), complétude profil corrigée (40% post-inscription, pas 50%), états vides ajoutés (feed, dossiers, messagerie), RGPD Art.20 portabilité au MVP, noms techniques abstraits dans les US (Stripe→prestataire paiement)"
 author: John (PM)
 projectName: Etoile Mobile App
 ---
 
-# PRD Draft: Etoile Mobile App
+# PRD: Etoile Mobile App
+
+## Executive Summary
+
+Etoile est une application mobile de recrutement par vidéo courte (40 secondes, style TikTok) destinée au marché français. Elle connecte les chercheurs d'emploi — qui se présentent via des vidéos authentiques enregistrées in-app — avec des recruteurs vérifiés (SIRET) qui publient leurs offres en vidéo ou en affiche.
+
+L'application se distingue par : (1) un onboarding guidé par une mascotte originale, (2) un système de complétude profil à 100% obligatoire avant toute interaction, (3) des dossiers de candidature automatiques par offre, et (4) des alertes filtrées configurables pour les chercheurs.
+
+Le modèle économique repose sur un freemium pour les chercheurs (4,99€/mois premium) et un abonnement professionnel pour les recruteurs (499€/mois), complété par des achats à l'unité. Le MVP cible 1 000 utilisateurs à M1 et 15 000 à M12, avec un lancement prévu en 17 semaines.
+
+**Architecture détaillée** dans `architecture-etoile-draft.md` (stack, schéma de données, sécurité).
+
+---
 
 ## Classification Projet
 
@@ -16,18 +36,27 @@ projectName: Etoile Mobile App
 |---------|--------|
 | **Type** | Mobile App Flutter (iOS + Android) |
 | **Domaine** | HR Tech / Recrutement |
-| **Complexité** | Moyenne-Haute |
+| **Complexité** | Haute |
 | **Contexte** | Greenfield (nouveau produit) |
+| **Marché cible** | France uniquement (V1) |
+| **Identité** | Mascotte Etoile — branding fun et attachant dans un marché sérieux |
 
 ---
 
-## Décisions Techniques
+## Décisions Produit & Technique
+
+> Les choix techniques détaillés (stack, schéma de données, sécurité) sont dans `architecture-etoile-draft.md`.
 
 | Aspect | Décision |
 |--------|----------|
-| **Hébergement vidéo** | Cloudflare R2 (recommandé - egress gratuit) |
-| **Paiements** | Stripe (CB direct, hors Apple/Google Pay) |
-| **Vérification recruteurs** | SIRET + document (manuel MVP, auto V2) |
+| **Hébergement vidéo** | Stockage cloud avec egress gratuit (Cloudflare R2) |
+| **Paiements** | Stripe direct in-app (Etoile = service de recrutement, pas contenu digital — meme approche que LinkedIn/Indeed). Plan B : RevenueCat (Apple IAP + Google Play) si rejet App Store |
+| **Paiements recruteurs** | Stripe via portail web (factures entreprise, B2B, commission reduite) |
+| **Vérification recruteurs** | SIRET : saisie manuelle + vérification humaine (V1), API INSEE automatique (V2) |
+| **Validation email** | OTP (mot de passe temporaire envoyé par email) |
+| **Validation téléphone** | OTP SMS (chercheurs uniquement) |
+| **Mascotte** | Personnage original à créer — élément central du branding Etoile |
+| **Design** | Enrichissement charte actuelle (noir/jaune doré/blanc) — inspiration HelloWork/Indeed avec identité propre |
 
 ---
 
@@ -40,13 +69,15 @@ projectName: Etoile Mobile App
 |---------|--------|----------|
 | Succès ultime | Obtention d'un emploi via Etoile | Premiers cas documentés à M3 |
 | Qualité des contacts | Messages de recruteurs vérifiés uniquement | 100% des contacts = recruteurs authentifiés |
-| Expérience de publication | Temps pour publier sa première vidéo | < 5 minutes après inscription |
+| Publication première vidéo | Temps pour publier après inscription | < 10 minutes (onboarding + complétude inclus) |
+| Complétude profil | % d'utilisateurs atteignant 100% | > 70% dans les 48h après inscription |
 
 **Recruteurs :**
 | Critère | Mesure | Objectif |
 |---------|--------|----------|
-| ROI perçu | Vues sur les offres + choix de candidats | Croissance visible mois après mois |
-| Gain de temps | Élimination du tri CV | Accès direct aux vidéos = décision plus rapide |
+| ROI perçu | Vues sur les offres + candidatures reçues | Croissance visible mois après mois |
+| Gain de temps | Organisation via dossiers candidature | Réduction du temps de tri de 50% |
+| Taux de vérification SIRET | Recruteurs validés / inscrits | > 90% en 7 jours |
 
 ### Succès Business
 
@@ -55,6 +86,9 @@ projectName: Etoile Mobile App
 | Utilisateurs totaux | 1 000 | 5 000 | 15 000 |
 | MAU | - | 2 500 | 7 000 |
 | Ratio Chercheurs/Recruteurs | 70/30 (MVP) | 60/40 | 50/50 (cible) |
+| Taux complétude profil 100% | 50% | 70% | 85% |
+| Postulations via dossiers / mois | - | 500 | 5 000 |
+| Alertes filtrées créées | - | 200 | 2 000 |
 | Premier paiement | M1 | - | - |
 
 ### Succès Technique
@@ -63,6 +97,7 @@ projectName: Etoile Mobile App
 |---------|--------------|---------------------|
 | Temps chargement vidéo | < 2 secondes | < 1 seconde |
 | Disponibilité (uptime) | 99.5% | 99.9% (stable 24/7) |
+| Taux de conversion onboarding | > 60% | > 80% |
 
 ---
 
@@ -72,50 +107,80 @@ projectName: Etoile Mobile App
 
 | Mode | Fonctionnalités | Prix |
 |------|-----------------|------|
-| **Gratuit** | Publier 1 vidéo/catégorie, parcourir offres, recevoir messages | 0€ |
-| **Premium** | Voir qui a vu sa vidéo, statistiques | ~5€/mois |
+| **Gratuit** | Publier 1 vidéo/catégorie, parcourir offres, postuler, recevoir messages | 0€ |
+| **Premium** | Dossiers de candidature (voir recruteurs intéressés), statistiques, voir qui a vu sa vidéo | 4,99€/mois |
 
 ### Recruteurs
 
 | Mode | Vidéo | Affiche | Prix |
 |------|-------|---------|------|
 | **Gratuit** | 1 vidéo (40s, importable) | 1 affiche | 0€ |
-| **Premium** | 2 vidéos + 2 affiches /semaine + stats | Voir qui a vu | ~500€/mois |
-| **À l'unité** | +1 vidéo | +1 affiche | ~100€ / ~50€ |
+| **Premium** | 2 vidéos + 2 affiches /semaine + stats + dossiers détaillés | Voir qui a vu | 499€/mois |
+| **À l'unité** | +1 vidéo | +1 affiche | 99€ / 49€ |
 
-**Note importante :**
+**Notes importantes :**
 - Chercheurs = enregistrement via app UNIQUEMENT (authenticité)
 - Recruteurs = peuvent IMPORTER leurs vidéos (flexibilité pro)
+- Complétude profil 100% requise pour publier et postuler
+- Profil < 100% = consultation du feed uniquement (pas de publication, pas de postulation)
 
 ---
 
 ## Périmètre MVP
 
 ### Modules essentiels
-- Authentification (email/mot de passe, choix rôle)
-- Profils (chercheur avec critères, recruteur avec SIRET)
-- Vidéo (enregistrement 40s in-app pour chercheurs, import pour recruteurs)
-- Feed (scroll vertical, filtres basiques)
-- Contact direct (accès coordonnées, messagerie texte)
-- Paiements (Stripe, abonnements premium)
-- Back-office (vérification manuelle recruteurs)
+- **Onboarding** : splash screen mascotte animé, écran d'accueil (connexion/inscription), choix du rôle, formulaire court avec OTP email + OTP SMS (chercheurs), CGU
+- **Complétude profil** : système de progression 0-100% par étapes, blocage des fonctions clés sous 100%
+- **Authentification** : email OTP + mot de passe compte, reconnexion multi-appareils
+- **Profils** : chercheur (infos personnelles + préférences emploi), recruteur (entreprise + SIRET)
+- **Vidéo** : enregistrement 40s in-app (chercheurs), import (recruteurs), affiches image
+- **Feed** : scroll vertical TikTok-style, filtres par rôle, 2 onglets chercheur (Entreprises/Offres)
+- **Dossiers candidature** : dossier auto par publication, postulations organisées, compteur
+- **Messagerie** : conversations 1-to-1 temps réel + dossiers candidature
+- **Alertes filtrées** : alertes chercheur configurables, push notification digest
+- **Mascotte** : splash animé, écran accueil, tuto première publication
+- **Paiements** : Stripe, abonnements premium, achats unitaires
+- **Back-office** : vérification manuelle recruteurs (SIRET)
 
 ### Non inclus MVP
 - Messages vocaux, appels in-app
 - Likes, favoris
-- Vérification automatique SIRET
+- Vérification automatique SIRET (API INSEE = V2)
 - Version web
-- Multi-langue
+- Multi-langue (France uniquement V1)
+- Salaire dans les profils/offres (se négocie en privé)
+
+---
+
+## User Journeys
+
+### Journey 1 : Chercheur — De l'inscription à la première candidature
+
+1. **Découverte** : Le chercheur télécharge l'app depuis le Store et voit le splash screen de la mascotte Etoile.
+2. **Inscription** : Il choisit "Créer un compte" → "Demandeur d'emploi" → saisit prénom, nom, email, téléphone → valide par OTP email + OTP SMS → crée son mot de passe → accepte les CGU.
+3. **Complétude profil** : Après inscription (50%), il est redirigé vers son profil avec la barre de progression. Il complète sa photo (70%), ses préférences emploi (90%), sa localisation (100%).
+4. **Première vidéo** : Il accède à l'onglet "Publier". La mascotte lui propose un tuto vidéo (skippable). Il enregistre sa vidéo de 40s in-app, choisit une catégorie métier, et publie.
+5. **Découverte des offres** : Il parcourt le feed (onglet "Offres") en swipe vertical. Il filtre par catégorie et type de contrat.
+6. **Candidature** : Il trouve une offre intéressante, tape "Postuler", ajoute un message court optionnel. Sa candidature est enregistrée dans le dossier du recruteur.
+7. **Suivi** : Il reçoit un message du recruteur dans sa messagerie. Il échange par texte.
+8. **Alertes** : Il crée une alerte "CDI Dev Paris" avec fréquence quotidienne. Il reçoit une push notification chaque jour avec les nouvelles offres correspondantes.
+
+### Journey 2 : Recruteur — De l'inscription à la gestion des candidatures
+
+1. **Découverte** : Le recruteur télécharge l'app et voit le splash screen de la mascotte.
+2. **Inscription** : Il choisit "Créer un compte" → "Recruteur" → saisit le nom de l'entreprise, email professionnel → valide par OTP email → crée son mot de passe → accepte les CGU.
+3. **Complétude profil** : Après inscription (40%), il complète le secteur d'activité (60%), le logo + couverture (80%), le SIRET (en attente de vérification manuelle). Après validation admin → 80%. Il ajoute la description + localisation → 100%.
+4. **Première publication** : Il accède à l'onglet "Publier" et choisit "Offre vidéo". Il importe une vidéo de 40s, saisit le titre du poste, la catégorie, le type de contrat (CDI). Un dossier de candidature est automatiquement créé.
+5. **Découverte des candidats** : Il parcourt le feed (vidéos de chercheurs) et filtre par catégorie, zone géographique, disponibilité.
+6. **Gestion des candidatures** : Il ouvre l'onglet messagerie → voit le dossier "Développeur Flutter CDI" → 3 candidatures. Il consulte les profils et vidéos des candidats.
+7. **Contact** : Il tape "Contacter" sur un candidat → conversation 1-to-1 ouverte. Il échange par texte.
+8. **Premium** : Il souscrit à l'offre Premium pour 2 publications/semaine + statistiques détaillées.
 
 ---
 
 ## Exigences Non-Fonctionnelles
 
-> **Réponses utilisateur collectées :** Les paramètres ci-dessous ont été définis suite aux questions NF1-NF4 posées au product owner.
-
 ### NF1 - Performance et Charge
-
-**Réponse utilisateur :** 500 utilisateurs simultanés au début, pics à 2000
 
 | Paramètre | Valeur |
 |-----------|--------|
@@ -123,17 +188,10 @@ projectName: Etoile Mobile App
 | **Utilisateurs simultanés (pic)** | 2 000 |
 | **Temps de réponse API** | < 500ms (P95) |
 | **Temps de chargement vidéo** | < 2s (démarrage lecture) |
-
-**Implications techniques :**
-- Architecture backend scalable (serverless ou auto-scaling recommandé)
-- CDN Cloudflare pour la distribution vidéo (R2 + Workers)
-- Cache agressif côté client (métadonnées, thumbnails)
-- Pagination et lazy loading obligatoires sur les feeds
-- Base de données dimensionnée pour 10x la charge nominale (marge de croissance)
+| **Envoi OTP** | < 10s après demande |
+| **Push notification alertes** | < 5min après déclenchement |
 
 ### NF2 - Disponibilité
-
-**Réponse utilisateur :** 24/7 dès le MVP
 
 | Paramètre | Valeur |
 |-----------|--------|
@@ -141,33 +199,44 @@ projectName: Etoile Mobile App
 | **SLA interne** | 99.5% uptime (MVP), 99.9% (post-MVP) |
 | **Maintenance planifiée** | Fenêtres nocturnes uniquement (2h-5h CET) |
 
-**Implications techniques :**
-- Monitoring et alerting dès le jour 1 (ex: Sentry, Uptime Robot)
-- Pas de single point of failure critique
-- Procédure de rollback documentée
-- Backup automatique des données (quotidien minimum)
-- Architecture multi-AZ ou serverless pour haute disponibilité
+### NF3 - Données Personnelles, Conformité RGPD et Droit du Travail
 
-### NF3 - Données Personnelles et Conformité
-
-**Réponse utilisateur :** Rien de spécial requis (conformité RGPD standard)
+#### RGPD (Règlement Général sur la Protection des Données)
 
 | Paramètre | Valeur |
 |-----------|--------|
-| **Hébergement EU obligatoire** | Non requis |
-| **DPO dédié** | Non requis |
-| **Conformité RGPD** | Standard (mentions légales, consentement, droit à l'oubli) |
+| **Hébergement** | Supabase (AWS eu-west-3 Paris), Cloudflare R2 (EU) — données en UE |
+| **Base légale traitement** | Consentement explicite (inscription + CGU) |
+| **CGU** | Checkbox obligatoire à l'inscription + lien vers texte complet |
+| **Données personnelles** | Visibles uniquement par les recruteurs vérifiés (nom, prénom, photo, vidéo) |
+| **Téléphone** | Jamais affiché publiquement. Visible uniquement dans la conversation après premier contact |
+| **Droit d'accès (Art. 15)** | L'utilisateur peut consulter toutes ses données depuis son profil |
+| **Droit de rectification (Art. 16)** | L'utilisateur peut modifier toutes ses données depuis l'édition de profil |
+| **Droit à l'effacement (Art. 17)** | Suppression de compte avec cascade complète (US-1.10), délai max 30 jours |
+| **Droit à la portabilité (Art. 20)** | Export des données personnelles au format JSON depuis les paramètres. MVP : envoi par email sur demande (bouton "Exporter mes données"). V2 : téléchargement direct in-app |
+| **Consentement éclairé** | Information claire sur l'utilisation des données vidéo avant tout enregistrement |
 
-**Implications techniques :**
-- Politique de confidentialité standard
-- Mécanisme de suppression de compte (hard delete ou anonymisation)
-- Export des données utilisateur sur demande (RGPD Art. 20)
-- Pas de transfert de données vers pays tiers sans garanties
-- Conservation des vidéos supprimées : 30 jours max avant purge définitive
+#### Données biométriques (vidéo = image faciale)
+
+| Paramètre | Valeur |
+|-----------|--------|
+| **Classification** | La vidéo contient l'image du visage — donnée biométrique potentielle au sens du RGPD Art. 9 |
+| **Traitement automatisé** | Aucun traitement biométrique automatisé (pas de reconnaissance faciale, pas d'analyse IA du visage) |
+| **Base légale** | Consentement explicite de l'utilisateur avant chaque enregistrement vidéo |
+| **Information** | Mention claire : "Votre vidéo sera visible par les recruteurs vérifiés sur la plateforme" |
+| **Suppression** | Vidéo supprimable à tout moment par l'utilisateur (R2 + BDD) |
+
+#### Droit du Travail français
+
+| Paramètre | Valeur |
+|-----------|--------|
+| **Art. L1132-1 Code du Travail** | Interdiction de discrimination à l'embauche. La plateforme ne collecte PAS : âge, sexe, origine, situation familiale, grossesse, religion, opinions politiques, handicap |
+| **Risque vidéo** | La vidéo révèle des caractéristiques physiques — avertissement explicite aux recruteurs : "Toute décision basée sur des critères discriminatoires est interdite par la loi" |
+| **Mentions recruteurs** | À l'inscription recruteur, information sur les obligations légales en matière de non-discrimination |
+| **Modération** | Signalement possible (US-1.11) si un recruteur fait des remarques discriminatoires dans les messages |
+| **CNIL recommandations** | Pas de collecte de données sensibles, vidéo = auto-présentation volontaire du candidat |
 
 ### NF4 - Support Utilisateur
-
-**Réponse utilisateur :** FAQ/Centre d'aide
 
 | Paramètre | Valeur |
 |-----------|--------|
@@ -175,63 +244,158 @@ projectName: Etoile Mobile App
 | **Support humain** | Email uniquement (MVP) |
 | **Temps de réponse cible** | 48h ouvrées |
 
-**Implications techniques :**
-- Page FAQ/Aide accessible depuis le menu principal de l'app
-- Contenu FAQ : webview ou page native avec recherche
-- Formulaire de contact avec email de support
-- Pas de chat live ni hotline au MVP
-- Documentation des cas d'usage courants (vidéo rejetée, paiement échoué, etc.)
-- Base de connaissance extensible pour V2
-
 ---
 
 ## User Stories
 
-### Epic 1 : Inscription et Profil
+### Epic 1 : Onboarding, Inscription et Profil
 
-**US-1.1 : Inscription Chercheur**
-> En tant que chercheur d'emploi, je veux créer un compte avec mon email pour accéder à l'application.
-
-Critères d'acceptation :
-- [ ] Formulaire : email, mot de passe, confirmation mot de passe
-- [ ] Validation email (format + unicité)
-- [ ] Mot de passe : 8 caractères minimum
-- [ ] Choix du rôle "Chercheur" à l'inscription
-- [ ] Email de confirmation envoyé
-
-**US-1.2 : Inscription Recruteur**
-> En tant que recruteur, je veux créer un compte professionnel pour publier des offres.
+**US-1.0 : Splash screen mascotte**
+> En tant qu'utilisateur, je vois une animation de la mascotte Etoile pendant le chargement de l'app.
 
 Critères d'acceptation :
-- [ ] Formulaire : email pro, mot de passe, nom entreprise, SIRET
-- [ ] Upload document justificatif (Kbis, carte pro)
-- [ ] Statut "En attente de vérification" après inscription
-- [ ] Notification par email quand compte validé/refusé
+- [ ] Animation de la mascotte affichée pendant le chargement
+- [ ] Disparaît automatiquement quand l'app est prête
+- [ ] Durée max : 3 secondes (même si app prête avant)
+- [ ] Transition fluide vers l'écran suivant
 
-**US-1.3 : Compléter profil Chercheur**
-> En tant que chercheur, je veux renseigner mes critères de recherche pour être visible des bons recruteurs.
-
-Critères d'acceptation :
-- [ ] Secteur d'activité recherché (liste déroulante)
-- [ ] Type de contrat (CDI, CDD, alternance, stage)
-- [ ] Zone géographique souhaitée
-- [ ] Disponibilité (immédiate, 1 mois, 3 mois)
-- [ ] Profil modifiable à tout moment
-
-**US-1.4 : Compléter profil Recruteur**
-> En tant que recruteur vérifié, je veux personnaliser mon profil entreprise.
+**US-1.1 : Écran d'accueil mascotte**
+> En tant que nouvel utilisateur, je vois la mascotte avec les options "Se connecter" ou "Créer un compte".
 
 Critères d'acceptation :
-- [ ] Logo entreprise (upload image)
-- [ ] Description entreprise (500 caractères max)
-- [ ] Secteur d'activité
-- [ ] Localisation(s) des postes
+- [ ] Image de la mascotte Etoile bien visible
+- [ ] Bouton "Se connecter" → page de connexion (email + mot de passe)
+- [ ] Bouton "Créer un compte" → page de choix du rôle
+- [ ] Design engageant, coloré, identité Etoile
+
+**US-1.2 : Connexion (utilisateur existant)**
+> En tant qu'utilisateur existant, je veux me connecter avec mon email et mot de passe.
+
+Critères d'acceptation :
+- [ ] Formulaire : email, mot de passe
+- [ ] Lien "Mot de passe oublié"
+- [ ] Redirection vers le feed après connexion réussie
+- [ ] Message d'erreur clair si identifiants incorrects
+
+**US-1.3 : Choix du rôle**
+> En tant que nouvel utilisateur, je choisis "Demandeur d'emploi" ou "Recruteur" pour orienter mon inscription.
+
+Critères d'acceptation :
+- [ ] Question "Vous êtes ?" avec 2 boutons clairs
+- [ ] Icônes distinctes pour chaque rôle
+- [ ] Redirection vers le formulaire d'inscription correspondant
+
+**US-1.4 : Inscription Chercheur**
+> En tant que chercheur, je crée mon compte avec un formulaire court.
+
+Critères d'acceptation :
+- [ ] Formulaire : prénom, nom, email, numéro de téléphone
+- [ ] Envoi OTP par email → saisie du code pour valider l'adresse
+- [ ] Envoi OTP par SMS → saisie du code pour valider le numéro
+- [ ] Création d'un mot de passe (8 caractères min) pour le compte
+- [ ] Checkbox CGU + politique de données (obligatoire) avec lien pour lire le texte complet
+- [ ] Après validation → redirection vers le profil à compléter (40% — catégories Inscription + Identité validées, cf. US-1.7)
+
+**US-1.5 : Inscription Recruteur**
+> En tant que recruteur, je crée mon compte professionnel avec un formulaire court.
+
+Critères d'acceptation :
+- [ ] Formulaire : nom de l'entreprise, email professionnel
+- [ ] Envoi OTP par email → saisie du code pour valider l'adresse
+- [ ] Création d'un mot de passe (8 caractères min) pour le compte
+- [ ] Checkbox CGU + politique de données (obligatoire) avec lien pour lire le texte complet
+- [ ] Après validation → redirection vers le profil à compléter (40% — catégories Inscription + Identité entreprise validées, cf. US-1.8)
+
+**US-1.6 : Système de complétude profil**
+> En tant qu'utilisateur, je vois ma progression de profil et sais quoi compléter pour atteindre 100%.
+
+Critères d'acceptation :
+- [ ] Barre de progression visible sur la page profil (0% → 100%)
+- [ ] 5 catégories de validation, chacune valant 20%
+- [ ] L'inscription (email/OTP/mot de passe) + identité (prénom/nom/téléphone ou nom entreprise/secteur) = 40% automatiquement après inscription
+- [ ] Indicateur visuel pour chaque catégorie (complétée / à faire)
+- [ ] Message explicatif : "Remplissez toutes ces informations pour faciliter les recruteurs à vous contacter"
+
+**US-1.7 : Complétude profil Chercheur**
+> En tant que chercheur, je complète mon profil pour atteindre 100%.
+
+5 catégories (20% chacune) :
+1. **Inscription** (20%) : email vérifié + OTP + mot de passe
+2. **Identité** (20%) : prénom, nom, téléphone vérifié (OTP SMS)
+3. **Photo de profil** (20%) : upload photo
+4. **Préférences emploi** (20%) : métier recherché, type de contrat, expérience, secteur d'activité, disponibilité
+5. **Localisation & situation** (20%) : pays (France), ville de résidence, situation, statut (en activité/sans activité), diplôme
+
+Critères d'acceptation :
+- [ ] Tous les champs sont obligatoires pour atteindre 100%
+- [ ] Progression mise à jour en temps réel après chaque sauvegarde
+- [ ] Sous 100% : consultation du feed autorisée, publication et postulation bloquées
+- [ ] Si action bloquée → redirection vers profil + message "Complétez votre profil pour accéder à cette fonctionnalité"
+
+**US-1.8 : Complétude profil Recruteur**
+> En tant que recruteur, je complète mon profil pour atteindre 100%.
+
+5 catégories (20% chacune) :
+1. **Inscription** (20%) : email vérifié + OTP + mot de passe
+2. **Identité entreprise** (20%) : nom entreprise, secteur d'activité
+3. **Visuels** (20%) : logo entreprise (photo de profil) + photo de couverture (bannière)
+4. **SIRET** (20%) : numéro SIRET saisi + vérifié (manuellement V1, API INSEE V2)
+5. **Description** (20%) : description entreprise + localisation(s)
+
+Critères d'acceptation :
+- [ ] SIRET invalide → message explicatif, recruteur bloqué tant que SIRET non validé
+- [ ] Vérification SIRET manuelle (V1) : recruteur en attente, notification par email à la validation/refus
+- [ ] Sous 100% : consultation du feed autorisée, publication et messagerie bloquées
+- [ ] Si action bloquée → redirection vers profil + message explicatif
+
+**US-1.9 : Mot de passe oublié**
+> En tant qu'utilisateur, je veux réinitialiser mon mot de passe si je l'ai oublié.
+
+Critères d'acceptation :
+- [ ] Saisie de l'email
+- [ ] Envoi d'un lien de réinitialisation
+- [ ] Nouveau mot de passe (8 caractères min)
+- [ ] Confirmation de changement
+
+**US-1.10 : Supprimer mon compte**
+> En tant qu'utilisateur, je veux pouvoir supprimer définitivement mon compte et toutes mes données (RGPD Art. 17 — droit à l'effacement).
+
+Critères d'acceptation :
+- [ ] Option "Supprimer mon compte" accessible depuis les paramètres
+- [ ] Confirmation requise avec saisie du mot de passe
+- [ ] Message d'avertissement clair : "Cette action est irréversible. Toutes vos données, vidéos, messages et candidatures seront supprimées."
+- [ ] Suppression effective sous 30 jours (RGPD)
+- [ ] Suppression cascade : profil, vidéos (stockage + base de données), messages, candidatures, alertes, abonnement (annulé auprès du prestataire de paiement)
+- [ ] Email de confirmation de suppression envoyé
+- [ ] Données anonymisées dans les conversations existantes (messages conservés mais auteur = "Utilisateur supprimé")
+- [ ] Possibilité de se réinscrire avec le même email après suppression
+
+**US-1.11 : Signaler un contenu ou un utilisateur**
+> En tant qu'utilisateur, je veux pouvoir signaler un contenu inapproprié ou un utilisateur.
+
+Critères d'acceptation :
+- [ ] Bouton "Signaler" accessible sur chaque vidéo/affiche dans le feed
+- [ ] Bouton "Signaler" accessible dans les conversations
+- [ ] Choix du motif : contenu inapproprié, spam, harcèlement, discrimination, faux profil, autre
+- [ ] Confirmation : "Votre signalement a été envoyé. Merci."
+- [ ] Signalement enregistré en BDD pour traitement par l'admin (US-7.2)
+- [ ] Pas de notification à l'utilisateur signalé (éviter les représailles)
 
 ---
 
 ### Epic 2 : Vidéo Chercheur
 
-**US-2.1 : Enregistrer ma vidéo de présentation**
+**US-2.1 : Tuto mascotte première publication**
+> En tant que chercheur publiant pour la première fois, la mascotte me propose un tutoriel vidéo.
+
+Critères d'acceptation :
+- [ ] Détection de la première publication (jamais publié avant)
+- [ ] Affichage d'une vidéo de la mascotte montrant comment filmer une bonne vidéo
+- [ ] Bouton "Skip" visible pour passer le tuto
+- [ ] Le tuto ne s'affiche qu'une seule fois (jamais re-proposé)
+- [ ] Après le tuto (ou skip), accès direct à la publication
+
+**US-2.2 : Enregistrer ma vidéo de présentation**
 > En tant que chercheur, je veux enregistrer une vidéo de 40 secondes pour me présenter aux recruteurs.
 
 Critères d'acceptation :
@@ -241,8 +405,9 @@ Critères d'acceptation :
 - [ ] Prévisualisation avant validation
 - [ ] Option "Recommencer" illimitée
 - [ ] Pas d'import externe (enregistrement in-app uniquement)
+- [ ] Profil à 100% requis pour publier
 
-**US-2.2 : Publier ma vidéo dans une catégorie**
+**US-2.3 : Publier ma vidéo dans une catégorie**
 > En tant que chercheur, je veux associer ma vidéo à une catégorie métier pour être trouvé.
 
 Critères d'acceptation :
@@ -250,13 +415,15 @@ Critères d'acceptation :
 - [ ] 1 seule vidéo par catégorie (remplacement si nouvelle)
 - [ ] Vidéo visible dans le feed après upload réussi
 - [ ] Notification de confirmation
+- [ ] **Création automatique d'un dossier dans la messagerie** avec le nom de la catégorie/vidéo
 
-**US-2.3 : Modifier/Supprimer ma vidéo**
+**US-2.4 : Modifier/Supprimer ma vidéo**
 > En tant que chercheur, je veux pouvoir remplacer ou supprimer ma vidéo.
 
 Critères d'acceptation :
 - [ ] Bouton "Remplacer" = nouvel enregistrement
 - [ ] Bouton "Supprimer" avec confirmation
+- [ ] Suppression du dossier associé (si vide) ou archivage (si candidatures existantes)
 - [ ] Suppression effective sous 24h (RGPD)
 
 ---
@@ -269,9 +436,11 @@ Critères d'acceptation :
 Critères d'acceptation :
 - [ ] Import vidéo depuis galerie OU enregistrement in-app
 - [ ] Durée max : 40 secondes (découpage automatique si > 40s)
-- [ ] Ajout titre du poste + catégorie
+- [ ] Ajout titre du poste + catégorie + type de contrat (CDI/CDD/Intérim/Freelance/Alternance/Stage)
+- [ ] **Nom de l'offre obligatoire** → crée un dossier dans la messagerie
 - [ ] Compte gratuit : 1 vidéo max
 - [ ] Compte premium : 2 vidéos/semaine
+- [ ] Profil à 100% + SIRET vérifié requis
 
 **US-3.2 : Publier une affiche**
 > En tant que recruteur, je veux publier une affiche (image) pour une offre.
@@ -279,18 +448,30 @@ Critères d'acceptation :
 Critères d'acceptation :
 - [ ] Upload image (JPG, PNG)
 - [ ] Format recommandé affiché (9:16)
-- [ ] Ajout titre du poste + catégorie
+- [ ] Ajout titre du poste + catégorie + type de contrat
+- [ ] **Nom de l'offre obligatoire** → crée un dossier dans la messagerie
 - [ ] Compte gratuit : 1 affiche max
 - [ ] Compte premium : 2 affiches/semaine
 
-**US-3.3 : Gérer mes publications**
+**US-3.3 : Publier une présentation entreprise**
+> En tant que recruteur, je veux publier une vidéo de présentation de mon entreprise (gratuit).
+
+Critères d'acceptation :
+- [ ] Import vidéo ou enregistrement in-app
+- [ ] Type "présentation" (pas d'offre d'emploi)
+- [ ] Gratuit (ne consomme pas de crédit)
+- [ ] Visible dans l'onglet "Entreprises" du feed chercheur
+- [ ] Pas de dossier créé (pas de candidature sur une présentation)
+
+**US-3.4 : Gérer mes publications**
 > En tant que recruteur, je veux voir et gérer toutes mes publications actives.
 
 Critères d'acceptation :
-- [ ] Liste de mes vidéos et affiches
+- [ ] Liste de mes vidéos, affiches et présentations
 - [ ] Statut (active, expirée, supprimée)
 - [ ] Actions : modifier, supprimer, renouveler
 - [ ] Compteur de vues (premium)
+- [ ] Lien vers le dossier de candidatures associé
 
 ---
 
@@ -305,6 +486,7 @@ Critères d'acceptation :
 - [ ] Tap pour activer/désactiver le son
 - [ ] Informations affichées : prénom, catégorie, localisation
 - [ ] Swipe haut = vidéo suivante
+- [ ] **État vide** : si aucun candidat, afficher un écran encourageant ("Aucun candidat pour le moment. Ajustez vos filtres ou revenez plus tard.")
 
 **US-4.2 : Filtrer les candidats (Recruteur)**
 > En tant que recruteur, je veux filtrer les candidats par critères.
@@ -313,6 +495,7 @@ Critères d'acceptation :
 - [ ] Filtre par catégorie métier
 - [ ] Filtre par zone géographique
 - [ ] Filtre par disponibilité
+- [ ] Filtre par type de contrat
 - [ ] Filtres cumulables
 - [ ] Bouton "Réinitialiser filtres"
 
@@ -320,10 +503,12 @@ Critères d'acceptation :
 > En tant que chercheur, je veux parcourir les offres des recruteurs.
 
 Critères d'acceptation :
+- [ ] 2 onglets : "Entreprises" (présentations) / "Offres" (vidéos + affiches)
 - [ ] Feed vertical (vidéos + affiches mélangées)
 - [ ] Badge "Entreprise vérifiée" visible
-- [ ] Informations : nom entreprise, titre poste, localisation
+- [ ] Informations : nom entreprise, titre poste, localisation, type de contrat
 - [ ] Accès au profil entreprise en tapant
+- [ ] **État vide** : si aucune offre, afficher un écran avec la mascotte ("Pas encore d'offres ici. Revenez bientôt !")
 
 **US-4.4 : Filtrer les offres (Chercheur)**
 > En tant que chercheur, je veux filtrer les offres par critères.
@@ -334,68 +519,99 @@ Critères d'acceptation :
 - [ ] Filtre par zone géographique
 - [ ] Sauvegarde des filtres préférés
 
+**US-4.5 : Postuler à une offre (Chercheur)**
+> En tant que chercheur, je veux postuler à une offre depuis le feed.
+
+Critères d'acceptation :
+- [ ] Bouton "Postuler" visible sur chaque offre dans le feed
+- [ ] Profil 100% requis pour postuler (sinon redirection profil + message)
+- [ ] Champ de message court (max 300 caractères) optionnel avant envoi
+- [ ] Confirmation : "Vous avez bien postulé !"
+- [ ] Le profil du chercheur est enregistré dans le dossier du recruteur pour cette offre
+- [ ] 1 seule candidature par offre (bouton grisé si déjà postulé)
+- [ ] Le chercheur peut aussi envoyer un message direct via "Contacter"
+
 ---
 
-### Epic 5 : Contact et Messagerie
+### Epic 5 : Messagerie et Dossiers de Candidature
 
-**US-5.1 : Contacter un candidat (Recruteur)**
-> En tant que recruteur, je veux contacter un candidat qui m'intéresse.
-
-Critères d'acceptation :
-- [ ] Bouton "Contacter" sur la vidéo du candidat
-- [ ] Accès aux coordonnées (email, téléphone si fourni)
-- [ ] Ouverture messagerie in-app
-- [ ] Notification au candidat
-
-**US-5.2 : Recevoir et répondre aux messages (Chercheur)**
-> En tant que chercheur, je veux voir et répondre aux messages des recruteurs.
+**US-5.1 : Dossiers de candidature (Recruteur)**
+> En tant que recruteur, je veux voir les candidatures organisées par offre dans mes messages.
 
 Critères d'acceptation :
-- [ ] Liste des conversations
+- [ ] Onglet messagerie affiche les dossiers (un par offre publiée)
+- [ ] Chaque dossier montre : nom de l'offre, compteur de candidatures
+- [ ] Ouverture du dossier → liste des candidats (nom, prénom, photo de profil)
+- [ ] Clic sur un candidat → voir sa vidéo + bouton "Contacter"
+- [ ] "Contacter" ouvre une conversation 1-to-1 classique
+- [ ] Compteur incrémenté à chaque nouvelle candidature
+- [ ] **État vide** : si aucune candidature dans un dossier, afficher "Aucune candidature pour cette offre pour l'instant."
+
+**US-5.2 : Dossiers de candidature (Chercheur Premium)**
+> En tant que chercheur premium, je veux voir les recruteurs intéressés par mes vidéos.
+
+Critères d'acceptation :
+- [ ] Onglet messagerie affiche les dossiers (un par vidéo publiée)
+- [ ] Chaque dossier montre : nom de la vidéo/catégorie, compteur de recruteurs
+- [ ] Ouverture du dossier → liste des recruteurs avec leur message court
+- [ ] Clic sur un recruteur → voir son profil + bouton "Contacter"
+- [ ] Feature premium uniquement (chercheurs gratuits ne voient pas les dossiers)
+
+**US-5.3 : Conversations 1-to-1**
+> En tant qu'utilisateur, je veux envoyer et recevoir des messages texte avec d'autres utilisateurs.
+
+Critères d'acceptation :
+- [ ] Liste des conversations actives (hors dossiers)
 - [ ] Badge "Non lu" sur les nouveaux messages
+- [ ] **État vide** : si aucune conversation, afficher "Aucun message. Commencez par postuler ou contacter un profil !"
 - [ ] Réponse en texte libre
-- [ ] Info recruteur visible (entreprise, poste concerné)
+- [ ] Info de l'interlocuteur visible (entreprise/poste ou prénom/catégorie)
+- [ ] Notifications push pour les nouveaux messages
 
-**US-5.3 : Bloquer un recruteur (Chercheur)**
-> En tant que chercheur, je veux pouvoir bloquer un recruteur indésirable.
+**US-5.4 : Bloquer un utilisateur**
+> En tant qu'utilisateur, je veux pouvoir bloquer un autre utilisateur indésirable.
 
 Critères d'acceptation :
 - [ ] Option "Bloquer" dans la conversation
 - [ ] Confirmation requise
 - [ ] Plus de messages possibles après blocage
-- [ ] Ma vidéo invisible pour ce recruteur
+- [ ] Contenu de l'utilisateur bloqué invisible dans le feed
 
 ---
 
 ### Epic 6 : Paiements et Abonnements
 
 **US-6.1 : Souscrire à Premium (Chercheur)**
-> En tant que chercheur, je veux souscrire à l'offre Premium pour voir mes statistiques.
+> En tant que chercheur, je veux souscrire à l'offre Premium pour accéder aux dossiers et statistiques.
 
 Critères d'acceptation :
-- [ ] Page détaillant les avantages Premium
-- [ ] Prix affiché : ~5€/mois
-- [ ] Paiement par carte via Stripe
+- [ ] Page détaillant les avantages Premium (dossiers, statistiques, visibilité)
+- [ ] Prix affiché : 4,99€/mois
+- [ ] **iOS** : Paiement via Apple In-App Purchase (obligatoire pour contenu digital sur iOS)
+- [ ] **Android** : Paiement via Google Play Billing (obligatoire pour contenu digital sur Android)
 - [ ] Activation immédiate après paiement
 - [ ] Reçu par email
+- [ ] Restauration des achats sur nouvel appareil
 
 **US-6.2 : Souscrire à Premium (Recruteur)**
 > En tant que recruteur, je veux souscrire à l'offre Premium pour plus de publications.
 
 Critères d'acceptation :
 - [ ] Page détaillant les avantages Premium
-- [ ] Prix affiché : ~500€/mois
-- [ ] Paiement par carte via Stripe
-- [ ] Possibilité de facture entreprise
+- [ ] Prix affiché : 499€/mois
+- [ ] **iOS** : Paiement via Apple In-App Purchase (obligatoire)
+- [ ] **Android** : Paiement via Google Play Billing (obligatoire)
+- [ ] Alternative web : paiement par carte via le portail web (lien externe, commission réduite)
+- [ ] Possibilité de facture entreprise (via portail web)
 - [ ] Activation immédiate
 
 **US-6.3 : Acheter à l'unité (Recruteur)**
 > En tant que recruteur, je veux acheter des publications supplémentaires à l'unité.
 
 Critères d'acceptation :
-- [ ] +1 vidéo : ~100€
-- [ ] +1 affiche : ~50€
-- [ ] Paiement Stripe
+- [ ] +1 vidéo : 99€
+- [ ] +1 affiche : 49€
+- [ ] Paiement via In-App Purchase (iOS/Android) ou carte bancaire (web)
 - [ ] Crédit ajouté immédiatement au compte
 
 **US-6.4 : Gérer mon abonnement**
@@ -411,14 +627,15 @@ Critères d'acceptation :
 
 ### Epic 7 : Administration (Back-office)
 
-**US-7.1 : Valider les recruteurs**
+**US-7.1 : Valider les recruteurs (SIRET)**
 > En tant qu'admin, je veux valider manuellement les inscriptions recruteurs.
 
 Critères d'acceptation :
-- [ ] Liste des recruteurs en attente
-- [ ] Visualisation SIRET + document uploadé
+- [ ] Liste des recruteurs en attente de vérification SIRET
+- [ ] Visualisation SIRET + infos entreprise
 - [ ] Actions : Approuver / Rejeter (avec motif)
-- [ ] Email automatique au recruteur
+- [ ] Email automatique au recruteur (validation ou refus avec explication)
+- [ ] Recruteur refusé → profil bloqué, ne peut pas publier ni contacter
 
 **US-7.2 : Modérer les contenus**
 > En tant qu'admin, je veux pouvoir supprimer des contenus inappropriés.
@@ -433,9 +650,10 @@ Critères d'acceptation :
 > En tant qu'admin, je veux voir les métriques clés de la plateforme.
 
 Critères d'acceptation :
-- [ ] Nombre d'utilisateurs (total, par rôle)
+- [ ] Nombre d'utilisateurs (total, par rôle, taux complétude 100%)
 - [ ] Nombre de vidéos/affiches publiées
-- [ ] Nombre de messages échangés
+- [ ] Nombre de postulations via dossiers
+- [ ] Nombre d'alertes filtrées actives
 - [ ] Revenus (abonnements + achats)
 - [ ] Graphiques d'évolution
 
@@ -462,6 +680,47 @@ Critères d'acceptation :
 
 ---
 
+### Epic 9 : Alertes Filtrées (Chercheur)
+
+**US-9.1 : Créer une alerte filtrée**
+> En tant que chercheur, je veux créer une alerte pour être notifié des nouvelles offres correspondant à mes critères.
+
+Critères d'acceptation :
+- [ ] Accessible depuis le profil ou les paramètres
+- [ ] Filtres configurables : catégorie métier, type de contrat, zone géographique
+- [ ] Choix de la fréquence : quotidien, tous les 2 jours, hebdomadaire
+- [ ] Nombre d'alertes illimité
+- [ ] Possibilité de nommer chaque alerte (ex: "CDI Dev Paris")
+- [ ] Profil 100% requis pour créer une alerte
+
+**US-9.2 : Recevoir les notifications d'alerte**
+> En tant que chercheur, je veux recevoir une push notification quand de nouvelles offres correspondent à mes alertes.
+
+Critères d'acceptation :
+- [ ] Push notification à la fréquence choisie
+- [ ] Message : "Il y a X nouvelles offres qui s'offrent à vous"
+- [ ] Tap sur la notification → ouvre le feed filtré avec les offres correspondantes
+- [ ] Pas de notification si 0 nouvelles offres sur la période
+
+**US-9.3 : Gérer mes alertes**
+> En tant que chercheur, je veux modifier ou supprimer mes alertes.
+
+Critères d'acceptation :
+- [ ] Liste de mes alertes actives
+- [ ] Modifier les filtres ou la fréquence
+- [ ] Activer/désactiver une alerte (sans la supprimer)
+- [ ] Supprimer une alerte définitivement
+
+---
+
+---
+
+> **Note : L'Epic 10 "Mascotte et Branding" a été fusionnée dans les Epics 1 et 2.**
+> Les user stories mascotte sont intégrées dans : US-1.0 (splash screen), US-1.1 (écran d'accueil mascotte), US-2.1 (tuto mascotte première publication).
+> Cela évite les doublons et centralise toute l'expérience onboarding/mascotte dans un parcours linéaire.
+
+---
+
 ## Risques et Dépendances
 
 ### Risques Identifiés
@@ -469,13 +728,14 @@ Critères d'acceptation :
 | ID | Risque | Probabilité | Impact | Mitigation |
 |----|--------|-------------|--------|------------|
 | R1 | **Rejet Apple/Google Store** (politique vidéo ou paiements) | Moyenne | Critique | Revue des guidelines avant dev, prévoir ajustements UI |
-| R2 | **Fraude recruteurs** (faux SIRET, arnaques) | Haute | Haute | Vérification manuelle stricte MVP, signalement utilisateurs |
-| R3 | **Contenus inappropriés** (vidéos offensantes) | Moyenne | Haute | Modération réactive, bouton signaler, suspension automatique après X signalements |
+| R2 | **Fraude recruteurs** (faux SIRET, arnaques) | Haute | Haute | Vérification SIRET manuelle V1, API INSEE V2, signalement utilisateurs |
+| R3 | **Contenus inappropriés** (vidéos offensantes) | Moyenne | Haute | Modération réactive, bouton signaler, suspension auto après X signalements |
 | R4 | **Faible adoption initiale** (poule et l'oeuf) | Haute | Haute | Stratégie d'acquisition ciblée, contenu "seed" au lancement |
 | R5 | **Coûts Cloudflare R2 sous-estimés** | Basse | Moyenne | Monitoring consommation, compression vidéo agressive |
-| R6 | **Problèmes Stripe hors Apple/Google Pay** | Moyenne | Moyenne | Bien communiquer le choix, UX de paiement irréprochable |
-| R7 | **RGPD - Demandes de suppression** | Certaine | Basse | Processus automatisé de suppression, documentation |
-| R8 | **Indisponibilité service tiers** (Stripe, Cloudflare) | Basse | Haute | Choix de providers fiables, fallback messages d'erreur clairs |
+| R6 | **Abandon onboarding** (trop d'étapes, complétude 100%) | Moyenne | Haute | Messages motivants, UX progressive, rappels push |
+| R7 | **Création mascotte** (design, coûts, délais) | Moyenne | Moyenne | Brief créatif clair, prestataire identifié tôt, mascotte simple mais mémorable |
+| R8 | **RGPD - Demandes de suppression** | Certaine | Basse | Processus automatisé de suppression, documentation |
+| R9 | **OTP SMS coûts** (envois en volume) | Basse | Basse | Provider SMS compétitif (Twilio/Vonage), rate limiting anti-abus |
 
 ### Dépendances Externes
 
@@ -485,325 +745,78 @@ Critères d'acceptation :
 | D2 | **Stripe** | Paiements | Critique | stripe.com |
 | D3 | **Apple App Store** | Distribution iOS | Critique | App Store Connect |
 | D4 | **Google Play Store** | Distribution Android | Critique | Google Play Console |
-| D5 | **Service email transactionnel** | Notifications | Haute | (à définir: SendGrid, Resend, etc.) |
-| D6 | **Service de vérification SIRET** (V2) | Automatisation | Moyenne | (API INSEE ou partenaire) |
+| D5 | **Service email transactionnel** | Notifications + OTP email | Haute | Resend / SendGrid |
+| D6 | **Service SMS OTP** | Validation téléphone | Haute | Twilio / Vonage |
+| D7 | **API INSEE** (V2) | Vérification SIRET automatique | Moyenne | api.insee.fr |
+| D8 | **Designer mascotte** | Branding | Haute | Prestataire à identifier |
 
 ### Dépendances Internes
 
 | ID | Dépendance | Équipe/Ressource | Criticité | Statut |
 |----|------------|------------------|-----------|--------|
 | DI1 | **Design UI/UX** | Designer | Haute | À recruter/externaliser |
-| DI2 | **Backend API** | Développeur backend | Critique | À définir |
-| DI3 | **App Flutter** | Développeur mobile | Critique | À définir |
-| DI4 | **DevOps/Infra** | DevOps ou backend | Haute | À définir |
+| DI2 | **Design mascotte** | Illustrateur | Haute | À identifier |
+| DI3 | **Backend API** | Développeur backend | Critique | Supabase |
+| DI4 | **App Flutter** | Développeur mobile | Critique | En cours |
 | DI5 | **Modérateur contenu** | Opérations | Moyenne | Manuel par fondateur au MVP |
-| DI6 | **Support utilisateur** | Opérations | Moyenne | Manuel par fondateur au MVP |
+| DI6 | **Rédaction CGU** | Juridique | Haute | À faire avant lancement |
 
 ---
 
-## Spécifications Techniques
+## Exigences Mobile (iOS + Android)
 
-### Architecture Globale
+### Permissions device
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                            CLIENTS                                       │
-│  ┌─────────────────┐                    ┌─────────────────┐             │
-│  │  iOS App        │                    │  Android App    │             │
-│  │  (Flutter/Dart) │                    │  (Flutter/Dart) │             │
-│  └────────┬────────┘                    └────────┬────────┘             │
-└───────────┼──────────────────────────────────────┼──────────────────────┘
-            │                                      │
-            └──────────────┬───────────────────────┘
-                           │ HTTPS
-                           ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         CLOUDFLARE                                       │
-│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐     │
-│  │      CDN        │    │    Workers      │    │       R2        │     │
-│  │  (Cache global) │    │  (Edge compute) │    │ (Stockage vidéo)│     │
-│  └─────────────────┘    └─────────────────┘    └─────────────────┘     │
-└─────────────────────────────────┬───────────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           BACKEND                                        │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                    API REST (Node.js/Express)                    │   │
-│  │              OU Supabase (Backend-as-a-Service)                  │   │
-│  │              OU Firebase (Alternative)                           │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                                  │                                       │
-│         ┌────────────────────────┼────────────────────────┐             │
-│         ▼                        ▼                        ▼             │
-│  ┌─────────────┐         ┌─────────────┐         ┌─────────────┐       │
-│  │ PostgreSQL  │         │   Redis     │         │   Stripe    │       │
-│  │ (Database)  │         │  (Cache)    │         │ (Paiements) │       │
-│  └─────────────┘         └─────────────┘         └─────────────┘       │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+| Permission | Usage | Demande |
+|------------|-------|---------|
+| **Caméra** | Enregistrement vidéo 40s (chercheurs + recruteurs) | Au moment de l'enregistrement uniquement |
+| **Microphone** | Audio de la vidéo | Combinée avec la demande caméra |
+| **Galerie photos** | Import vidéo/image (recruteurs), upload photo profil | Au moment de l'import |
+| **Notifications push** | Messages, alertes filtrées, rappels | À l'inscription (explications claires avant) |
+| **Localisation** | Carte OpenStreetMap, filtres géographiques | Optionnelle, au besoin uniquement |
 
-### Stack Technique
+### Paiements in-app (Apple App Store / Google Play)
 
-| Couche | Technologie | Justification |
-|--------|-------------|---------------|
-| **Frontend** | Flutter 3.x / Dart | Cross-platform iOS + Android, une seule codebase |
-| **Backend** | Supabase (recommandé) | Auth intégrée, PostgreSQL, temps réel, open-source |
-| | *Alternative 1* : Firebase | Écosystème Google, rapide à setup |
-| | *Alternative 2* : Node.js + Express | Contrôle total, plus de flexibilité |
-| **Base de données** | PostgreSQL | Robuste, scalable, support JSON natif |
-| **Stockage vidéo** | Cloudflare R2 | Egress gratuit, compatible S3, CDN intégré |
-| **CDN** | Cloudflare | Performance globale, protection DDoS |
-| **Paiements** | Stripe | Fiabilité, API moderne, conformité PCI |
-| **Email transactionnel** | Resend ou SendGrid | Délivrabilité, templates |
-| **Monitoring** | Sentry + Uptime Robot | Erreurs temps réel, alertes uptime |
+> **IMPORTANT** : Apple et Google imposent l'utilisation de leur système de paiement pour le contenu digital (abonnements, crédits de publication). L'utilisation de Stripe direct dans l'app pour du contenu digital entraîne un rejet.
 
-### API Endpoints Principaux
+| Plateforme | Système | Commission | Mitigation |
+|------------|---------|------------|------------|
+| **iOS** | StoreKit 2 / Apple In-App Purchase | 15-30% | Prix ajustés pour absorber la commission |
+| **Android** | Google Play Billing | 15-30% | Prix ajustés pour absorber la commission |
+| **Web** | Stripe (CB direct) | ~3% | Lien web pour les recruteurs souhaitant éviter la commission |
 
-#### Authentification (`/api/v1/auth`)
+**Stratégie** : Utiliser `in_app_purchase` (Flutter package) pour iOS/Android. Stripe en complément via portail web pour les gros comptes recruteurs (factures entreprise).
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| POST | `/auth/register` | Inscription (email, password, role) |
-| POST | `/auth/login` | Connexion (retourne JWT) |
-| POST | `/auth/refresh` | Renouvellement du token |
-| POST | `/auth/forgot-password` | Demande de réinitialisation |
-| POST | `/auth/reset-password` | Réinitialisation avec token |
-| POST | `/auth/logout` | Déconnexion (invalidation token) |
+### Mode offline
 
-#### Utilisateurs (`/api/v1/users`)
+| Situation | Comportement |
+|-----------|-------------|
+| **Perte de connexion pendant navigation** | Message "Pas de connexion internet", vidéos déjà chargées restent lisibles |
+| **Perte de connexion pendant envoi message** | Message mis en file d'attente, envoi automatique au retour de la connexion |
+| **Perte de connexion pendant upload vidéo** | Upload annulé avec message d'erreur, reprise manuelle possible |
+| **Perte de connexion générale** | Bannière persistante en haut de l'écran, données en cache affichées |
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/users/profile` | Récupérer mon profil |
-| PUT | `/users/profile` | Mettre à jour mon profil |
-| GET | `/users/preferences` | Récupérer mes préférences |
-| PUT | `/users/preferences` | Mettre à jour mes préférences |
-| DELETE | `/users/account` | Supprimer mon compte (RGPD) |
-| GET | `/users/:id/public` | Profil public d'un utilisateur |
+### Accessibilité (a11y)
 
-#### Vidéos (`/api/v1/videos`)
+| Critère | Implémentation |
+|---------|----------------|
+| **Contraste** | Ratio minimum 4.5:1 (WCAG AA) pour le texte |
+| **Taille du texte** | Support du scaling système (Dynamic Type iOS / Font Scale Android) |
+| **Screen readers** | Labels sémantiques sur tous les boutons et éléments interactifs |
+| **Navigation** | Ordre logique de focus pour le clavier / switch access |
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| POST | `/videos/upload` | Upload vidéo (retourne presigned URL R2) |
-| GET | `/videos/stream/:id` | URL de streaming vidéo |
-| GET | `/videos/my` | Mes vidéos publiées |
-| PUT | `/videos/:id` | Modifier métadonnées vidéo |
-| DELETE | `/videos/:id` | Supprimer une vidéo |
-| POST | `/videos/:id/report` | Signaler une vidéo |
+### Terminologie unifiée
 
-#### Feed (`/api/v1/feed`)
+> Pour assurer la cohérence dans toute l'application :
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/feed/seekers` | Feed candidats (pour recruteurs) |
-| GET | `/feed/recruiters` | Feed offres (pour chercheurs) |
-| GET | `/feed/filters` | Options de filtres disponibles |
-| POST | `/feed/filters/save` | Sauvegarder filtres préférés |
+| Terme officiel | Alternatives à éviter |
+|---------------|----------------------|
+| **Chercheur** (ou "Chercheur d'emploi") | Demandeur, candidat, seeker |
+| **Recruteur** | Employeur, entreprise (sauf dans "nom de l'entreprise") |
+| **Postuler** | Candidater, appliquer |
+| **Publication** | Offre (sauf "offre d'emploi" en contexte), post |
 
-#### Messages (`/api/v1/messages`)
-
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/messages/conversations` | Liste des conversations |
-| GET | `/messages/conversations/:id` | Messages d'une conversation |
-| POST | `/messages/send` | Envoyer un message |
-| PUT | `/messages/:id/read` | Marquer comme lu |
-| POST | `/messages/block/:userId` | Bloquer un utilisateur |
-
-#### Paiements (`/api/v1/payments`)
-
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| POST | `/payments/subscribe` | Créer un abonnement |
-| POST | `/payments/one-time` | Achat à l'unité |
-| GET | `/payments/subscription` | Statut de mon abonnement |
-| POST | `/payments/cancel` | Annuler l'abonnement |
-| GET | `/payments/history` | Historique des paiements |
-| POST | `/payments/webhook` | Webhook Stripe (événements) |
-
-#### Administration (`/api/v1/admin`)
-
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/admin/recruiters/pending` | Recruteurs en attente |
-| POST | `/admin/recruiters/:id/approve` | Approuver un recruteur |
-| POST | `/admin/recruiters/:id/reject` | Rejeter un recruteur |
-| GET | `/admin/reports` | Signalements en attente |
-| POST | `/admin/reports/:id/action` | Traiter un signalement |
-| GET | `/admin/stats` | Statistiques globales |
-
-### Modèle de Données Simplifié
-
-```sql
--- Table Utilisateurs
-CREATE TABLE users (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email           VARCHAR(255) UNIQUE NOT NULL,
-    password_hash   VARCHAR(255) NOT NULL,
-    role            VARCHAR(20) NOT NULL CHECK (role IN ('seeker', 'recruiter', 'admin')),
-    email_verified  BOOLEAN DEFAULT FALSE,
-    is_premium      BOOLEAN DEFAULT FALSE,
-    status          VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'pending', 'suspended', 'deleted')),
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Table Profils Chercheurs
-CREATE TABLE seeker_profiles (
-    user_id         UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    first_name      VARCHAR(100),
-    last_name       VARCHAR(100),
-    phone           VARCHAR(20),
-    region          VARCHAR(100),
-    city            VARCHAR(100),
-    category        VARCHAR(100),           -- Secteur recherché
-    contract_type   VARCHAR(50),            -- CDI, CDD, alternance, stage
-    experience      VARCHAR(50),            -- junior, confirmé, senior
-    availability    VARCHAR(50),            -- immediate, 1_month, 3_months
-    bio             TEXT,
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Table Profils Recruteurs
-CREATE TABLE recruiter_profiles (
-    user_id         UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    company_name    VARCHAR(255) NOT NULL,
-    siret           VARCHAR(14) NOT NULL,
-    document_url    VARCHAR(500),           -- URL du justificatif (Kbis, etc.)
-    logo_url        VARCHAR(500),
-    description     TEXT,
-    sector          VARCHAR(100),
-    locations       TEXT[],                 -- Zones géographiques
-    verified        BOOLEAN DEFAULT FALSE,
-    verified_at     TIMESTAMP WITH TIME ZONE,
-    verified_by     UUID REFERENCES users(id),
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Table Vidéos
-CREATE TABLE videos (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type            VARCHAR(20) NOT NULL CHECK (type IN ('presentation', 'offer', 'poster')),
-    category        VARCHAR(100),
-    title           VARCHAR(255),
-    url             VARCHAR(500) NOT NULL,  -- URL Cloudflare R2
-    thumbnail_url   VARCHAR(500),
-    duration        INTEGER,                -- Durée en secondes
-    status          VARCHAR(20) DEFAULT 'active' CHECK (status IN ('processing', 'active', 'suspended', 'deleted')),
-    views_count     INTEGER DEFAULT 0,
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    expires_at      TIMESTAMP WITH TIME ZONE
-);
-
--- Table Messages
-CREATE TABLE messages (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    conversation_id UUID NOT NULL,
-    sender_id       UUID NOT NULL REFERENCES users(id),
-    receiver_id     UUID NOT NULL REFERENCES users(id),
-    content         TEXT NOT NULL,
-    is_read         BOOLEAN DEFAULT FALSE,
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Table Conversations
-CREATE TABLE conversations (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    participant_1   UUID NOT NULL REFERENCES users(id),
-    participant_2   UUID NOT NULL REFERENCES users(id),
-    video_id        UUID REFERENCES videos(id),    -- Vidéo à l'origine du contact
-    last_message_at TIMESTAMP WITH TIME ZONE,
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(participant_1, participant_2)
-);
-
--- Table Abonnements
-CREATE TABLE subscriptions (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    plan            VARCHAR(50) NOT NULL CHECK (plan IN ('seeker_premium', 'recruiter_premium')),
-    stripe_subscription_id VARCHAR(255),
-    stripe_customer_id     VARCHAR(255),
-    status          VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'canceled', 'past_due', 'expired')),
-    current_period_start   TIMESTAMP WITH TIME ZONE,
-    current_period_end     TIMESTAMP WITH TIME ZONE,
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Table Achats unitaires
-CREATE TABLE purchases (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES users(id),
-    product_type    VARCHAR(50) NOT NULL CHECK (product_type IN ('video_credit', 'poster_credit')),
-    quantity        INTEGER DEFAULT 1,
-    amount_cents    INTEGER NOT NULL,
-    stripe_payment_id VARCHAR(255),
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Table Blocages
-CREATE TABLE blocks (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    blocker_id      UUID NOT NULL REFERENCES users(id),
-    blocked_id      UUID NOT NULL REFERENCES users(id),
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(blocker_id, blocked_id)
-);
-
--- Table Signalements
-CREATE TABLE reports (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    reporter_id     UUID NOT NULL REFERENCES users(id),
-    reported_user_id UUID REFERENCES users(id),
-    reported_video_id UUID REFERENCES videos(id),
-    reason          VARCHAR(100) NOT NULL,
-    description     TEXT,
-    status          VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'actioned', 'dismissed')),
-    reviewed_by     UUID REFERENCES users(id),
-    reviewed_at     TIMESTAMP WITH TIME ZONE,
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Index pour performances
-CREATE INDEX idx_videos_user_id ON videos(user_id);
-CREATE INDEX idx_videos_category ON videos(category);
-CREATE INDEX idx_videos_status ON videos(status);
-CREATE INDEX idx_messages_conversation ON messages(conversation_id);
-CREATE INDEX idx_messages_receiver ON messages(receiver_id, is_read);
-CREATE INDEX idx_seeker_profiles_category ON seeker_profiles(category);
-CREATE INDEX idx_seeker_profiles_region ON seeker_profiles(region);
-```
-
-### Sécurité
-
-| Aspect | Implémentation |
-|--------|----------------|
-| **Authentification** | JWT (JSON Web Tokens) avec refresh tokens |
-| **Durée de vie tokens** | Access: 15 min, Refresh: 7 jours |
-| **Transport** | HTTPS obligatoire (TLS 1.2+) |
-| **Stockage mot de passe** | bcrypt (cost factor 12) |
-| **Rate Limiting** | 100 req/min par IP, 1000 req/min par user authentifié |
-| **Validation SIRET** | Manuelle (MVP), API INSEE (V2) |
-| **Protection CSRF** | Token CSRF sur mutations sensibles |
-| **Validation input** | Sanitization et validation côté serveur systématique |
-| **Upload vidéo** | Presigned URLs (pas d'upload direct vers API) |
-| **CORS** | Domaines autorisés uniquement |
-
-### Intégrations Tierces
-
-| Service | Usage | Documentation |
-|---------|-------|---------------|
-| **Cloudflare R2** | Stockage et streaming vidéos | developers.cloudflare.com/r2 |
-| **Cloudflare Workers** | Edge functions pour URLs signées | developers.cloudflare.com/workers |
-| **Stripe** | Paiements et abonnements | stripe.com/docs |
-| **Resend** | Emails transactionnels | resend.com/docs |
-| **Sentry** | Monitoring erreurs | docs.sentry.io |
-| **Uptime Robot** | Monitoring disponibilité | uptimerobot.com |
+> **Note** : Les spécifications techniques (architecture, schéma de données, stack, sécurité) sont dans le document séparé `architecture-etoile-draft.md`.
 
 ---
 
@@ -811,150 +824,16 @@ CREATE INDEX idx_seeker_profiles_region ON seeker_profiles(region);
 
 ### Vue d'ensemble
 
-| Phase | Durée | Dates estimées | Objectif |
-|-------|-------|----------------|----------|
-| **Phase 0** | 2 semaines | S1-S2 | Setup & Design |
-| **Phase 1** | 4 semaines | S3-S6 | Core Features |
-| **Phase 2** | 3 semaines | S7-S9 | Features Avancées |
-| **Phase 3** | 2 semaines | S10-S11 | Tests & Polish |
-| **Phase 4** | 1 semaine | S12 | Lancement |
+| Phase | Durée | Objectif |
+|-------|-------|----------|
+| **Phase 0** | 2 semaines | Setup, Design, Mascotte brief |
+| **Phase 1** | 5 semaines | Onboarding, Auth, Profils, Complétude |
+| **Phase 2** | 4 semaines | Vidéo, Feed, Dossiers candidature |
+| **Phase 3** | 3 semaines | Messagerie, Alertes, Paiements |
+| **Phase 4** | 2 semaines | Admin, Tests, Polish, Mascotte intégrée |
+| **Phase 5** | 1 semaine | Lancement |
 
-**Durée totale estimée : 12 semaines (3 mois)**
-
----
-
-### Phase 0 : Setup & Design (Semaines 1-2)
-
-**Objectif :** Poser les fondations techniques et finaliser le design.
-
-| Tâche | Responsable | Livrable |
-|-------|-------------|----------|
-| Setup projet Flutter | Dev Mobile | Repo Git, structure projet |
-| Setup backend (Supabase/custom) | Dev Backend | Instance configurée |
-| Setup Cloudflare R2 + Workers | DevOps | Bucket créé, Workers déployés |
-| Setup Stripe (test mode) | Dev Backend | Compte configuré, clés API |
-| Design UI/UX complet | Designer | Maquettes Figma haute fidélité |
-| Design system (composants) | Designer | Kit UI Flutter |
-
-**Jalon Phase 0 :** Environnement de développement opérationnel + Design validé
-
----
-
-### Phase 1 : Core Features (Semaines 3-6)
-
-**Objectif :** Implémenter les fonctionnalités essentielles.
-
-#### Semaine 3-4 : Auth & Profils
-
-| Tâche | Epic | User Stories |
-|-------|------|--------------|
-| Inscription/Connexion | Epic 1 | US-1.1, US-1.2 |
-| Profil chercheur | Epic 1 | US-1.3 |
-| Profil recruteur | Epic 1 | US-1.4 |
-| Vérification email | Epic 1 | - |
-
-#### Semaine 5-6 : Vidéo & Feed
-
-| Tâche | Epic | User Stories |
-|-------|------|--------------|
-| Enregistrement vidéo (chercheur) | Epic 2 | US-2.1, US-2.2 |
-| Upload/Import vidéo (recruteur) | Epic 3 | US-3.1 |
-| Feed vertical basique | Epic 4 | US-4.1, US-4.3 |
-| Filtres basiques | Epic 4 | US-4.2, US-4.4 |
-
-**Jalon Phase 1 :** Application fonctionnelle avec inscription, vidéos et feed
-
----
-
-### Phase 2 : Features Avancées (Semaines 7-9)
-
-**Objectif :** Compléter les fonctionnalités métier.
-
-#### Semaine 7 : Messagerie
-
-| Tâche | Epic | User Stories |
-|-------|------|--------------|
-| Système de messagerie | Epic 5 | US-5.1, US-5.2 |
-| Notifications push | Epic 5 | - |
-| Blocage utilisateur | Epic 5 | US-5.3 |
-
-#### Semaine 8 : Paiements
-
-| Tâche | Epic | User Stories |
-|-------|------|--------------|
-| Intégration Stripe | Epic 6 | US-6.1, US-6.2 |
-| Abonnements | Epic 6 | US-6.4 |
-| Achats à l'unité | Epic 6 | US-6.3 |
-| Webhooks Stripe | Epic 6 | - |
-
-#### Semaine 9 : Admin & Support
-
-| Tâche | Epic | User Stories |
-|-------|------|--------------|
-| Back-office admin | Epic 7 | US-7.1, US-7.2, US-7.3 |
-| FAQ in-app | Epic 8 | US-8.1 |
-| Formulaire contact | Epic 8 | US-8.2 |
-
-**Jalon Phase 2 :** Application complète avec toutes les features MVP
-
----
-
-### Phase 3 : Tests & Polish (Semaines 10-11)
-
-**Objectif :** Stabiliser et optimiser l'application.
-
-| Tâche | Description |
-|-------|-------------|
-| Tests end-to-end | Parcours critiques (inscription, vidéo, paiement) |
-| Tests de charge | Simuler 500 users simultanés |
-| Beta testing | 50-100 beta testeurs (chercheurs + recruteurs) |
-| Fix bugs critiques | Correction des bugs remontés |
-| Optimisation performance | Temps de chargement, taille app |
-| Revue sécurité | Audit basique, correction failles |
-| Mentions légales & CGU | Documents juridiques |
-
-**Jalon Phase 3 :** Application stable, prête pour soumission stores
-
----
-
-### Phase 4 : Lancement (Semaine 12)
-
-**Objectif :** Déployer l'application sur les stores.
-
-| Tâche | Description |
-|-------|-------------|
-| Soumission App Store | Review Apple (prévoir 3-7 jours) |
-| Soumission Play Store | Review Google (prévoir 1-3 jours) |
-| Configuration production | Variables d'env, monitoring |
-| Seed content | Vidéos de démonstration, FAQ complète |
-| Communication lancement | Réseaux sociaux, early adopters |
-
-**Jalon Phase 4 :** Application live sur iOS et Android
-
----
-
-### Tableau Récapitulatif des Jalons
-
-| Jalon | Date (estimée) | Critères de validation |
-|-------|----------------|------------------------|
-| **M0 - Setup Complete** | Fin S2 | Env dev OK, Design validé |
-| **M1 - Core Features** | Fin S6 | Auth + Vidéo + Feed fonctionnels |
-| **M2 - Feature Complete** | Fin S9 | Toutes features MVP implémentées |
-| **M3 - Release Candidate** | Fin S11 | Tests passés, bugs critiques résolus |
-| **M4 - Launch** | Fin S12 | App live sur stores |
-
----
-
-### Ressources Nécessaires
-
-| Rôle | Nombre | Engagement |
-|------|--------|------------|
-| Product Manager | 1 | 50% (stratégie, priorisation) |
-| Designer UI/UX | 1 | 100% (S1-S4), puis 25% |
-| Dev Flutter | 1-2 | 100% |
-| Dev Backend | 1 | 100% |
-| DevOps (optionnel) | 1 | 25% (setup, déploiement) |
-| QA (optionnel) | 1 | 50% (S10-S12) |
+**Durée totale estimée : 17 semaines (~4 mois)**
 
 ---
 
@@ -964,26 +843,16 @@ CREATE INDEX idx_seeker_profiles_region ON seeker_profiles(region);
 |-------|---------|--------|
 | 1 | Classification du projet | Fait |
 | 2 | Clarifications techniques | Fait |
-| 3 | Critères de succès | Fait |
-| 4 | Parcours utilisateurs (partiel) | Fait |
-| 5 | Exigences non-fonctionnelles | Fait |
-| 6 | User Stories | Fait |
-| 7 | Risques et Dépendances | Fait |
-| 8 | Spécifications techniques et Timeline | Fait |
-| 9 | **Validation finale PRD** | ✅ Fait |
-
-> **Note :** Le PRD est maintenant **VALIDÉ** et prêt pour le développement.
-
----
-
-## Questions Résolues
-
-Les questions de l'étape 4 ont été intégrées via les User Stories :
-- Admin Back-Office : US-7.1, US-7.2, US-7.3
-- Cas d'échec : US-7.2 (modération), US-3.3 (gestion publications)
-- Parcours découverte : US-4.1 à US-4.4 (feed + filtres)
-- Premier contact : US-5.1 à US-5.3 (messagerie + blocage)
+| 3 | Critères de succès | Fait (mis à jour) |
+| 4 | Modèle économique | Fait (mis à jour) |
+| 5 | User Stories (10 Epics) | Fait (mis à jour) |
+| 6 | Risques et Dépendances | Fait (mis à jour) |
+| 7 | Spécifications techniques | Fait (mis à jour) |
+| 8 | Timeline | Fait (mis à jour) |
+| 9 | **Architecture détaillée** | À faire |
+| 10 | **Epics et Stories de développement** | À faire |
 
 ---
 
-*Document généré par John (PM) - Dernière mise à jour : 2026-02-01*
+*Document édité par John (PM) — Dernière mise à jour : 2026-02-18*
+*Modifications : refonte onboarding mascotte, système complétude profil, dossiers candidature, alertes filtrées, enrichissement branding*

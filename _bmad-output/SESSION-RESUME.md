@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-02-18
-**Statut** : Profil recruteur public TERMINE. Bugs Firebase web + trigger push corriges.
+**Date de mise a jour** : 2026-02-23
+**Statut** : Sprint 13 quasi TERMINE (5/6 stories, 15 pts). Camera reportee (emulateur requis).
 
 ---
 
@@ -13,266 +13,138 @@ cd C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app\flutter_application_1
 
 # 2. Lancer l'app sur Edge (test rapide) ou emulateur (test push/camera)
 flutter run -d edge
-# OU pour tester les notifications push / camera:
-flutter emulators --launch Medium_Phone_API_36.1
-flutter run -d emulator-5554
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-## Profil Recruteur Public (TERMINE)
+## Ce qui a ete fait — Sprint 13 (2026-02-23)
 
-### Ce qui a ete fait
-| Changement | Fichier(s) | Statut |
-|------------|-----------|--------|
-| Migration SQL | 20260218000000_video_contract_type.sql | OK (appliquee via SQL Editor) |
-| Video model + repo | video_model.dart, video_repository.dart | OK - champ contractType |
-| Dropdown type contrat | publish_offer_page.dart | OK - CDI/CDD/Interim/Freelance/Alternance/Stage |
-| Page profil public | public_recruiter_profile_page.dart | OK - header, carte, adresses, publications |
-| Route GoRouter | app_router.dart | OK - /profile/:userId |
-| Navigation feed | feed_page.dart | OK - remplace bottom sheet par page |
-| Reverse geocoding | public_recruiter_profile_page.dart | OK - adresses via Photon API |
+### Story 13.2 : Stats Premium (5 pts) — DONE
 
-### Bugs corriges
-| Bug | Cause | Fix |
-|-----|-------|-----|
-| Page rouge TypeError sur messagerie (web) | FirebaseMessaging.instance eager init crash JS interop | Lazy-init dans push_notification_service.dart + try-catch dans chat_page.dart |
-| Message envoye mais pas affiche | trigger_send_push() crash sur current_setting('supabase.service_role_key') bloquait INSERT | BEGIN...EXCEPTION dans trigger SQL + conversation update non-bloquant + garde double-envoi BLoC |
+**Fichiers crees :**
+- `lib/features/profile/data/models/video_stats.dart` — Data class VideoStats
+- `lib/features/profile/data/repositories/stats_repository.dart` — Requetes video_views + check isPremium
+- `lib/features/profile/presentation/widgets/stats_card.dart` — Widget stats reel
 
----
+**Fichiers modifies :**
+- `profile_state.dart` — +`isPremium` et `stats` sur SeekerProfileLoaded et RecruiterProfileLoaded
+- `profile_bloc.dart` — +StatsRepository, charge premium+stats en parallele
+- `profile_page.dart` — Remplace `_StatisticsCard` placeholder par `StatsCard` reel
+- `injection_container.dart` — +StatsRepository singleton
 
-## FR29 - Carte interactive OpenStreetMap (TERMINE)
+**Comportement :**
+- Premium : vues totales + viewers uniques + tendance hebdo (vert/rouge/gris)
+- Non-premium : message teaser + CTA "Passer Premium" (route adaptee seeker/recruteur)
+- Donnees chargees depuis `video_views` (RLS filtre auto)
 
-### Ce qui a ete fait
+### Story 13.3 : Page Parametres (3 pts) — DONE
 
-| Changement | Fichier(s) | Description |
-|------------|-----------|-------------|
-| Packages carte | pubspec.yaml | flutter_map, latlong2, geolocator |
-| Modele MapMarker | recruiter_profile_model.dart | Classe MapMarker (nom + lat/lng), champ mapMarkers dans RecruiterProfile |
-| Widget carte lecture | location_map_widget.dart | **NOUVEAU** - Carte avec markers batiment nommes |
-| Widget carte edition | location_picker_widget.dart | **NOUVEAU** - Bouton "Ajouter un emplacement" + autocompletion adresse Photon API |
-| Profil recruteur | profile_page.dart | Section "Localisation" avec carte si markers presents |
-| Edition profil | edit_recruiter_profile_page.dart | Section villes remplacee par carte interactive |
-| Migration SQL | 20260217000000_recruiter_coordinates.sql | Colonnes latitude, longitude, map_markers (JSONB) |
+**Fichier cree :** `lib/features/settings/presentation/pages/settings_page.dart`
+- Menu : Mon profil, Premium, FAQ, Contact support, CGU, Confidentialite, Version, Deconnexion
+- Navigation adaptee selon role (seeker/recruteur) pour profil et premium
+- Dialog de confirmation pour la deconnexion
 
-### Points cles
-- Autocompletion adresse via **Photon API** (OpenStreetMap, gratuit, francais)
-- Markers avec icone batiment (`Icons.domain`) + label nom
-- Suppression marker : tap sur le marker ou croix sur le chip
-- Section "Villes" (ancien champ texte) supprimee du formulaire edition
+**Fichier modifie :** `app_router.dart` — +4 nouvelles routes (faq, contact, terms, privacy)
 
----
+### Story 13.4 : FAQ in-app (3 pts) — DONE
 
-## Sprint 11 - Feed 2 onglets + Presentation entreprise (TERMINE)
+**Fichier cree :** `lib/features/settings/presentation/pages/faq_page.dart`
+- 5 sections, 18 questions : Compte, Video, Messages, Paiements, Technique
+- Barre de recherche temps reel (filtre question + reponse)
+- Accordeon ExpansionTile dans des Card
+- Bouton "Contacter le support" en bas
 
-### Ce qui a ete fait
+### Story 13.5 : Formulaire contact support (2 pts) — DONE
 
-| Changement | Fichier(s) | Description |
-|------------|-----------|-------------|
-| Feed 2 onglets (seeker) | feed_page.dart, feed_bloc.dart, feed_event.dart, feed_state.dart | Onglets "Entreprises" (discover) et "Offres" style TikTok dans l'AppBar |
-| Nouveau feed discover | feed_repository.dart | `getSeekerDiscoverFeed()` : presentations des recruteurs verifies |
-| Rename feed offers | feed_repository.dart | `getSeekerFeed()` → `getSeekerOffersFeed()` |
-| Affiches en image | feed_page.dart | Les posters s'affichent en `Image.network` plein ecran au lieu du video player |
-| Publication 3 choix | publish_offer_page.dart | "Presentation entreprise" (gratuit) / "Offre video" / "Offre affiche" |
-| Credits gratuits | publish_offer_page.dart | `decrementCredits()` skip quand `_publishType == 'presentation'` |
-| Profil 2 sections | profile_page.dart, profile_state.dart, profile_bloc.dart | 2 cards : "Presentations entreprise" + "Publications de recrutement" avec compteurs |
-| Mes publications tabs | my_publications_page.dart | TabBar "Presentations" / "Recrutement" avec filtre par type |
-| Type badge 3 types | my_publications_page.dart | Badge "Presentation" (vert), "Video" (bleu), "Affiche" (orange) |
-| Router query param | app_router.dart | `?tab=presentations` ou `?tab=recruitment` passe a MyPublicationsPage |
-| DI update | injection_container.dart | ProfileBloc recoit VideoRepository pour compter les publications |
+**Fichier cree :** `lib/features/settings/presentation/pages/contact_support_page.dart`
+- Formulaire : Sujet (dropdown 4 choix) + Description (min 20 car.)
+- Envoi via `url_launcher` (mailto:support@etoile-app.fr)
+- Ecran de confirmation apres envoi
 
-### Tests a effectuer
+### Story 13.6 : Mentions legales / CGU / Confidentialite (2 pts) — DONE
 
-1. **Recruteur (emma@gmail.com)** :
-   - Page Publier : 3 boutons visibles (Presentation / Offre video / Offre affiche)
-   - Publier une presentation entreprise → credits NON decrementes
-   - Publier une offre video/affiche → credits decrementes
-   - Profil : 2 sections avec compteurs corrects
-   - Mes publications : 2 onglets filtres correctement
+**Fichier cree :** `lib/features/settings/presentation/pages/legal_page.dart`
+- Page generique `LegalPage` reutilisee 3 fois via factory constructors
+- `LegalPage.termsOfService()` — CGU (8 sections)
+- `LegalPage.privacyPolicy()` — Confidentialite RGPD (8 sections)
+- `LegalPage.legalNotice()` — Mentions legales (5 sections)
 
-2. **Chercheur** :
-   - Feed : 2 onglets "Entreprises" / "Offres" dans l'AppBar
-   - Entreprises → presentations des recruteurs
-   - Offres → offres video + affiches
-   - Affiches → image plein ecran (pas video player)
+### Story 13.1 : Camera in-app (8 pts) — REPORTEE
 
-3. **Feed recruteur** : doit toujours montrer les videos de seekers
-
-### flutter analyze : 0 erreurs (31 info/warning pre-existants)
+- Necessite emulateur Android (pas faisable sur Edge)
+- A faire lors d'une session avec emulateur
 
 ---
 
-## Sprint 10 - Import Video + Affiche + Publications (TERMINE)
+## Ce qui a ete fait — Sprint 12 (2026-02-22/23)
 
-### Stories completees
+### Stories 12.1-12.7 (26 pts) — DONE
 
-| Story | Description | Commit |
-|-------|-------------|--------|
-| S1 | VideoUploadService (upload R2 via Worker) | a82c2c7 |
-| S2 | Import video galerie (PublishOfferPage) | a82c2c7 |
-| S3 | Enregistrement video in-app (camera) | **DEFERRED** (mobile only) |
-| S4 | Publication affiche image (poster) | a82c2c7 |
-| S5 | Page "Mes publications" (liste) | a82c2c7 |
-| S6 | Modification / Suppression publications | a82c2c7 |
+- **12.1** error_translator.dart — traduction exceptions → Failure
+- **12.2** Firebase Crashlytics — init + guards web
+- **12.3** seed.sql — 6 users, profiles, videos, messages
+- **12.4** Page Premium Chercheur — BLoC + UI
+- **12.5** Page Premium Recruteur — offre + credits
+- **12.6** Integration Stripe Checkout — PaymentSheet + Edge Functions
+- **12.7** Webhooks Stripe — 5 evenements, RPC credits
+
+### Configuration Stripe (mode test)
+
+| Element | Valeur |
+|---------|--------|
+| Publishable Key | `pk_test_51T3hr...` (dans `.env`) |
+| Secret Key | `sk_test_51T3hr...` (dans Supabase secrets) |
+| Webhook Secret | `whsec_c1yCS0N...` (dans Supabase secrets) |
+| Webhook URL | `https://ojslqytmuifaofojutgb.supabase.co/functions/v1/stripe-webhook` |
+| Premium Chercheur | `price_1T3hupIKNrg8W1BsqQFqUKu5` (4,99 EUR/mois) |
+| Premium Recruteur | `price_1T3hwgIKNrg8W1Bs9MJ5To2P` (499 EUR/mois) |
+| Credit Video | `price_1T3hxYIKNrg8W1Bs1iKdjUq2` (99 EUR) |
+| Credit Affiche | `price_1T3hy2IKNrg8W1BsC4f0QGuJ` (49 EUR) |
+| Carte test | `4242 4242 4242 4242` |
 
 ---
 
-## Sprint 9 - Notifications Push (TERMINE)
+## Sessions precedentes
 
-| # | Composant | Statut |
-|---|-----------|--------|
-| 1-18 | Tous composants (PRD, archi, SQL, Flutter, Edge Function, Webhooks, CRON) | Done |
+### PRD + Architecture (2026-02-18)
+
+- PRD valide (~85/100) : `_bmad-output/prd-etoile-draft.md`
+- Architecture COMPLETE (8/8 etapes) : `_bmad-output/architecture.md`
+- 6 ADR + 17 decisions categorielles
+
+### Profil Recruteur Public (TERMINE)
+
+- Page profil public read-only pour seekers
+- Migration `video_contract_type`, dropdown type contrat
+- Fix messagerie web (Firebase lazy-init + trigger push resilient)
+
+### FR29 - Carte OpenStreetMap (TERMINE)
+
+- Autocompletion Photon API, markers batiment, carte lecture/edition
 
 ---
 
-## Sprints restants (depuis sprint-plan.md)
+## Sprints completes
 
 | Sprint | Contenu | Statut |
 |--------|---------|--------|
-| 1-8 | Auth, Profil, Feed, Messages, etc. | Done |
-| 9 | Notifications Push | **Done** |
-| 10 | Import video + Affiche + Publications | **Done** (sauf S3 camera) |
-| 11 | Feed 2 onglets + Presentation entreprise | **Done** |
-| 12 | A planifier - Features restantes du backlog | **NEXT** |
+| 1-8 | Auth, Profil, Feed, Messages, Worker, etc. | Done |
+| 9 | Notifications Push | Done |
+| 10 | Import video + Affiche + Publications | Done (sauf camera) |
+| 11 | Feed 2 onglets + Presentation entreprise | Done |
+| FR29 | Carte OpenStreetMap | Done |
+| - | Profil recruteur public + contract_type | Done |
+| - | PRD validation + Architecture complete | Done |
+| **12** | **Infra + Paiements Stripe (7/7 stories, 26 pts)** | **DONE** |
+| **13** | **Stats + Parametres + FAQ + Contact + Legal (5/6, 15 pts)** | **DONE (sauf camera)** |
 
-### Features disponibles pour Sprint 12
+### Prochains sprints
 
-1. ~~Carte interactive OpenStreetMap (FR29)~~ **DONE**
-2. Statistiques avancees (vues, engagement)
-3. Systeme de paiement Stripe (premium)
-4. Recherche avancee candidats
-5. S3: Camera in-app (report du Sprint 10)
-
----
-
-## Supabase CLI
-
-- Installe localement dans `supabase/node_modules/` (pas global)
-- Utiliser : `cd supabase && npx supabase <commande>`
-- OU depuis la racine : `npx --prefix supabase supabase <commande> --project-ref ojslqytmuifaofojutgb`
-- Access Token Supabase : `sbp_9ab83a87cc77ec01e864f0400f77d364572650dd`
-- Project Ref : `ojslqytmuifaofojutgb`
-
----
-
-## Firebase
-
-- **Project ID** : `etoile-app-b80e2`
-- **Service Account** : `firebase-adminsdk-fbsvc@etoile-app-b80e2.iam.gserviceaccount.com`
-- **Service Account Key** : `C:\Users\gzzad\Downloads\etoile-app-b80e2-firebase-adminsdk-fbsvc-8103287027.json`
-- **google-services.json** : `flutter_application_1/android/app/google-services.json`
-
----
-
-## Cloudflare Worker
-
-- **Worker deploye** : `https://etoile-video-worker.gzzadri11.workers.dev`
-- **Health check** : `GET /health` → OK
-- **Buckets R2** : `etoile-videos` + `etoile-thumnails`
-- **Token API** : set via `$env:CLOUDFLARE_API_TOKEN` en PowerShell
-- **Account ID** : 91852e840042405a28e7ad2dd08d4fa8
-
----
-
-## Resume complet du projet
-
-### Ce qui fonctionne
-
-| Fonctionnalite | Statut | Sprint |
-|----------------|--------|--------|
-| Connexion Supabase | OK | 1 |
-| Cloudflare R2 (2 buckets) | OK | 1 |
-| Base de donnees (12 tables + RLS) | OK | 1 |
-| Trigger creation profil | OK | 1 |
-| Inscription (chercheur/recruteur) | OK | 2 |
-| Connexion / Deconnexion | OK | 2 |
-| Mot de passe oublie | OK | 2 |
-| Navigation GoRouter | OK | 2 |
-| Affichage profil (donnees reelles) | OK | 3 |
-| Edition profil chercheur | OK | 3 |
-| Structure video (model, bloc, repo) | OK | 4 |
-| Feed vertical TikTok-style | OK | 5 |
-| Prechargement 2 videos suivantes | OK | 5 |
-| Bouton Profil (bottom sheet) | OK | 5 |
-| Bouton Message (creation conversation) | OK | 6 |
-| Feed par Profil (chercheur vs recruteur) | OK | 7 |
-| Filtres specifiques par role | OK | 7 |
-| Boutons Postuler / Contacter | OK | 7 |
-| Edition profil recruteur (logo + couverture) | OK | 8 |
-| Messagerie temps reel (Realtime) | OK | 8 |
-| Worker Cloudflare deploye | OK | 8 |
-| Video test sur R2 | OK | 8 |
-| Tables device_tokens + notification_log | OK | 9 |
-| Edge Function send-push deployee | OK | 9 |
-| Secret Firebase configure | OK | 9 |
-| Code Flutter push notifications | OK | 9 |
-| Database Webhooks (messages + conversations) | OK | 9 |
-| CRON rappel profil + cleanup logs | OK | 9 |
-| VideoUploadService (upload R2 reel) | OK | 10 |
-| Import video galerie (recruteur) | OK | 10 |
-| Publication affiche image (poster) | OK | 10 |
-| Page Mes publications (liste + edit/delete) | OK | 10 |
-| Onglet Publier (bottom nav recruteur) | OK | 10 |
-| Fix Firebase web (kIsWeb guard) | OK | 10 |
-| Feed 2 onglets chercheur (Entreprises/Offres) | OK | 11 |
-| Publication presentation entreprise (gratuit) | OK | 11 |
-| Profil recruteur 2 sections publications | OK | 11 |
-| Mes publications avec tabs | OK | 11 |
-| Affiches en image plein ecran dans feed | OK | 11 |
-| Carte OpenStreetMap profil recruteur | OK | FR29 |
-| Autocompletion adresse (Photon API) | OK | FR29 |
-| Markers batiment nommes (multi) | OK | FR29 |
-| Profil recruteur public (page complete) | OK | - |
-| contract_type sur videos (migration + Flutter) | OK | - |
-| Dropdown type contrat publication | OK | - |
-
----
-
-## Fichiers cles
-
-```
-ETOILE/Etoile-mobile-app/
-├── cloudflare/
-│   ├── src/index.ts              # Worker R2 (upload, stream, CORS)
-│   └── wrangler.toml             # Config Worker
-├── flutter_application_1/
-│   ├── lib/
-│   │   ├── app.dart                    # Widget principal + GoRouter + Push init
-│   │   ├── main.dart                   # Firebase init + background handler
-│   │   ├── di/injection_container.dart # DI (tous les services)
-│   │   ├── core/
-│   │   │   ├── config/app_config.dart
-│   │   │   ├── router/app_router.dart
-│   │   │   ├── services/push_notification_service.dart
-│   │   │   └── services/video_upload_service.dart
-│   │   └── features/
-│   │       ├── auth/presentation/bloc/auth_bloc.dart
-│   │       ├── profile/
-│   │       ├── feed/
-│   │       ├── messages/
-│   │       └── video/
-│   │           ├── data/models/video_model.dart
-│   │           ├── data/repositories/video_repository.dart
-│   │           ├── presentation/bloc/video_bloc.dart
-│   │           └── presentation/pages/
-│   │               ├── publish_offer_page.dart
-│   │               ├── my_publications_page.dart
-│   │               └── video_record_page.dart
-│   ├── android/app/google-services.json
-│   └── pubspec.yaml
-├── supabase/
-│   ├── package.json
-│   ├── migrations/
-│   └── functions/send-push/index.ts
-└── _bmad-output/
-    ├── SESSION-RESUME.md
-    ├── sprint-plan.md
-    ├── epics.md
-    ├── prd-notifications-push.md
-    └── architecture-notifications-push.md
-```
+- Sprint 13 restant : Story 13.1 Camera in-app (8 pts, emulateur requis)
+- Sprint 14 : Administration (Epic 7) + Support (Epic 8)
+- Sprint 15 : Polish + Beta
 
 ---
 
@@ -294,10 +166,30 @@ ETOILE/Etoile-mobile-app/
 - **Account ID** : 91852e840042405a28e7ad2dd08d4fa8
 - **Buckets** : etoile-videos, etoile-thumnails
 
+### Stripe
+- **Dashboard** : https://dashboard.stripe.com (mode test)
+- **Account** : gzzadri@gmail.com
+
 ### Comptes de test
 - **Recruteur** : emma@gmail.com (entreprise UDI, secteur BTP)
 
 ---
 
-*Sauvegarde mise a jour le 2026-02-18*
-*Profil recruteur public termine. Bugs Firebase web + trigger push corriges.*
+## Documents BMAD
+
+| Document | Fichier | Statut |
+|----------|---------|--------|
+| PRD | `_bmad-output/prd-etoile-draft.md` | Valide (~85/100) |
+| Architecture | `_bmad-output/architecture.md` | COMPLETE (8/8 etapes) |
+| Architecture draft (extrait PRD) | `_bmad-output/architecture-etoile-draft.md` | Draft (reference) |
+| UX Design | `_bmad-output/ux-design-etoile-draft.md` | Draft |
+| Sprint Plan | `_bmad-output/sprint-plan.md` | Sprint 13 quasi DONE |
+| Epics | `_bmad-output/epics.md` | Complet |
+| PRD Notifications | `_bmad-output/prd-notifications-push.md` | Complet |
+| Archi Notifications | `_bmad-output/architecture-notifications-push.md` | Complet |
+| Instructions Claude | `CLAUDE.md` | Cree |
+
+---
+
+*Sauvegarde mise a jour le 2026-02-23*
+*Sprint 13 quasi TERMINE (5/6 stories). Camera reportee. Pret pour Sprint 14 ou camera avec emulateur.*

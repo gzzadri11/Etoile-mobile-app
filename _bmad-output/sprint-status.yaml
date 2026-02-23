@@ -1,0 +1,132 @@
+# generated: 2026-02-18
+# project: Etoile Mobile App
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+generated: 2026-02-18
+project: Etoile Mobile App
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output
+
+development_status:
+
+  # ============================================================
+  # Epic 0: Fondation Technique (Sprint 1)
+  # ============================================================
+  epic-0: done
+  0-1-setup-projet-flutter: done                    # Sprint 1
+  0-2-configuration-supabase: done                  # Sprint 1
+  0-3-configuration-cloudflare-r2: done             # Sprint 1
+  0-4-configuration-stripe: backlog                 # Pas encore fait
+  0-5-schema-base-de-donnees-initial: done          # Sprint 1
+  epic-0-retrospective: optional
+
+  # ============================================================
+  # Epic 1: Authentification & Profils (Sprints 2-3-8)
+  # ============================================================
+  epic-1: done
+  1-1-inscription-chercheur: done                   # Sprint 2
+  1-2-inscription-recruteur: done                   # Sprint 2
+  1-3-connexion-deconnexion: done                   # Sprint 2
+  1-4-profil-chercheur: done                        # Sprint 3
+  1-5-profil-recruteur: done                        # Sprint 8 + FR29 carte
+  1-6-reinitialisation-mot-de-passe: done           # Sprint 2
+  epic-1-retrospective: optional
+
+  # ============================================================
+  # Epic 2: Video Chercheur
+  # ============================================================
+  epic-2: in-progress
+  2-1-enregistrement-video-40s: backlog             # Camera in-app differe
+  2-2-previsualisation-reenregistrement: backlog    # Depend de 2.1
+  2-3-publication-dans-categorie: backlog           # Upload mecanism exists (Sprint 10) mais flow chercheur pas specifique
+  2-4-modification-remplacement-video: backlog
+  2-5-suppression-video: backlog
+  epic-2-retrospective: optional
+
+  # ============================================================
+  # Epic 3: Video & Affiche Recruteur (Sprint 10-11)
+  # ============================================================
+  epic-3: in-progress
+  3-1-import-video-depuis-galerie: done             # Sprint 10
+  3-2-enregistrement-video-in-app-recruteur: backlog  # Camera differe
+  3-3-publication-affiche-image: done               # Sprint 10
+  3-4-gestion-des-publications: done                # Sprint 10
+  3-5-modification-suppression-publication: done    # Sprint 10
+  epic-3-retrospective: optional
+
+  # ============================================================
+  # Epic 4: Feed & Decouverte (Sprints 5-7-11)
+  # ============================================================
+  epic-4: done
+  4-1-feed-vertical-candidats-recruteur: done       # Sprint 5+7
+  4-2-feed-vertical-offres-chercheur: done          # Sprint 11 (2 onglets)
+  4-3-lecture-video-controles: done                  # Sprint 5
+  4-4-filtres: done                                 # Sprint 7
+  4-5-prechargement-videos-performance: done        # Sprint 5
+  4-6-profil-detaille-depuis-feed: done             # Profil recruteur public
+  epic-4-retrospective: optional
+
+  # ============================================================
+  # Epic 5: Messagerie & Contact (Sprints 6-8-9)
+  # ============================================================
+  epic-5: in-progress
+  5-1-initier-une-conversation: done                # Sprint 6
+  5-2-liste-des-conversations: done                 # Sprint 8
+  5-3-chat-temps-reel: done                         # Sprint 8
+  5-4-notifications-push-nouveaux-messages: done    # Sprint 9
+  5-5-bloquer-un-utilisateur: backlog               # Table blocks existe, pas d'UI
+  5-6-signaler-une-conversation: backlog            # Table reports a creer
+  epic-5-retrospective: optional
+
+  # ============================================================
+  # Epic 6: Paiements & Abonnements
+  # ============================================================
+  epic-6: backlog
+  6-1-page-premium-chercheur: backlog
+  6-2-page-premium-recruteur: backlog
+  6-3-paiement-stripe-checkout: backlog
+  6-4-achat-credits-unite: backlog
+  6-5-gestion-abonnement: backlog
+  6-6-webhooks-stripe: backlog
+  epic-6-retrospective: optional
+
+  # ============================================================
+  # Epic 7: Administration
+  # ============================================================
+  epic-7: backlog
+  7-1-back-office-liste-recruteurs-en-attente: backlog
+  7-2-validation-rejet-recruteur: backlog
+  7-3-liste-signalements: backlog
+  7-4-moderation-contenus: backlog
+  7-5-dashboard-statistiques: backlog
+  epic-7-retrospective: optional
+
+  # ============================================================
+  # Epic 8: Support & Aide
+  # ============================================================
+  epic-8: backlog
+  8-1-faq-in-app: backlog
+  8-2-formulaire-de-contact: backlog
+  8-3-mentions-legales-cgu-confidentialite: backlog
+  epic-8-retrospective: optional

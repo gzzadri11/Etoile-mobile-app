@@ -2,6 +2,8 @@ import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/services/push_notification_service.dart';
+import '../core/services/stripe_service.dart';
+import '../core/services/supabase_service.dart';
 import '../core/services/video_upload_service.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/feed/data/repositories/feed_repository.dart';
@@ -9,7 +11,9 @@ import '../features/feed/presentation/bloc/feed_bloc.dart';
 import '../features/messages/data/repositories/conversation_repository.dart';
 import '../features/messages/data/repositories/message_repository.dart';
 import '../features/messages/presentation/bloc/message_bloc.dart';
+import '../features/payment/data/repositories/payment_repository.dart';
 import '../features/profile/data/repositories/profile_repository.dart';
+import '../features/profile/data/repositories/stats_repository.dart';
 import '../features/profile/presentation/bloc/profile_bloc.dart';
 import '../features/video/data/repositories/video_repository.dart';
 import '../features/video/presentation/bloc/video_bloc.dart';
@@ -32,6 +36,16 @@ Future<void> init() async {
   // SERVICES
   // ============================================
 
+  // Supabase Service - centralized access to Supabase features
+  sl.registerLazySingleton<SupabaseService>(
+    () => SupabaseService(client: sl()),
+  );
+
+  // Stripe Service - payment processing
+  sl.registerLazySingleton<StripeService>(
+    () => StripeService(supabaseService: sl()),
+  );
+
   // Push Notification Service - SINGLETON
   sl.registerLazySingleton<PushNotificationService>(
     () => PushNotificationService(supabaseClient: sl()),
@@ -49,6 +63,11 @@ Future<void> init() async {
   // Profile repository
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepository(supabaseClient: sl()),
+  );
+
+  // Stats repository
+  sl.registerLazySingleton<StatsRepository>(
+    () => StatsRepository(supabaseClient: sl()),
   );
 
   // Video repository
@@ -69,6 +88,11 @@ Future<void> init() async {
   // Message repository
   sl.registerLazySingleton<MessageRepository>(
     () => MessageRepository(supabaseClient: sl()),
+  );
+
+  // Payment repository
+  sl.registerLazySingleton<PaymentRepository>(
+    () => PaymentRepository(supabaseClient: sl(), stripeService: sl()),
   );
 
   // ============================================
@@ -95,7 +119,11 @@ Future<void> init() async {
 
   // ProfileBloc
   sl.registerFactory<ProfileBloc>(
-    () => ProfileBloc(profileRepository: sl(), videoRepository: sl()),
+    () => ProfileBloc(
+      profileRepository: sl(),
+      videoRepository: sl(),
+      statsRepository: sl(),
+    ),
   );
 
   // ============================================

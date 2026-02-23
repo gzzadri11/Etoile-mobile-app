@@ -303,16 +303,13 @@ abstract class StripeProducts {
   static const String posterCredit = 'poster_credit';
 }
 
-/// Stripe price IDs (to be set after creating products in Stripe)
+/// Stripe price IDs (from Stripe Dashboard - test mode)
 abstract class StripePrices {
-  // These should be replaced with actual price IDs from Stripe Dashboard
-  // Format: price_XXXXXXXXXXXXXXXXXXXXXXXX
-
   // Subscriptions (monthly)
-  static const String seekerPremiumMonthly = 'price_seeker_premium_monthly';
-  static const String recruiterPremiumMonthly = 'price_recruiter_premium_monthly';
+  static const String seekerPremiumMonthly = 'price_1T3hupIKNrg8W1BsqQFqUKu5';
+  static const String recruiterPremiumMonthly = 'price_1T3hwgIKNrg8W1Bs9MJ5To2P';
 
   // One-time
-  static const String videoCreditUnit = 'price_video_credit';
-  static const String posterCreditUnit = 'price_poster_credit';
+  static const String videoCreditUnit = 'price_1T3hxYIKNrg8W1Bs1iKdjUq2';
+  static const String posterCreditUnit = 'price_1T3hy2IKNrg8W1BsC4f0QGuJ';
 }

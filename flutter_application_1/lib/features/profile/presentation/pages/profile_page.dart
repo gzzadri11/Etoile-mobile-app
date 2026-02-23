@@ -12,7 +12,9 @@ import '../../../../shared/widgets/location_map_widget.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../data/models/seeker_profile_model.dart';
 import '../../data/models/recruiter_profile_model.dart';
+import '../../data/models/video_stats.dart';
 import '../bloc/profile_bloc.dart';
+import '../widgets/stats_card.dart';
 
 /// User profile page
 class ProfilePage extends StatelessWidget {
@@ -41,7 +43,11 @@ class _ProfilePageContent extends StatelessWidget {
         }
 
         if (state is SeekerProfileLoaded) {
-          return _SeekerProfileView(profile: state.profile);
+          return _SeekerProfileView(
+            profile: state.profile,
+            isPremium: state.isPremium,
+            stats: state.stats,
+          );
         }
 
         if (state is RecruiterProfileLoaded) {
@@ -50,6 +56,8 @@ class _ProfilePageContent extends StatelessWidget {
             presentationCount: state.presentationCount,
             offerCount: state.offerCount,
             posterCount: state.posterCount,
+            isPremium: state.isPremium,
+            stats: state.stats,
           );
         }
 
@@ -86,8 +94,14 @@ class _ProfilePageContent extends StatelessWidget {
 /// Seeker profile view
 class _SeekerProfileView extends StatelessWidget {
   final SeekerProfile profile;
+  final bool isPremium;
+  final VideoStats stats;
 
-  const _SeekerProfileView({required this.profile});
+  const _SeekerProfileView({
+    required this.profile,
+    required this.isPremium,
+    required this.stats,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +153,11 @@ class _SeekerProfileView extends StatelessWidget {
                 const SizedBox(height: AppTheme.spaceLg),
 
               // Statistics card
-              _StatisticsCard(isPremium: false),
+              StatsCard(
+                isPremium: isPremium,
+                stats: stats,
+                isSeeker: true,
+              ),
 
               const SizedBox(height: AppTheme.spaceLg),
 
@@ -187,12 +205,16 @@ class _RecruiterProfileView extends StatelessWidget {
   final int presentationCount;
   final int offerCount;
   final int posterCount;
+  final bool isPremium;
+  final VideoStats stats;
 
   const _RecruiterProfileView({
     required this.profile,
     this.presentationCount = 0,
     this.offerCount = 0,
     this.posterCount = 0,
+    required this.isPremium,
+    required this.stats,
   });
 
   @override
@@ -318,7 +340,11 @@ class _RecruiterProfileView extends StatelessWidget {
                     const SizedBox(height: AppTheme.spaceLg),
 
                     // Statistics card
-                    _StatisticsCard(isPremium: false),
+                    StatsCard(
+                      isPremium: isPremium,
+                      stats: stats,
+                      isSeeker: false,
+                    ),
 
                     const SizedBox(height: AppTheme.spaceLg),
 
@@ -829,64 +855,3 @@ class _PublicationSectionCard extends StatelessWidget {
   }
 }
 
-/// Statistics card
-class _StatisticsCard extends StatelessWidget {
-  final bool isPremium;
-
-  const _StatisticsCard({required this.isPremium});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppTheme.spaceMd),
-      decoration: BoxDecoration(
-        color: AppColors.tagBackground,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppColors.primaryYellow.withAlpha(75)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.bar_chart,
-                color: AppColors.primaryOrange,
-              ),
-              const SizedBox(width: AppTheme.spaceSm),
-              Text(
-                AppStrings.statistics,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppTheme.spaceMd),
-          if (isPremium)
-            const Text('Stats detaillees ici')
-          else
-            Column(
-              children: [
-                Text(
-                  AppStrings.infoStatsNonPremium,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.greyWarm,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppTheme.spaceMd),
-                OutlinedButton.icon(
-                  onPressed: () => context.push(AppRoutes.premium),
-                  icon: const Icon(Icons.star_outline),
-                  label: const Text(AppStrings.goPremium),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primaryOrange,
-                    side: const BorderSide(color: AppColors.primaryOrange),
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}

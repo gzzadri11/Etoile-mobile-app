@@ -17,7 +17,16 @@ import '../../features/profile/presentation/pages/edit_recruiter_profile_page.da
 import '../../features/video/presentation/pages/my_publications_page.dart';
 import '../../features/video/presentation/pages/publish_offer_page.dart';
 import '../../features/video/presentation/pages/video_record_page.dart';
+import '../../features/payment/data/repositories/payment_repository.dart';
+import '../../features/payment/presentation/bloc/payment_bloc.dart';
+import '../../features/payment/presentation/bloc/payment_event.dart';
+import '../../features/payment/presentation/pages/recruiter_premium_page.dart';
+import '../../features/payment/presentation/pages/seeker_premium_page.dart';
 import '../../features/profile/presentation/pages/public_recruiter_profile_page.dart';
+import '../../features/settings/presentation/pages/contact_support_page.dart';
+import '../../features/settings/presentation/pages/faq_page.dart';
+import '../../features/settings/presentation/pages/legal_page.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
 
 /// Application route names
@@ -53,7 +62,13 @@ abstract class AppRoutes {
   // Settings routes
   static const String settings = '/settings';
   static const String help = '/settings/help';
+  static const String faq = '/settings/faq';
+  static const String contactSupport = '/settings/contact';
+  static const String termsOfService = '/settings/terms';
+  static const String privacyPolicy = '/settings/privacy';
   static const String premium = '/premium';
+  static const String premiumSeeker = '/premium/seeker';
+  static const String premiumRecruiter = '/premium/recruiter';
 
   // Helper to build chat route
   static String chatWith(String conversationId) => '/messages/$conversationId';
@@ -225,20 +240,54 @@ class AppRouter {
         },
       ),
 
-      // Premium page
+      // Premium pages
       GoRoute(
         path: AppRoutes.premium,
         builder: (context, state) => const _PremiumPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.premiumSeeker,
+        builder: (context, state) => BlocProvider(
+          create: (_) => PaymentBloc(
+            paymentRepository: GetIt.I<PaymentRepository>(),
+          )..add(const PaymentLoadStatus()),
+          child: const SeekerPremiumPage(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.premiumRecruiter,
+        builder: (context, state) => BlocProvider(
+          create: (_) => PaymentBloc(
+            paymentRepository: GetIt.I<PaymentRepository>(),
+          )..add(const PaymentLoadStatus()),
+          child: const RecruiterPremiumPage(),
+        ),
       ),
 
       // Settings
       GoRoute(
         path: AppRoutes.settings,
-        builder: (context, state) => const _SettingsPage(),
+        builder: (context, state) => const SettingsPage(),
         routes: [
           GoRoute(
             path: 'help',
-            builder: (context, state) => const _HelpPage(),
+            builder: (context, state) => LegalPage.legalNotice(),
+          ),
+          GoRoute(
+            path: 'faq',
+            builder: (context, state) => const FaqPage(),
+          ),
+          GoRoute(
+            path: 'contact',
+            builder: (context, state) => const ContactSupportPage(),
+          ),
+          GoRoute(
+            path: 'terms',
+            builder: (context, state) => LegalPage.termsOfService(),
+          ),
+          GoRoute(
+            path: 'privacy',
+            builder: (context, state) => LegalPage.privacyPolicy(),
           ),
         ],
       ),
@@ -366,30 +415,6 @@ class _PremiumPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Premium')),
       body: const Center(child: Text('Premium Page - A implementer')),
-    );
-  }
-}
-
-class _SettingsPage extends StatelessWidget {
-  const _SettingsPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Parametres')),
-      body: const Center(child: Text('Settings Page - A implementer')),
-    );
-  }
-}
-
-class _HelpPage extends StatelessWidget {
-  const _HelpPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Aide')),
-      body: const Center(child: Text('Help Page - A implementer')),
     );
   }
 }

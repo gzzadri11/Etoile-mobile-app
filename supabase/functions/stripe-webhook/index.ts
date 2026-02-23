@@ -176,22 +176,20 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 /**
- * Handle successful checkout session (for one-time purchases)
+ * Handle successful payment intent (for one-time credit purchases)
+ *
+ * Our create-payment-intent Edge Function creates raw PaymentIntents
+ * (not Checkout Sessions), so this handler processes credit purchases.
  */
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  console.log('Processing checkout.session.completed:', session.id)
+async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+  console.log('Processing payment_intent.succeeded:', paymentIntent.id)
 
-  if (session.mode !== 'payment') {
-    console.log('Not a one-time payment, skipping')
-    return
-  }
-
-  const userId = session.metadata?.userId
-  const productType = session.metadata?.productType
-  const quantity = parseInt(session.metadata?.quantity || '1')
+  const userId = paymentIntent.metadata?.userId
+  const productType = paymentIntent.metadata?.productType
+  const quantity = parseInt(paymentIntent.metadata?.quantity || '1')
 
   if (!userId || !productType) {
-    console.error('Missing metadata in checkout session')
+    console.log('No credit metadata on payment intent, skipping (likely a subscription payment)')
     return
   }
 
@@ -202,9 +200,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       user_id: userId,
       product_type: productType,
       quantity,
-      unit_price_cents: session.amount_total ? Math.round(session.amount_total / quantity) : 0,
-      total_price_cents: session.amount_total || 0,
-      stripe_payment_intent_id: session.payment_intent as string,
+      unit_price_cents: paymentIntent.amount ? Math.round(paymentIntent.amount / quantity) : 0,
+      total_price_cents: paymentIntent.amount || 0,
+      stripe_payment_intent_id: paymentIntent.id,
       status: 'completed',
     })
 
@@ -304,8 +302,8 @@ serve(async (req) => {
         await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
         break
 
-      case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session)
+      case 'payment_intent.succeeded':
+        await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent)
         break
 
       default:
