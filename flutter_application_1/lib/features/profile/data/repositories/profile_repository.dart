@@ -183,6 +183,50 @@ class ProfileRepository {
   }
 
   // ===========================================================================
+  // DOCUMENT JUSTIFICATIF
+  // ===========================================================================
+
+  /// Upload a verification document to Supabase Storage (private bucket).
+  ///
+  /// Returns the storage path. Also updates the recruiter_profiles table
+  /// with document_url, document_type, and document_uploaded_at.
+  Future<String> uploadDocument(
+    Uint8List bytes,
+    String extension, {
+    required String documentType,
+  }) async {
+    final userId = currentUserId;
+    if (userId == null) throw Exception('Utilisateur non connecte');
+
+    final path = '$userId/document.$extension';
+
+    await _supabaseClient.storage.from('verification-docs').uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: extension == 'pdf'
+                ? 'application/pdf'
+                : 'image/$extension',
+          ),
+        );
+
+    // Get the URL (private bucket — use createSignedUrl for viewing)
+    final url = _supabaseClient.storage
+        .from('verification-docs')
+        .getPublicUrl(path);
+
+    // Update recruiter profile with document info
+    await _supabaseClient.from('recruiter_profiles').update({
+      'document_url': url,
+      'document_type': documentType,
+      'document_uploaded_at': DateTime.now().toIso8601String(),
+    }).eq('user_id', userId);
+
+    return url;
+  }
+
+  // ===========================================================================
   // USER ROLE
   // ===========================================================================
 

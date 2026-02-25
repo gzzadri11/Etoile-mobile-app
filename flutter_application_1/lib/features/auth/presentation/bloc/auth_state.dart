@@ -53,6 +53,11 @@ class AuthPasswordResetSent extends AuthState {
   const AuthPasswordResetSent();
 }
 
+/// Account deleted (RGPD soft delete)
+class AuthAccountDeleted extends AuthState {
+  const AuthAccountDeleted();
+}
+
 /// Authentication error occurred
 class AuthError extends AuthState {
   final String message;

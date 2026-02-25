@@ -48,7 +48,8 @@ class StatsCard extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spaceMd),
 
-          if (isPremium)
+          // B2B model: seekers always see stats, recruiters need premium
+          if (isSeeker || isPremium)
             _PremiumStatsContent(stats: stats, isSeeker: isSeeker)
           else
             _NonPremiumContent(isSeeker: isSeeker),
@@ -228,11 +229,7 @@ class _NonPremiumContent extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spaceMd),
         OutlinedButton.icon(
-          onPressed: () => context.push(
-            isSeeker
-                ? AppRoutes.premiumSeeker
-                : AppRoutes.premiumRecruiter,
-          ),
+          onPressed: () => context.push(AppRoutes.premiumRecruiter),
           icon: const Icon(Icons.star_outline),
           label: const Text(AppStrings.goPremium),
           style: OutlinedButton.styleFrom(

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/services/sirene_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
@@ -24,10 +26,15 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _siretController = TextEditingController();
+
+  final _sireneService = SireneService();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String _selectedRole = 'seeker';
+  bool _siretVerifying = false;
+  String? _siretError;
 
   @override
   void dispose() {
@@ -35,11 +42,49 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _siretController.dispose();
     super.dispose();
   }
 
-  void _onRegisterPressed() {
-    if (_formKey.currentState?.validate() ?? false) {
+  Future<void> _onRegisterPressed() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    // If recruiter, verify SIRET first
+    if (_selectedRole == 'recruiter') {
+      setState(() {
+        _siretVerifying = true;
+        _siretError = null;
+      });
+
+      final result = await _sireneService.verifySiret(
+        _siretController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      if (!result.isValid) {
+        setState(() {
+          _siretVerifying = false;
+          _siretError = result.errorMessage;
+        });
+        return;
+      }
+
+      setState(() => _siretVerifying = false);
+
+      context.read<AuthBloc>().add(
+            AuthRegisterRequested(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+              firstName: _firstNameController.text.trim(),
+              role: _selectedRole,
+              siret: _siretController.text.trim(),
+              companyName: result.companyName,
+              siren: result.siren,
+              legalForm: result.legalForm,
+            ),
+          );
+    } else {
       context.read<AuthBloc>().add(
             AuthRegisterRequested(
               email: _emailController.text.trim(),
@@ -96,7 +141,7 @@ class _RegisterPageState extends State<RegisterPage> {
           }
         },
         builder: (context, state) {
-          final isLoading = state is AuthLoading;
+          final isLoading = state is AuthLoading || _siretVerifying;
 
           return SafeArea(
             child: SingleChildScrollView(
@@ -141,6 +186,47 @@ class _RegisterPageState extends State<RegisterPage> {
                         return null;
                       },
                     ),
+
+                    // SIRET field (only for recruiters)
+                    if (_selectedRole == 'recruiter') ...[
+                      const SizedBox(height: AppTheme.spaceMd),
+                      EtoileTextField(
+                        controller: _siretController,
+                        label: 'SIRET',
+                        hintText: '14 chiffres',
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        prefixIcon: Icons.badge_outlined,
+                        enabled: !isLoading,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(14),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Le SIRET est obligatoire';
+                          }
+                          if (value.length != 14) {
+                            return 'Le SIRET doit contenir 14 chiffres';
+                          }
+                          return null;
+                        },
+                      ),
+                      if (_siretError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: AppTheme.spaceXs,
+                            left: 12,
+                          ),
+                          child: Text(
+                            _siretError!,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: AppColors.error),
+                          ),
+                        ),
+                    ],
 
                     const SizedBox(height: AppTheme.spaceMd),
 
@@ -299,7 +385,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 subtitle: "d'emploi",
                 icon: Icons.person_search_outlined,
                 isSelected: _selectedRole == 'seeker',
-                onTap: () => setState(() => _selectedRole = 'seeker'),
+                onTap: () => setState(() {
+                  _selectedRole = 'seeker';
+                  _siretError = null;
+                }),
               ),
             ),
             const SizedBox(width: AppTheme.spaceMd),
@@ -309,7 +398,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 subtitle: "d'entreprise",
                 icon: Icons.business_outlined,
                 isSelected: _selectedRole == 'recruiter',
-                onTap: () => setState(() => _selectedRole = 'recruiter'),
+                onTap: () => setState(() {
+                  _selectedRole = 'recruiter';
+                  _siretError = null;
+                }),
               ),
             ),
           ],

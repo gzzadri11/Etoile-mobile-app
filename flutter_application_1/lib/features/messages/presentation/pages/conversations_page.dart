@@ -9,6 +9,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/message_model.dart';
+import '../../data/repositories/block_repository.dart';
 import '../../data/repositories/message_repository.dart';
 
 /// Conversations list page
@@ -78,13 +79,23 @@ class _ConversationsPageState extends State<ConversationsPage> {
 
     try {
       final messageRepository = GetIt.I<MessageRepository>();
+      final blockRepository = GetIt.I<BlockRepository>();
       debugPrint('[ConversationsPage] Repository obtained, fetching...');
       final conversations = await messageRepository.getConversations();
-      debugPrint('[ConversationsPage] Got ${conversations.length} conversations');
+      final blockedIds = await blockRepository.getBlockedUserIds();
+      debugPrint('[ConversationsPage] Got ${conversations.length} conversations, ${blockedIds.length} blocked');
+
+      final currentUserId = messageRepository.currentUserId ?? '';
+      final filtered = blockedIds.isEmpty
+          ? conversations
+          : conversations
+              .where((c) =>
+                  !blockedIds.contains(c.getOtherParticipantId(currentUserId)))
+              .toList();
 
       if (mounted) {
         setState(() {
-          _conversations = conversations;
+          _conversations = filtered;
           _isLoading = false;
         });
       }

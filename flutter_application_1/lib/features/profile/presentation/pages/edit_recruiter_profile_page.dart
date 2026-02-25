@@ -47,6 +47,12 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
   // Map markers
   List<MapMarker> _mapMarkers = [];
 
+  // Document upload state
+  Uint8List? _pickedDocBytes;
+  String? _pickedDocExtension;
+  String? _pickedDocType;
+  bool _isUploadingDoc = false;
+
   bool _isInitialized = false;
 
   // Sectors d'activite
@@ -149,6 +155,110 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
       _pickedCoverBytes = bytes;
       _pickedCoverExtension = (ext == 'png') ? 'png' : 'jpeg';
     });
+  }
+
+  Future<void> _pickDocument() async {
+    // Show bottom sheet to select document type
+    final docType = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(AppTheme.spaceLg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Type de document',
+              style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: AppTheme.spaceMd),
+            ListTile(
+              leading: const Icon(Icons.description),
+              title: const Text('Extrait Kbis'),
+              onTap: () => Navigator.pop(ctx, 'Kbis'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.badge),
+              title: const Text('Carte professionnelle'),
+              onTap: () => Navigator.pop(ctx, 'Carte professionnelle'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.article),
+              title: const Text('Autre justificatif'),
+              onTap: () => Navigator.pop(ctx, 'Autre'),
+            ),
+            const SizedBox(height: AppTheme.spaceSm),
+          ],
+        ),
+      ),
+    );
+
+    if (docType == null || !mounted) return;
+
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 2048,
+      maxHeight: 2048,
+      imageQuality: 90,
+    );
+    if (picked == null) return;
+
+    final bytes = await picked.readAsBytes();
+    final ext = picked.name.split('.').last.toLowerCase();
+
+    setState(() {
+      _pickedDocBytes = bytes;
+      _pickedDocExtension = (ext == 'png') ? 'png' : 'jpeg';
+      _pickedDocType = docType;
+    });
+  }
+
+  Future<void> _uploadDocument() async {
+    if (_pickedDocBytes == null) return;
+
+    setState(() => _isUploadingDoc = true);
+
+    try {
+      final repo = GetIt.I<ProfileRepository>();
+      await repo.uploadDocument(
+        _pickedDocBytes!,
+        _pickedDocExtension ?? 'jpeg',
+        documentType: _pickedDocType ?? 'Autre',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Document envoye avec succes'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        // Reload profile to show updated document status
+        context.read<ProfileBloc>().add(const ProfileLoadRequested());
+        setState(() {
+          _pickedDocBytes = null;
+          _pickedDocExtension = null;
+          _pickedDocType = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur upload document: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingDoc = false);
+    }
   }
 
   Future<void> _onSave(RecruiterProfile currentProfile) async {
@@ -305,7 +415,7 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                   const SizedBox(height: AppTheme.spaceMd),
 
                   DropdownButtonFormField<String>(
-                    value: _selectedSector,
+                    initialValue: _selectedSector,
                     decoration: InputDecoration(
                       labelText: 'Selectionnez un secteur',
                       prefixIcon: const Icon(Icons.category_outlined),
@@ -337,7 +447,7 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                   const SizedBox(height: AppTheme.spaceMd),
 
                   DropdownButtonFormField<String>(
-                    value: _selectedCompanySize,
+                    initialValue: _selectedCompanySize,
                     decoration: InputDecoration(
                       labelText: 'Nombre de salaries',
                       prefixIcon: const Icon(Icons.people_outline),
@@ -404,6 +514,11 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: AppTheme.spaceLg),
+
+                  // === Document justificatif ===
+                  _buildDocumentSection(profile),
 
                   const SizedBox(height: AppTheme.spaceLg),
 
@@ -553,5 +668,225 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
             fontWeight: FontWeight.bold,
           ),
     );
+  }
+
+  Widget _buildDocumentSection(RecruiterProfile profile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Document de verification'),
+        const SizedBox(height: AppTheme.spaceSm),
+
+        // Verified state
+        if (profile.isVerified) ...[
+          _buildDocStatusCard(
+            icon: Icons.verified,
+            iconColor: AppColors.success,
+            borderColor: AppColors.success,
+            title: 'Compte verifie',
+            subtitle: profile.verifiedAt != null
+                ? 'Verifie le ${_formatDate(profile.verifiedAt!)}'
+                : 'Votre compte est verifie',
+          ),
+        ]
+        // Rejected state
+        else if (profile.isRejected) ...[
+          _buildDocStatusCard(
+            icon: Icons.error,
+            iconColor: AppColors.error,
+            borderColor: AppColors.error,
+            title: 'Verification rejetee',
+            subtitle: profile.rejectionReason ?? 'Motif non precise',
+          ),
+          const SizedBox(height: AppTheme.spaceSm),
+          Text(
+            'Vous pouvez soumettre un nouveau document.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.greyWarm,
+                ),
+          ),
+          const SizedBox(height: AppTheme.spaceSm),
+          _buildDocumentPicker(),
+        ]
+        // Document already uploaded, pending review
+        else if (profile.documentUrl != null &&
+            profile.documentUrl!.isNotEmpty &&
+            _pickedDocBytes == null) ...[
+          _buildDocStatusCard(
+            icon: Icons.hourglass_top,
+            iconColor: AppColors.warning,
+            borderColor: AppColors.warning,
+            title:
+                'Document envoye${profile.documentType != null ? ' (${profile.documentType})' : ''}',
+            subtitle: profile.documentUploadedAt != null
+                ? 'Envoye le ${_formatDate(profile.documentUploadedAt!)} — En attente de verification'
+                : 'En attente de verification par un administrateur',
+          ),
+        ]
+        // No document yet
+        else ...[
+          if (_pickedDocBytes == null) ...[
+            Text(
+              'Uploadez un justificatif (Kbis, carte pro) pour faire verifier votre compte.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.greyWarm,
+                  ),
+            ),
+            const SizedBox(height: AppTheme.spaceMd),
+          ],
+          _buildDocumentPicker(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDocStatusCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color borderColor,
+    required String title,
+    required String subtitle,
+  }) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: borderColor.withAlpha(80)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 28),
+            const SizedBox(width: AppTheme.spaceMd),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.greyWarm,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDocumentPicker() {
+    return Column(
+      children: [
+        // Preview if picked
+        if (_pickedDocBytes != null) ...[
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: AppColors.success.withAlpha(80)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppTheme.spaceMd),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(
+                      _pickedDocBytes!,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.spaceMd),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _pickedDocType ?? 'Document',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                        ),
+                        Text(
+                          'Pret a envoyer',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.success,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => setState(() {
+                      _pickedDocBytes = null;
+                      _pickedDocExtension = null;
+                      _pickedDocType = null;
+                    }),
+                    icon: const Icon(Icons.close, color: AppColors.greyWarm),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spaceSm),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isUploadingDoc ? null : _uploadDocument,
+              icon: _isUploadingDoc
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.cloud_upload),
+              label: Text(
+                  _isUploadingDoc ? 'Envoi en cours...' : 'Envoyer le document'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+        ] else ...[
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _pickDocument,
+              icon: const Icon(Icons.add_photo_alternate),
+              label: const Text('Choisir un fichier'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
   }
 }

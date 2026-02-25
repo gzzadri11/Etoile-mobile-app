@@ -48,6 +48,38 @@ class PaymentCancelled extends PaymentState {
   const PaymentCancelled();
 }
 
+/// Payment history loaded (subscription + purchases)
+class PaymentHistoryLoaded extends PaymentState {
+  final bool isPremium;
+  final String? planType;
+  final DateTime? currentPeriodEnd;
+  final String? subscriptionStatus;
+  final int videoCredits;
+  final int posterCredits;
+  final List<Map<String, dynamic>> transactions;
+
+  const PaymentHistoryLoaded({
+    required this.isPremium,
+    this.planType,
+    this.currentPeriodEnd,
+    this.subscriptionStatus,
+    this.videoCredits = 0,
+    this.posterCredits = 0,
+    this.transactions = const [],
+  });
+
+  @override
+  List<Object?> get props => [
+        isPremium,
+        planType,
+        currentPeriodEnd,
+        subscriptionStatus,
+        videoCredits,
+        posterCredits,
+        transactions,
+      ];
+}
+
 /// Payment or status load failed
 class PaymentError extends PaymentState {
   final String message;

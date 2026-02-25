@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
+import '../constants/app_colors.dart';
+import '../theme/app_theme.dart';
+
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
@@ -21,13 +24,22 @@ import '../../features/payment/data/repositories/payment_repository.dart';
 import '../../features/payment/presentation/bloc/payment_bloc.dart';
 import '../../features/payment/presentation/bloc/payment_event.dart';
 import '../../features/payment/presentation/pages/recruiter_premium_page.dart';
-import '../../features/payment/presentation/pages/seeker_premium_page.dart';
+import '../../features/payment/presentation/pages/subscription_management_page.dart';
 import '../../features/profile/presentation/pages/public_recruiter_profile_page.dart';
+import '../../features/admin/data/repositories/admin_repository.dart';
+import '../../features/admin/presentation/bloc/admin_bloc.dart';
+import '../../features/admin/presentation/bloc/admin_event.dart';
+import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
+import '../../features/admin/presentation/pages/verification_queue_page.dart';
+import '../../features/admin/presentation/pages/recruiter_verification_page.dart';
+import '../../features/admin/presentation/pages/reports_page.dart';
+import '../../features/admin/presentation/pages/admin_stats_page.dart';
 import '../../features/settings/presentation/pages/contact_support_page.dart';
 import '../../features/settings/presentation/pages/faq_page.dart';
 import '../../features/settings/presentation/pages/legal_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
+import '../../shared/widgets/splash_screen.dart';
 
 /// Application route names
 abstract class AppRoutes {
@@ -67,8 +79,14 @@ abstract class AppRoutes {
   static const String termsOfService = '/settings/terms';
   static const String privacyPolicy = '/settings/privacy';
   static const String premium = '/premium';
-  static const String premiumSeeker = '/premium/seeker';
   static const String premiumRecruiter = '/premium/recruiter';
+  static const String premiumManage = '/premium/manage';
+
+  // Admin routes
+  static const String admin = '/admin';
+  static const String adminVerifications = '/admin/verifications';
+  static const String adminReports = '/admin/reports';
+  static const String adminStats = '/admin/stats';
 
   // Helper to build chat route
   static String chatWith(String conversationId) => '/messages/$conversationId';
@@ -134,7 +152,7 @@ class AppRouter {
       // Splash screen
       GoRoute(
         path: AppRoutes.splash,
-        builder: (context, state) => const _SplashPage(),
+        builder: (context, state) => const _SplashRedirect(),
       ),
 
       // Welcome/Onboarding
@@ -182,12 +200,26 @@ class AppRouter {
           ),
           GoRoute(
             path: AppRoutes.record,
+            redirect: (context, state) {
+              final authState = authBloc.state;
+              if (authState is AuthAuthenticated && authState.isRecruiter) {
+                return AppRoutes.publish;
+              }
+              return null;
+            },
             pageBuilder: (context, state) => const NoTransitionPage(
               child: VideoRecordPage(),
             ),
           ),
           GoRoute(
             path: AppRoutes.publish,
+            redirect: (context, state) {
+              final authState = authBloc.state;
+              if (authState is AuthAuthenticated && authState.isSeeker) {
+                return AppRoutes.record;
+              }
+              return null;
+            },
             pageBuilder: (context, state) => const NoTransitionPage(
               child: PublishOfferPage(),
             ),
@@ -246,21 +278,21 @@ class AppRouter {
         builder: (context, state) => const _PremiumPage(),
       ),
       GoRoute(
-        path: AppRoutes.premiumSeeker,
-        builder: (context, state) => BlocProvider(
-          create: (_) => PaymentBloc(
-            paymentRepository: GetIt.I<PaymentRepository>(),
-          )..add(const PaymentLoadStatus()),
-          child: const SeekerPremiumPage(),
-        ),
-      ),
-      GoRoute(
         path: AppRoutes.premiumRecruiter,
         builder: (context, state) => BlocProvider(
           create: (_) => PaymentBloc(
             paymentRepository: GetIt.I<PaymentRepository>(),
           )..add(const PaymentLoadStatus()),
           child: const RecruiterPremiumPage(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.premiumManage,
+        builder: (context, state) => BlocProvider(
+          create: (_) => PaymentBloc(
+            paymentRepository: GetIt.I<PaymentRepository>(),
+          )..add(const PaymentLoadHistory()),
+          child: const SubscriptionManagementPage(),
         ),
       ),
 
@@ -288,6 +320,67 @@ class AppRouter {
           GoRoute(
             path: 'privacy',
             builder: (context, state) => LegalPage.privacyPolicy(),
+          ),
+        ],
+      ),
+
+      // Admin (guard: redirect non-admin to feed)
+      GoRoute(
+        path: AppRoutes.admin,
+        redirect: (context, state) {
+          final authState = authBloc.state;
+          if (authState is! AuthAuthenticated || !authState.isAdmin) {
+            return AppRoutes.feed;
+          }
+          return null;
+        },
+        builder: (context, state) => BlocProvider(
+          create: (_) => AdminBloc(
+            adminRepository: GetIt.I<AdminRepository>(),
+          )..add(const AdminDashboardLoadRequested()),
+          child: const AdminDashboardPage(),
+        ),
+        routes: [
+          GoRoute(
+            path: 'verifications',
+            builder: (context, state) => BlocProvider(
+              create: (_) => AdminBloc(
+                adminRepository: GetIt.I<AdminRepository>(),
+              )..add(const AdminVerificationListLoadRequested()),
+              child: const VerificationQueuePage(),
+            ),
+            routes: [
+              GoRoute(
+                path: ':userId',
+                builder: (context, state) {
+                  final userId = state.pathParameters['userId']!;
+                  return BlocProvider(
+                    create: (_) => AdminBloc(
+                      adminRepository: GetIt.I<AdminRepository>(),
+                    ),
+                    child: RecruiterVerificationPage(userId: userId),
+                  );
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'reports',
+            builder: (context, state) => BlocProvider(
+              create: (_) => AdminBloc(
+                adminRepository: GetIt.I<AdminRepository>(),
+              )..add(const AdminReportsListLoadRequested()),
+              child: const ReportsPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'stats',
+            builder: (context, state) => BlocProvider(
+              create: (_) => AdminBloc(
+                adminRepository: GetIt.I<AdminRepository>(),
+              )..add(const AdminStatsLoadRequested()),
+              child: const AdminStatsPage(),
+            ),
           ),
         ],
       ),
@@ -320,32 +413,12 @@ class GoRouterRefreshStream extends ChangeNotifier {
 // PLACEHOLDER PAGES (to be implemented in features)
 // ============================================
 
-class _SplashPage extends StatelessWidget {
-  const _SplashPage();
+class _SplashRedirect extends StatelessWidget {
+  const _SplashRedirect();
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'ETOILE',
-              style: TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFFFB800),
-              ),
-            ),
-            SizedBox(height: 16),
-            CircularProgressIndicator(
-              color: Color(0xFFFFB800),
-            ),
-          ],
-        ),
-      ),
-    );
+    return const SplashScreen();
   }
 }
 
@@ -357,27 +430,54 @@ class _WelcomePage extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(AppTheme.spaceLg),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              const Text(
-                'ETOILE',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFFFB800),
+
+              // Logo
+              Container(
+                width: 64,
+                height: 64,
+                decoration: const BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.star_rounded,
+                  color: AppColors.black,
+                  size: 36,
                 ),
               ),
-              const SizedBox(height: 8),
+
+              const SizedBox(height: AppTheme.spaceLg),
+
+              ShaderMask(
+                shaderCallback: (bounds) =>
+                    AppColors.primaryGradient.createShader(bounds),
+                child: const Text(
+                  'ETOILE',
+                  style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
+                    letterSpacing: 6,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: AppTheme.spaceSm),
+
               Text(
                 '40 secondes pour briller',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.grey[600],
+                      color: AppColors.greyWarm,
                     ),
               ),
+
               const Spacer(),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -385,7 +485,9 @@ class _WelcomePage extends StatelessWidget {
                   child: const Text('Je cherche un emploi'),
                 ),
               ),
-              const SizedBox(height: 12),
+
+              const SizedBox(height: AppTheme.spaceMd),
+
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -393,12 +495,15 @@ class _WelcomePage extends StatelessWidget {
                   child: const Text('Je recrute'),
                 ),
               ),
-              const SizedBox(height: 24),
+
+              const SizedBox(height: AppTheme.spaceLg),
+
               TextButton(
                 onPressed: () => context.push(AppRoutes.login),
                 child: const Text('Deja un compte ? Se connecter'),
               ),
-              const SizedBox(height: 48),
+
+              const SizedBox(height: AppTheme.space2Xl),
             ],
           ),
         ),

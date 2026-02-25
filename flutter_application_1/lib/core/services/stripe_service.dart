@@ -294,8 +294,7 @@ enum PaymentStatus {
 
 /// Stripe product IDs (match with Stripe Dashboard)
 abstract class StripeProducts {
-  // Subscriptions
-  static const String seekerPremium = 'seeker_premium';
+  // Subscriptions (B2B: recruiters only)
   static const String recruiterPremium = 'recruiter_premium';
 
   // One-time purchases
@@ -305,8 +304,7 @@ abstract class StripeProducts {
 
 /// Stripe price IDs (from Stripe Dashboard - test mode)
 abstract class StripePrices {
-  // Subscriptions (monthly)
-  static const String seekerPremiumMonthly = 'price_1T3hupIKNrg8W1BsqQFqUKu5';
+  // Subscriptions (monthly - B2B: recruiters only)
   static const String recruiterPremiumMonthly = 'price_1T3hwgIKNrg8W1Bs9MJ5To2P';
 
   // One-time

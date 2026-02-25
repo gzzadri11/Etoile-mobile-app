@@ -40,9 +40,9 @@ class PaymentRepository {
     if (userId == null) return false;
 
     final response = await _supabaseClient
-        .from('users')
+        .from('user_roles')
         .select('is_premium')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .single();
 
     return response['is_premium'] == true;
@@ -50,7 +50,7 @@ class PaymentRepository {
 
   /// Subscribe to a premium plan via Stripe Payment Sheet
   ///
-  /// [planType] must be 'seeker_premium' or 'recruiter_premium'
+  /// [planType] must be 'recruiter_premium' (B2B model)
   Future<PaymentResult> subscribe(String planType) async {
     final priceId = _priceIdForPlan(planType);
     debugPrint('[PaymentRepository] Subscribe: planType=$planType, priceId=$priceId');
@@ -85,15 +85,81 @@ class PaymentRepository {
     return _stripeService.cancelSubscription(stripeSubId);
   }
 
+  /// Get payment history (all subscriptions + purchases)
+  Future<List<Map<String, dynamic>>> getPaymentHistory() async {
+    final userId = _supabaseClient.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    final List<Map<String, dynamic>> transactions = [];
+
+    // Subscriptions
+    final subs = await _supabaseClient
+        .from('subscriptions')
+        .select('id, plan_type, status, created_at, current_period_end')
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+
+    for (final sub in subs) {
+      transactions.add({
+        'date': sub['created_at'],
+        'description': 'Premium Recruteur',
+        'amount': '499 EUR',
+        'status': sub['status'],
+        'type': 'subscription',
+      });
+    }
+
+    // Purchases
+    final purchases = await _supabaseClient
+        .from('purchases')
+        .select('id, description, amount, status, created_at')
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+
+    for (final p in purchases) {
+      transactions.add({
+        'date': p['created_at'],
+        'description': p['description'] ?? 'Achat',
+        'amount': '${p['amount']} EUR',
+        'status': p['status'],
+        'type': 'purchase',
+      });
+    }
+
+    // Sort by date desc
+    transactions.sort((a, b) =>
+        (b['date'] as String).compareTo(a['date'] as String));
+
+    debugPrint('[PaymentRepository] History: ${transactions.length} transactions');
+    return transactions;
+  }
+
+  /// Get recruiter credits
+  Future<Map<String, int>> getRecruiterCredits() async {
+    final userId = _supabaseClient.auth.currentUser?.id;
+    if (userId == null) return {'video_credits': 0, 'poster_credits': 0};
+
+    final response = await _supabaseClient
+        .from('recruiter_profiles')
+        .select('video_credits, poster_credits')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (response == null) return {'video_credits': 0, 'poster_credits': 0};
+
+    return {
+      'video_credits': (response['video_credits'] as num?)?.toInt() ?? 0,
+      'poster_credits': (response['poster_credits'] as num?)?.toInt() ?? 0,
+    };
+  }
+
   // ===========================================================================
   // HELPERS
   // ===========================================================================
 
-  /// Map plan type to Stripe price ID
+  /// Map plan type to Stripe price ID (B2B: recruiters only)
   String _priceIdForPlan(String planType) {
     switch (planType) {
-      case 'seeker_premium':
-        return StripePrices.seekerPremiumMonthly;
       case 'recruiter_premium':
         return StripePrices.recruiterPremiumMonthly;
       default:

@@ -11,6 +11,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../messages/data/repositories/conversation_repository.dart';
+import '../../../report/presentation/widgets/report_dialog.dart';
 import '../../data/models/feed_item_model.dart';
 import '../bloc/feed_bloc.dart';
 import '../widgets/feed_video_player.dart';
@@ -574,6 +575,16 @@ class _VideoCard extends StatelessWidget {
                 icon: Icons.person_outline,
                 label: 'Profil',
                 onTap: () => _onProfileTap(context),
+              ),
+              const SizedBox(height: AppTheme.spaceMd),
+              _ActionButton(
+                icon: Icons.flag_outlined,
+                label: 'Signaler',
+                onTap: () => showReportDialog(
+                  context,
+                  reportedUserId: feedItem.video.userId,
+                  reportedVideoId: feedItem.video.id,
+                ),
               ),
             ],
           ),

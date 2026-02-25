@@ -126,6 +126,15 @@ abstract class AppStrings {
   static const String about = 'A propos';
 
   // ============================================
+  // ADMIN
+  // ============================================
+  static const String administration = 'Administration';
+  static const String adminDashboard = 'Tableau de bord';
+  static const String adminVerifications = 'Verifications';
+  static const String adminReports = 'Signalements';
+  static const String adminStats = 'Statistiques';
+
+  // ============================================
   // ACTIONS
   // ============================================
   static const String continueAction = 'Continuer';

@@ -22,9 +22,9 @@ class StatsRepository {
 
     try {
       final response = await _supabaseClient
-          .from('users')
+          .from('user_roles')
           .select('is_premium')
-          .eq('id', userId)
+          .eq('user_id', userId)
           .maybeSingle();
 
       return response?['is_premium'] == true;

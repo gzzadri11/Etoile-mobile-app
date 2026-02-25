@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../messages/data/repositories/block_repository.dart';
 import '../../data/models/feed_item_model.dart';
 import '../../data/repositories/feed_repository.dart';
 
@@ -10,9 +11,13 @@ part 'feed_state.dart';
 /// BLoC for managing feed state
 class FeedBloc extends Bloc<FeedEvent, FeedState> {
   final FeedRepository _feedRepository;
+  final BlockRepository _blockRepository;
 
-  FeedBloc({required FeedRepository feedRepository})
-      : _feedRepository = feedRepository,
+  FeedBloc({
+    required FeedRepository feedRepository,
+    required BlockRepository blockRepository,
+  })  : _feedRepository = feedRepository,
+        _blockRepository = blockRepository,
         super(const FeedInitial()) {
     on<FeedLoadRequested>(_onLoadRequested);
     on<FeedLoadMoreRequested>(_onLoadMoreRequested);
@@ -184,18 +189,34 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     required int offset,
     FeedFilters? filters,
   }) async {
+    List<FeedItem> items;
     if (role == 'seeker' && feedTab == 'discover') {
-      return _feedRepository.getSeekerDiscoverFeed(
+      items = await _feedRepository.getSeekerDiscoverFeed(
           limit: limit, offset: offset, filters: filters);
+    } else {
+      items = await switch (role) {
+        'seeker' => _feedRepository.getSeekerOffersFeed(
+            limit: limit, offset: offset, filters: filters),
+        'recruiter' => _feedRepository.getRecruiterFeed(
+            limit: limit, offset: offset, filters: filters),
+        _ => _feedRepository.getMixedFeed(
+            limit: limit, offset: offset, filters: filters),
+      };
     }
-    return switch (role) {
-      'seeker' => _feedRepository.getSeekerOffersFeed(
-          limit: limit, offset: offset, filters: filters),
-      'recruiter' => _feedRepository.getRecruiterFeed(
-          limit: limit, offset: offset, filters: filters),
-      _ => _feedRepository.getMixedFeed(
-          limit: limit, offset: offset, filters: filters),
-    };
+
+    // Filter out blocked users
+    try {
+      final blockedIds = await _blockRepository.getBlockedUserIds();
+      if (blockedIds.isNotEmpty) {
+        items = items
+            .where((item) => !blockedIds.contains(item.video.userId))
+            .toList();
+      }
+    } catch (_) {
+      // Silently fail - don't break feed if block check fails
+    }
+
+    return items;
   }
 
   /// Record video view

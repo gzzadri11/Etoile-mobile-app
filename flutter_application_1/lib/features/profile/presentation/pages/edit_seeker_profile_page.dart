@@ -361,7 +361,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                   const SizedBox(height: AppTheme.spaceMd),
 
                   DropdownButtonFormField<String>(
-                    value: _selectedExperience,
+                    initialValue: _selectedExperience,
                     decoration: InputDecoration(
                       labelText: 'Niveau d\'experience',
                       border: OutlineInputBorder(
@@ -390,7 +390,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                   const SizedBox(height: AppTheme.spaceMd),
 
                   DropdownButtonFormField<String>(
-                    value: _selectedAvailability,
+                    initialValue: _selectedAvailability,
                     decoration: InputDecoration(
                       labelText: 'Disponible',
                       border: OutlineInputBorder(

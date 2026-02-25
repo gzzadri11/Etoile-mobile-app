@@ -16,6 +16,7 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
     on<PaymentSubscribe>(_onSubscribe);
     on<PaymentBuyCredit>(_onBuyCredit);
     on<PaymentCancelSubscription>(_onCancelSubscription);
+    on<PaymentLoadHistory>(_onLoadHistory);
   }
 
   Future<void> _onLoadStatus(
@@ -103,6 +104,36 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
       }
     } catch (e) {
       debugPrint('[PaymentBloc] Buy credit error: $e');
+      final failure = ErrorTranslator.translate(e);
+      emit(PaymentError(message: failure.message));
+    }
+  }
+
+  Future<void> _onLoadHistory(
+    PaymentLoadHistory event,
+    Emitter<PaymentState> emit,
+  ) async {
+    emit(const PaymentLoading());
+
+    try {
+      final isPremium = await _paymentRepository.isPremium();
+      final subscription = await _paymentRepository.getSubscriptionStatus();
+      final transactions = await _paymentRepository.getPaymentHistory();
+      final credits = await _paymentRepository.getRecruiterCredits();
+
+      emit(PaymentHistoryLoaded(
+        isPremium: isPremium,
+        planType: subscription?['plan_type'] as String?,
+        currentPeriodEnd: subscription?['current_period_end'] != null
+            ? DateTime.tryParse(subscription!['current_period_end'] as String)
+            : null,
+        subscriptionStatus: subscription?['status'] as String?,
+        videoCredits: credits['video_credits'] ?? 0,
+        posterCredits: credits['poster_credits'] ?? 0,
+        transactions: transactions,
+      ));
+    } catch (e) {
+      debugPrint('[PaymentBloc] Error loading history: $e');
       final failure = ErrorTranslator.translate(e);
       emit(PaymentError(message: failure.message));
     }

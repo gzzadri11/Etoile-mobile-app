@@ -40,21 +40,17 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     try {
       final role = await _profileRepository.getUserRole();
 
-      // Load premium status and stats in parallel
-      final premiumFuture = _statsRepository.isPremium();
-      final statsFuture = _statsRepository.getStats();
-
       if (role == 'seeker') {
         final profile = await _profileRepository.getSeekerProfile();
         final categories = await _profileRepository.getCategories();
-        final isPremium = await premiumFuture;
-        final stats = await statsFuture;
+        final stats = await _statsRepository.getStats();
 
         if (profile != null) {
+          // B2B model: seekers are never premium (free access to stats)
           emit(SeekerProfileLoaded(
             profile: profile,
             categories: categories,
-            isPremium: isPremium,
+            isPremium: false,
             stats: stats,
           ));
         } else {
@@ -62,8 +58,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         }
       } else if (role == 'recruiter') {
         final profile = await _profileRepository.getRecruiterProfile();
-        final isPremium = await premiumFuture;
-        final stats = await statsFuture;
+        final isPremium = await _statsRepository.isPremium();
+        final stats = await _statsRepository.getStats();
 
         if (profile != null) {
           // Count publications by type

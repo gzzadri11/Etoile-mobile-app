@@ -5,6 +5,9 @@ import '../core/services/push_notification_service.dart';
 import '../core/services/stripe_service.dart';
 import '../core/services/supabase_service.dart';
 import '../core/services/video_upload_service.dart';
+import '../features/admin/data/repositories/admin_repository.dart';
+import '../features/messages/data/repositories/block_repository.dart';
+import '../features/report/data/repositories/report_repository.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/feed/data/repositories/feed_repository.dart';
 import '../features/feed/presentation/bloc/feed_bloc.dart';
@@ -95,6 +98,21 @@ Future<void> init() async {
     () => PaymentRepository(supabaseClient: sl(), stripeService: sl()),
   );
 
+  // Admin repository
+  sl.registerLazySingleton<AdminRepository>(
+    () => AdminRepository(supabaseClient: sl()),
+  );
+
+  // Report repository
+  sl.registerLazySingleton<ReportRepository>(
+    () => ReportRepository(supabaseClient: sl()),
+  );
+
+  // Block repository
+  sl.registerLazySingleton<BlockRepository>(
+    () => BlockRepository(supabaseClient: sl()),
+  );
+
   // ============================================
   // FEATURES - MESSAGES
   // ============================================
@@ -141,6 +159,6 @@ Future<void> init() async {
 
   // FeedBloc
   sl.registerFactory<FeedBloc>(
-    () => FeedBloc(feedRepository: sl()),
+    () => FeedBloc(feedRepository: sl(), blockRepository: sl()),
   );
 }

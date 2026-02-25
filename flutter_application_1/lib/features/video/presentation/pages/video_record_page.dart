@@ -209,7 +209,7 @@ class _PreparationView extends StatelessWidget {
             child: Icon(
               Icons.person,
               size: 120,
-              color: AppColors.white.withOpacity(0.3),
+              color: AppColors.white.withValues(alpha:0.3),
             ),
           ),
         ),
@@ -248,7 +248,7 @@ class _PreparationView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppTheme.spaceMd),
                 decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.1),
+                  color: AppColors.white.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 ),
                 child: Row(
@@ -316,7 +316,7 @@ class _RecordingView extends StatelessWidget {
             child: Icon(
               Icons.person,
               size: 120,
-              color: AppColors.white.withOpacity(0.3),
+              color: AppColors.white.withValues(alpha:0.3),
             ),
           ),
         ),
@@ -385,7 +385,7 @@ class _RecordingView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppTheme.spaceMd),
                 decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.1),
+                  color: AppColors.white.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 ),
                 child: Text(
@@ -411,7 +411,7 @@ class _RecordingView extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: index <= phaseIndex
                           ? AppColors.primaryYellow
-                          : AppColors.white.withOpacity(0.3),
+                          : AppColors.white.withValues(alpha:0.3),
                     ),
                   );
                 }),
@@ -422,7 +422,7 @@ class _RecordingView extends StatelessWidget {
               Text(
                 'Phase ${phaseIndex + 1}/$totalPhases',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.white.withOpacity(0.7),
+                      color: AppColors.white.withValues(alpha:0.7),
                     ),
               ),
 
@@ -433,7 +433,7 @@ class _RecordingView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
                 child: LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: AppColors.white.withOpacity(0.3),
+                  backgroundColor: AppColors.white.withValues(alpha:0.3),
                   valueColor: AlwaysStoppedAnimation<Color>(phase.color),
                   minHeight: 4,
                 ),
@@ -482,7 +482,7 @@ class _PreviewView extends StatelessWidget {
                 Icon(
                   Icons.play_circle_filled,
                   size: 64,
-                  color: AppColors.white.withOpacity(0.7),
+                  color: AppColors.white.withValues(alpha:0.7),
                 ),
                 const SizedBox(height: AppTheme.spaceMd),
                 Text(
@@ -570,7 +570,7 @@ class _SuccessView extends StatelessWidget {
           Text(
             AppStrings.successVideoPublished,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.white.withOpacity(0.8),
+                  color: AppColors.white.withValues(alpha:0.8),
                 ),
             textAlign: TextAlign.center,
           ),
@@ -588,7 +588,7 @@ class _SuccessView extends StatelessWidget {
             onPressed: onExploreFeed,
             child: Text(
               'Explorer le feed',
-              style: TextStyle(color: AppColors.white.withOpacity(0.7)),
+              style: TextStyle(color: AppColors.white.withValues(alpha:0.7)),
             ),
           ),
         ],

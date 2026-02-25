@@ -25,6 +25,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthRegisterRequested>(_onRegisterRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthPasswordResetRequested>(_onPasswordResetRequested);
+    on<AuthDeleteAccountRequested>(_onDeleteAccountRequested);
 
     // Listen to auth state changes
     _supabaseClient.auth.onAuthStateChange.listen((data) {
@@ -109,13 +110,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
 
     try {
+      final metadata = <String, dynamic>{
+        'role': event.role,
+        'first_name': event.firstName,
+      };
+      if (event.siret != null) metadata['siret'] = event.siret;
+      if (event.companyName != null) {
+        metadata['company_name'] = event.companyName;
+      }
+      if (event.siren != null) metadata['siren'] = event.siren;
+      if (event.legalForm != null) metadata['legal_form'] = event.legalForm;
+
       final response = await _supabaseClient.auth.signUp(
         email: event.email,
         password: event.password,
-        data: {
-          'role': event.role,
-          'first_name': event.firstName,
-        },
+        data: metadata,
       );
 
       if (response.user != null) {
@@ -174,6 +183,58 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(message: _mapAuthError(e)));
     } catch (e) {
       emit(AuthError(message: e.toString()));
+    }
+  }
+
+  /// Handle delete account request (RGPD soft delete)
+  Future<void> _onDeleteAccountRequested(
+    AuthDeleteAccountRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+
+    try {
+      final user = _supabaseClient.auth.currentUser;
+      if (user == null) {
+        emit(const AuthError(message: 'Session expirée'));
+        return;
+      }
+
+      // Verify password first
+      try {
+        await _supabaseClient.auth.signInWithPassword(
+          email: user.email!,
+          password: event.password,
+        );
+      } on AuthException {
+        emit(const AuthError(message: 'Mot de passe incorrect'));
+        return;
+      }
+
+      // Call Edge Function for soft delete
+      final response = await _supabaseClient.functions.invoke(
+        'delete-account',
+        body: {'userId': user.id},
+      );
+
+      if (response.status != 200) {
+        debugPrint('[AuthBloc] delete-account error: ${response.data}');
+        emit(const AuthError(
+          message: 'Erreur lors de la suppression. Réessayez.',
+        ));
+        return;
+      }
+
+      debugPrint('[AuthBloc] Account soft-deleted for ${user.email}');
+
+      // Remove push token and sign out
+      await _removePushToken();
+      await _supabaseClient.auth.signOut();
+
+      emit(const AuthAccountDeleted());
+    } catch (e) {
+      debugPrint('[AuthBloc] Delete account error: $e');
+      emit(AuthError(message: 'Une erreur est survenue: ${e.toString()}'));
     }
   }
 

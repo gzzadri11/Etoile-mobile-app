@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-02-23
-**Statut** : Sprint 13 quasi TERMINE (5/6 stories, 15 pts). Camera reportee (emulateur requis).
+**Date de mise a jour** : 2026-02-25
+**Statut** : Sprint 16 TERMINE (6/6 stories, 17/17 pts). Sprint 13 camera toujours reportee.
 
 ---
 
@@ -19,62 +19,199 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-## Ce qui a ete fait — Sprint 13 (2026-02-23)
+## Ce qui a ete fait — Sprint 16 (2026-02-25)
 
-### Story 13.2 : Stats Premium (5 pts) — DONE
+### Pre-requis Sprint 15 deployes
+- Edge Functions `delete-account` et `export-user-data` deployees sur Supabase
+- Migration SQL poussee : VIEW `public.users`, admin role, bucket `verification-docs`, RLS policies
+- Fix `users` → `user_roles` dans admin_repository, payment_repository, admin_state, admin_bloc
 
-**Fichiers crees :**
-- `lib/features/profile/data/models/video_stats.dart` — Data class VideoStats
-- `lib/features/profile/data/repositories/stats_repository.dart` — Requetes video_views + check isPremium
-- `lib/features/profile/presentation/widgets/stats_card.dart` — Widget stats reel
+### Story 16.1 : Fix deprecations (2 pts) — DONE
+- 13x `withOpacity()` → `withValues(alpha:)` dans 4 fichiers
+- 2x `value:` → `initialValue:` dans edit_recruiter_profile_page.dart
+- 2x `value:` → `initialValue:` dans edit_seeker_profile_page.dart
+- Resultat : 0 deprecation warnings (Flutter 3.38+)
+
+### Story 16.2 : Bloquer utilisateur FR-5.3 (5 pts) — DONE
+**Fichier cree :** `lib/features/messages/data/repositories/block_repository.dart`
+- blockUser(), unblockUser(), isBlocked(), getBlockedUserIds()
 
 **Fichiers modifies :**
-- `profile_state.dart` — +`isPremium` et `stats` sur SeekerProfileLoaded et RecruiterProfileLoaded
-- `profile_bloc.dart` — +StatsRepository, charge premium+stats en parallele
-- `profile_page.dart` — Remplace `_StatisticsCard` placeholder par `StatsCard` reel
-- `injection_container.dart` — +StatsRepository singleton
+- `chat_page.dart` — Ajout "Bloquer" (rouge) dans PopupMenu + dialog confirmation
+- `conversations_page.dart` — Filtrage conversations avec utilisateurs bloques
+- `feed_bloc.dart` — Filtrage videos d'utilisateurs bloques dans le feed
+- `injection_container.dart` — +BlockRepository + FeedBloc(blockRepository)
 
-**Comportement :**
-- Premium : vues totales + viewers uniques + tendance hebdo (vert/rouge/gris)
-- Non-premium : message teaser + CTA "Passer Premium" (route adaptee seeker/recruteur)
-- Donnees chargees depuis `video_views` (RLS filtre auto)
+### Story 16.3 : Splash screen anime + App icon (3 pts) — DONE
+**Fichier cree :** `lib/shared/widgets/splash_screen.dart`
+- Splash anime avec gradient, icone etoile, ShaderMask titre, fade-in + scale
+- Remplace le loading basique dans app.dart
 
-### Story 13.3 : Page Parametres (3 pts) — DONE
+**Fichier modifie :** `lib/app.dart` — Utilise SplashScreen au lieu du loading inline
 
-**Fichier cree :** `lib/features/settings/presentation/pages/settings_page.dart`
-- Menu : Mon profil, Premium, FAQ, Contact support, CGU, Confidentialite, Version, Deconnexion
-- Navigation adaptee selon role (seeker/recruteur) pour profil et premium
-- Dialog de confirmation pour la deconnexion
+**App icon :** `flutter_launcher_icons` configure avec logo etoile doree 3D
+- Logo source : `assets/icon/app_icon.png` (etoile doree sur fond #333)
+- Mascotte : `assets/images/mascotte.png` (personnage etoile avec telephone)
+- Icones generees : Android (mipmap + adaptive), iOS (alpha removed), Web (favicon + 192/512), Windows
+- Package `flutter_launcher_icons: ^0.14.3` dans dev_dependencies
 
-**Fichier modifie :** `app_router.dart` — +4 nouvelles routes (faq, contact, terms, privacy)
+### Story 16.4 : Fix widget_test + tests supplementaires (3 pts) — DONE
+**Fichier modifie :** `test/widget_test.dart` — Teste SplashScreen (ETOILE + tagline)
+**Fichier cree :** `test/features/messages/data/repositories/block_repository_test.dart` — 5 tests
+- Resultat : **25/25 tests pass** (avant 19+1 fail = 20 tests)
 
-### Story 13.4 : FAQ in-app (3 pts) — DONE
+### Story 16.5 : Navigation guards + UX polish (3 pts) — DONE
+**Fichier modifie :** `lib/core/router/app_router.dart`
+- Role-based guards : /record → /publish si recruteur, /publish → /record si seeker
+- Splash route utilise SplashScreen (remplace _SplashPage inline)
+- Welcome page polie : logo etoile, ShaderMask titre, AppColors/AppTheme
 
-**Fichier cree :** `lib/features/settings/presentation/pages/faq_page.dart`
-- 5 sections, 18 questions : Compte, Video, Messages, Paiements, Technique
-- Barre de recherche temps reel (filtre question + reponse)
-- Accordeon ExpansionTile dans des Card
-- Bouton "Contacter le support" en bas
+### Story 16.6 : Update docs — CE DOCUMENT
 
-### Story 13.5 : Formulaire contact support (2 pts) — DONE
+---
 
-**Fichier cree :** `lib/features/settings/presentation/pages/contact_support_page.dart`
-- Formulaire : Sujet (dropdown 4 choix) + Description (min 20 car.)
-- Envoi via `url_launcher` (mailto:support@etoile-app.fr)
-- Ecran de confirmation apres envoi
+## Ce qui a ete fait — Sprint 15 (2026-02-25)
 
-### Story 13.6 : Mentions legales / CGU / Confidentialite (2 pts) — DONE
+### Story 15.4 : Lien Administration dans Settings (2 pts) — DEJA FAIT
+- Etait deja implemente dans Sprint 14 (lignes 29-39 de settings_page.dart)
 
-**Fichier cree :** `lib/features/settings/presentation/pages/legal_page.dart`
-- Page generique `LegalPage` reutilisee 3 fois via factory constructors
-- `LegalPage.termsOfService()` — CGU (8 sections)
-- `LegalPage.privacyPolicy()` — Confidentialite RGPD (8 sections)
-- `LegalPage.legalNotice()` — Mentions legales (5 sections)
+### Story 15.1 : RGPD - Suppression de compte (5 pts) — DONE
 
-### Story 13.1 : Camera in-app (8 pts) — REPORTEE
+**Fichiers modifies :**
+- `lib/features/auth/presentation/bloc/auth_event.dart` — +`AuthDeleteAccountRequested` (avec password)
+- `lib/features/auth/presentation/bloc/auth_state.dart` — +`AuthAccountDeleted`
+- `lib/features/auth/presentation/bloc/auth_bloc.dart` — +handler `_onDeleteAccountRequested` (verify password → Edge Function → signOut)
+- `lib/features/settings/presentation/pages/settings_page.dart` — Bouton "Supprimer mon compte" + dialog confirmation avec mot de passe
 
-- Necessite emulateur Android (pas faisable sur Edge)
-- A faire lors d'une session avec emulateur
+**Fichier cree :**
+- `supabase/functions/delete-account/index.ts` — Soft delete 30j (user_roles.status='deleted', videos.status='deleted', auth metadata deleted_at, cancel subscriptions, remove device_tokens)
+
+### Story 15.2 : RGPD - Export donnees personnelles (5 pts) — DONE
+
+**Fichiers modifies :**
+- `lib/features/settings/presentation/pages/settings_page.dart` — Bouton "Exporter mes donnees" + dialog JSON scrollable + copier presse-papiers
+
+**Fichier cree :**
+- `supabase/functions/export-user-data/index.ts` — Collecte user, profile, videos, conversations, messages (envoyes), subscriptions, purchases → JSON
+
+### Story 15.3 : Signaler depuis conversation et feed (5 pts) — DONE
+
+**Fichiers crees :**
+- `lib/features/report/data/repositories/report_repository.dart` — INSERT reports + guard auto-signalement
+- `lib/features/report/presentation/widgets/report_dialog.dart` — Bottom sheet reutilisable (5 motifs + description optionnelle)
+
+**Fichiers modifies :**
+- `lib/features/messages/presentation/pages/chat_page.dart` — PopupMenuButton "Signaler" dans AppBar
+- `lib/features/feed/presentation/pages/feed_page.dart` — Bouton Signaler (drapeau) sur chaque video card
+- `lib/di/injection_container.dart` — +ReportRepository singleton
+
+### Story 15.5 : Gestion abonnement (historique + annulation) (5 pts) — DONE
+
+**Fichier cree :**
+- `lib/features/payment/presentation/pages/subscription_management_page.dart` — Mon abonnement (status, renouvellement, annulation) + credits recruteur + historique transactions
+
+**Fichiers modifies :**
+- `lib/features/payment/presentation/bloc/payment_event.dart` — +`PaymentLoadHistory`
+- `lib/features/payment/presentation/bloc/payment_state.dart` — +`PaymentHistoryLoaded` (isPremium, planType, credits, transactions)
+- `lib/features/payment/presentation/bloc/payment_bloc.dart` — +handler `_onLoadHistory`
+- `lib/features/payment/data/repositories/payment_repository.dart` — +`getPaymentHistory()` + `getRecruiterCredits()`
+- `lib/core/router/app_router.dart` — Route `/premium/manage` avec BlocProvider
+- `lib/features/settings/presentation/pages/settings_page.dart` — Lien "Mon abonnement"
+
+### Story 15.6 : Tests unitaires critiques (3 pts) — DONE
+
+**Fichiers crees :**
+- `test/features/auth/presentation/bloc/auth_bloc_test.dart` — 9 tests (check, login, register, logout, delete, reset)
+- `test/features/report/data/repositories/report_repository_test.dart` — 3 tests (self-report guard, reasons)
+- `test/features/profile/data/repositories/profile_repository_test.dart` — 7 tests (currentUserId, role, null guards)
+
+**Packages ajoutes :** `mocktail: ^1.0.4`, `bloc_test: ^9.1.7`
+**Resultat :** 19/19 tests passed
+
+---
+
+## Ce qui a ete fait — Sprint 14 (2026-02-24)
+
+### Story 14.1 : Structure admin + route guard + dashboard (3 pts) — DONE
+
+**Fichiers crees :**
+- `lib/features/admin/presentation/pages/admin_dashboard_page.dart` — Hub 3 cards
+- `lib/features/admin/presentation/bloc/admin_bloc.dart`
+- `lib/features/admin/presentation/bloc/admin_event.dart`
+- `lib/features/admin/presentation/bloc/admin_state.dart`
+
+**Fichiers modifies :**
+- `app_router.dart` — Routes admin avec guard isAdmin + BlocProvider
+- `injection_container.dart` — +AdminRepository singleton
+
+### Story 14.2 : Models + AdminRepository (3 pts) — DONE
+
+**Fichiers crees :**
+- `lib/features/admin/data/models/report_model.dart` — ReportModel (joined data)
+- `lib/features/admin/data/repositories/admin_repository.dart` — 10 methodes admin
+
+### Story 14.3 : Liste recruteurs en attente (5 pts) — DONE
+
+**Fichier cree :** `lib/features/admin/presentation/pages/verification_queue_page.dart`
+- Liste cards recruteurs pending, pull-to-refresh, count AppBar, empty/error states
+
+### Story 14.4 : Validation / rejet recruteur (5 pts) — DONE
+
+**Fichier cree :** `lib/features/admin/presentation/pages/recruiter_verification_page.dart`
+- Detail complet recruteur (header, infos, document, description, locations)
+- Boutons Approuver/Rejeter avec dialogs de confirmation
+- BlocConsumer pour SnackBar succes/erreur + retour liste
+
+### Story 14.5 : Liste + moderation signalements (5 pts) — DONE
+
+**Fichier cree :** `lib/features/admin/presentation/pages/reports_page.dart`
+- Liste signalements pending avec type icon (video/message/utilisateur)
+- Bottom sheet draggable avec detail + actions (Ignorer / Supprimer video / Suspendre utilisateur)
+- Dialog de confirmation + champ Notes admin optionnel
+
+### Story 14.6 : Dashboard statistiques (5 pts) — DONE
+
+**Fichier cree :** `lib/features/admin/presentation/pages/admin_stats_page.dart`
+- 5 sections de metriques en grille : Utilisateurs, Verification, Videos, Activite, Abonnements
+- 14 compteurs dans des _StatCard colorees
+- Timestamp mise a jour, pull-to-refresh
+- Suppression de _AdminPlaceholderPage (plus utilisee)
+
+### Story 14.7 : Verification SIRET via API Sirene (5 pts) — DONE
+
+**Fichier cree :** `lib/core/services/sirene_service.dart`
+- Appel API `recherche-entreprises.api.gouv.fr` (gratuit, sans cle)
+- SiretVerificationResult (valid/invalid + companyName, siren, legalForm)
+- Gestion erreurs : SIRET invalide, entreprise fermee, timeout, reseau
+
+**Fichiers modifies :**
+- `auth_event.dart` — +champs optionnels siret, companyName, siren, legalForm
+- `auth_bloc.dart` — Metadata enrichies pour recruteurs
+- `register_page.dart` — Champ SIRET (14 digits, visible si recruteur) + verification API au submit
+
+### Story 14.8 : Upload document justificatif (3 pts) — DONE
+
+**Fichiers modifies :**
+- `profile_repository.dart` — +`uploadDocument()` (Supabase Storage bucket `verification-docs`)
+- `edit_recruiter_profile_page.dart` — Section "Document de verification" avec 4 etats :
+  - Verifie (badge vert)
+  - Rejete (motif + re-upload)
+  - Document envoye (en attente de verification)
+  - Pas de document (choix type → pick image → preview → upload)
+
+---
+
+## Ce qui a ete fait — Sprint 13 (2026-02-23)
+
+### Stories 13.2-13.6 (15 pts) — DONE
+
+- **13.2** Stats Premium — vues + viewers + tendance hebdo
+- **13.3** Page Parametres — menu complet settings
+- **13.4** FAQ in-app — 5 sections, 18 questions, recherche
+- **13.5** Contact support — formulaire mailto
+- **13.6** Mentions legales — CGU + Confidentialite + Mentions
+
+### Story 13.1 : Camera in-app (8 pts) — REPORTEE (emulateur requis)
 
 ---
 
@@ -137,14 +274,17 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | FR29 | Carte OpenStreetMap | Done |
 | - | Profil recruteur public + contract_type | Done |
 | - | PRD validation + Architecture complete | Done |
-| **12** | **Infra + Paiements Stripe (7/7 stories, 26 pts)** | **DONE** |
-| **13** | **Stats + Parametres + FAQ + Contact + Legal (5/6, 15 pts)** | **DONE (sauf camera)** |
+| 12 | Infra + Paiements Stripe (7/7 stories, 26 pts) | Done |
+| 13 | Stats + Parametres + FAQ + Contact + Legal (5/6, 15 pts) | Done (sauf camera) |
+| **14** | **Administration + SIRET + Document (8/8 stories, 34 pts)** | **DONE** |
+| **15** | **RGPD + Signalement + Gestion abo + Tests (6/6 stories, 25 pts)** | **DONE** |
+| **16** | **Polish + Beta (6/6 stories, 17/17 pts)** | **DONE** |
 
 ### Prochains sprints
 
-- Sprint 13 restant : Story 13.1 Camera in-app (8 pts, emulateur requis)
-- Sprint 14 : Administration (Epic 7) + Support (Epic 8)
-- Sprint 15 : Polish + Beta
+- Story reportee : 13.1 Camera in-app (8 pts, emulateur requis)
+- Sprint 17 : Camera in-app + Beta testing
+- Tous les pre-requis (admin role, bucket, Edge Functions, RLS, VIEW users) sont deployes
 
 ---
 
@@ -183,7 +323,7 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | Architecture | `_bmad-output/architecture.md` | COMPLETE (8/8 etapes) |
 | Architecture draft (extrait PRD) | `_bmad-output/architecture-etoile-draft.md` | Draft (reference) |
 | UX Design | `_bmad-output/ux-design-etoile-draft.md` | Draft |
-| Sprint Plan | `_bmad-output/sprint-plan.md` | Sprint 13 quasi DONE |
+| Sprint Plan | `_bmad-output/sprint-plan.md` | Sprint 16 DONE (6/6) |
 | Epics | `_bmad-output/epics.md` | Complet |
 | PRD Notifications | `_bmad-output/prd-notifications-push.md` | Complet |
 | Archi Notifications | `_bmad-output/architecture-notifications-push.md` | Complet |
@@ -191,5 +331,5 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-*Sauvegarde mise a jour le 2026-02-23*
-*Sprint 13 quasi TERMINE (5/6 stories). Camera reportee. Pret pour Sprint 14 ou camera avec emulateur.*
+*Sauvegarde mise a jour le 2026-02-25*
+*Sprint 16 TERMINE (6/6 stories, 17/17 pts). Deprecations fix, Bloquer utilisateur, Splash screen + App icon, 25 tests, Navigation guards, Welcome page polish. App quasi-complete pour beta (manque camera 13.1).*

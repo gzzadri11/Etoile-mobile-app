@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/push_notification_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../report/presentation/widgets/report_dialog.dart';
 import '../../data/models/message_model.dart';
+import '../../data/repositories/block_repository.dart';
 import '../bloc/message_bloc.dart';
 
 /// Individual chat/conversation page
@@ -96,6 +98,54 @@ class _ChatViewState extends State<_ChatView> {
     });
   }
 
+  void _showBlockConfirmation(
+      BuildContext context, String userId, String userName) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Bloquer cet utilisateur ?'),
+        content: Text(
+          'Vous ne recevrez plus de messages de $userName. '
+          'Cette action est reversible depuis les parametres.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              try {
+                await GetIt.I<BlockRepository>().blockUser(userId);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Utilisateur bloque'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                  context.pop();
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Erreur: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Bloquer'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<MessageBloc, MessageState>(
@@ -129,6 +179,48 @@ class _ChatViewState extends State<_ChatView> {
         icon: const Icon(Icons.arrow_back),
         onPressed: () => context.pop(),
       ),
+      actions: [
+        if (state is MessageLoaded)
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              final currentUserId =
+                  context.read<MessageBloc>().currentUserId ?? '';
+              final otherUserId = state.conversation
+                  .getOtherParticipantId(currentUserId);
+              if (value == 'report') {
+                showReportDialog(
+                  context,
+                  reportedUserId: otherUserId,
+                );
+              } else if (value == 'block') {
+                _showBlockConfirmation(context, otherUserId,
+                    state.conversation.otherUserName ?? 'cet utilisateur');
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'report',
+                child: Row(
+                  children: [
+                    Icon(Icons.flag_outlined, size: 20),
+                    SizedBox(width: 8),
+                    Text('Signaler'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'block',
+                child: Row(
+                  children: [
+                    Icon(Icons.block, size: 20, color: AppColors.error),
+                    SizedBox(width: 8),
+                    Text('Bloquer', style: TextStyle(color: AppColors.error)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+      ],
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

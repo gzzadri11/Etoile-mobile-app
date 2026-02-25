@@ -7,11 +7,11 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
-import 'core/constants/app_colors.dart';
 import 'core/router/app_router.dart';
 import 'core/services/push_notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'shared/widgets/splash_screen.dart';
 
 /// Main application widget
 class EtoileApp extends StatefulWidget {
@@ -127,38 +127,7 @@ class _EtoileAppState extends State<EtoileApp> {
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized || _router == null || _authBloc == null) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          backgroundColor: AppColors.black,
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'ETOILE',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryYellow,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                CircularProgressIndicator(
-                  color: AppColors.primaryYellow,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Chargement...',
-                  style: TextStyle(
-                    color: AppColors.white.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      return const SplashScreen();
     }
 
     return MultiBlocProvider(

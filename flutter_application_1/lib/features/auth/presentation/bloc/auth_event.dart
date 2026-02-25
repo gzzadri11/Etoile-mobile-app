@@ -33,16 +33,25 @@ class AuthRegisterRequested extends AuthEvent {
   final String password;
   final String firstName;
   final String role; // 'seeker' or 'recruiter'
+  final String? siret;
+  final String? companyName;
+  final String? siren;
+  final String? legalForm;
 
   const AuthRegisterRequested({
     required this.email,
     required this.password,
     required this.firstName,
     required this.role,
+    this.siret,
+    this.companyName,
+    this.siren,
+    this.legalForm,
   });
 
   @override
-  List<Object> get props => [email, password, firstName, role];
+  List<Object?> get props =>
+      [email, password, firstName, role, siret, companyName];
 }
 
 /// Logout current user
@@ -58,6 +67,16 @@ class AuthPasswordResetRequested extends AuthEvent {
 
   @override
   List<Object> get props => [email];
+}
+
+/// Delete account (RGPD - soft delete)
+class AuthDeleteAccountRequested extends AuthEvent {
+  final String password;
+
+  const AuthDeleteAccountRequested({required this.password});
+
+  @override
+  List<Object> get props => [password];
 }
 
 /// Email verification completed

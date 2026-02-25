@@ -12,9 +12,9 @@ class PaymentLoadStatus extends PaymentEvent {
   const PaymentLoadStatus();
 }
 
-/// Subscribe to a premium plan (seeker or recruiter)
+/// Subscribe to a premium plan (B2B: recruiter only)
 class PaymentSubscribe extends PaymentEvent {
-  final String planType; // 'seeker_premium' or 'recruiter_premium'
+  final String planType; // 'recruiter_premium'
 
   const PaymentSubscribe({required this.planType});
 
@@ -35,4 +35,9 @@ class PaymentBuyCredit extends PaymentEvent {
 /// Cancel an active subscription
 class PaymentCancelSubscription extends PaymentEvent {
   const PaymentCancelSubscription();
+}
+
+/// Load payment history (subscriptions + purchases)
+class PaymentLoadHistory extends PaymentEvent {
+  const PaymentLoadHistory();
 }
