@@ -251,7 +251,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
           Image.network(
             widget.thumbnailUrl!,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
         const Center(
           child: CircularProgressIndicator(
@@ -270,7 +270,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
           Image.network(
             widget.thumbnailUrl!,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(color: AppColors.black),
+            errorBuilder: (_, _, _) => Container(color: AppColors.black),
           )
         else
           Container(color: AppColors.black),

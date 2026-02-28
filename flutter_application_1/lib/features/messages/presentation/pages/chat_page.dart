@@ -8,6 +8,7 @@ import '../../../../core/services/push_notification_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../report/presentation/widgets/report_dialog.dart';
 import '../../data/models/message_model.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../data/repositories/block_repository.dart';
 import '../bloc/message_bloc.dart';
 
@@ -336,34 +337,10 @@ class _ChatViewState extends State<_ChatView> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceLg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.chat_bubble_outline,
-              size: 64,
-              color: AppColors.greyMedium,
-            ),
-            const SizedBox(height: AppTheme.spaceMd),
-            Text(
-              'Aucun message',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.greyWarm,
-                  ),
-            ),
-            const SizedBox(height: AppTheme.spaceSm),
-            Text(
-              'Envoyez le premier message !',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyMedium,
-                  ),
-            ),
-          ],
-        ),
-      ),
+    return const EmptyStateWidget(
+      icon: Icons.chat_bubble_outline,
+      title: 'Aucun message',
+      subtitle: 'Envoyez le premier message !',
     );
   }
 }

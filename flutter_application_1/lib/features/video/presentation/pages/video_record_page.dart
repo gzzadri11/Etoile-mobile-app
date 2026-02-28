@@ -5,6 +5,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
+import '../../../../shared/widgets/profile_gate.dart';
 
 /// Video recording page
 ///
@@ -90,7 +91,10 @@ class _VideoRecordPageState extends State<VideoRecordPage>
     }
   }
 
-  void _startRecording() {
+  Future<void> _startRecording() async {
+    final allowed = await checkProfileGate(context);
+    if (!allowed || !mounted) return;
+
     setState(() {
       _state = _RecordingState.recording;
       _secondsRemaining = AppConfig.videoDurationSeconds;

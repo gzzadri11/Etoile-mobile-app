@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-02-25
-**Statut** : Sprint 16 TERMINE (6/6 stories, 17/17 pts). Sprint 13 camera toujours reportee.
+**Date de mise a jour** : 2026-02-28
+**Statut** : Sprint 18 TERMINE (8/8 stories). Pivot beta alternance IdF. Sprint 13 camera toujours reportee.
 
 ---
 
@@ -16,6 +16,123 @@ flutter run -d edge
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+---
+
+## Ce qui a ete fait — Sprint 18 : Pivot Beta Alternance IdF (2026-02-28)
+
+### Decisions cles
+- **Beta cible** : Chercheurs d'alternance en Ile-de-France uniquement
+- **2 secteurs** : Commerce/Vente + Restauration/Hotellerie (codes: commerce_vente, restauration_hotellerie)
+- **Landing** : Page de recherche (SearchPage) au lieu du feed direct
+- **Profil seeker** : prenom, nom, age, ecole, niveau etude, ville (autocomplete IdF), domaine
+- **Profil recruteur** : secteur restreint a 2 options + localisation IdF (CityAutocompleteField)
+- **Anciens champs seeker** : gardes en DB pour backward compat (categories, contractTypes, etc.)
+
+### Story 18.1 : Migration DB + Modele SeekerProfile (3 pts) — DONE
+- Migration SQL : 4 colonnes ajoutees (age, school, study_level, domain)
+- seeker_profile_model.dart : +4 champs, nouveau completionPercentage (5x20%)
+- Completion: Inscription(20%) + Identite(prenom+nom+age=20%) + Etudes(ecole+niveau=20%) + Localisation(ville=20%) + Domaine(20%)
+
+### Story 18.2 : Refonte formulaire profil chercheur (5 pts) — DONE
+- edit_seeker_profile_page.dart : reecrit — dropdowns (age, niveau, domaine) + CityAutocompleteField + EtoileTextField (ecole)
+- profile_page.dart : _SeekerProfileView affiche domaine + etudes au lieu de jobTitle/availability
+- profile_repository.dart : isSeekerProfileComplete utilise completionPercentage >= 100
+
+### Story 18.3 : Autocompletion ville filtree IdF (3 pts) — DONE
+- Fichier cree : shared/widgets/city_autocomplete_field.dart
+- Photon API avec bbox IdF (1.44,48.12,3.56,49.24), debounce 400ms, max 5 resultats
+
+### Story 18.4 : Restrictions recruteur beta (3 pts) — DONE
+- edit_recruiter_profile_page.dart : secteur restreint a 2 options (codes) + LocationPickerWidget remplace par CityAutocompleteField
+- profile_page.dart : _RecruiterProfileView affiche label secteur (pas le code) + ville texte au lieu de carte
+- public_recruiter_profile_page.dart : carte remplacee par ville texte + secteur label
+
+### Story 18.5 + 18.6 : Page de recherche + Routeur (5+3 pts) — DONE
+- Fichier cree : features/feed/presentation/pages/search_page.dart (landing avec secteur dropdown + IdF badge + mascotte)
+- app_router.dart : route /search ajoutee, redirect initial → /search
+- main_scaffold.dart : 5 onglets bottom nav (Rechercher, Feed, Messages, Profil, Enregistrer/Publier)
+- Redirections mises a jour : login, onboarding, error page, conversations → /search
+
+### Story 18.7 : Adaptation filtres feed (3 pts) — DONE
+- feed_page.dart : filtres seeker et recruteur simplifies (secteur/domaine uniquement, 2 options avec labels)
+- _FilterSection : +optionLabels param pour afficher labels au lieu de codes
+- FeedPage : +initialSector param (recoit secteur depuis query params de SearchPage)
+
+### Story 18.8 : Tests + documentation (1 pt) — DONE
+- profile_completion_test.dart : 8 tests seeker reecrits pour nouveaux champs (age, school, studyLevel, domain)
+- Resultat : **52/52 tests pass**, 0 issues flutter analyze
+- SESSION-RESUME.md mis a jour
+
+---
+
+## Ce qui a ete fait — Sprint 17 : Finitions Pre-Beta (2026-02-27)
+
+### Story 17.1 : Modele B2B — premium chercheur supprime — DONE
+- Suppression de SeekerPremiumPage, SeekerPremiumBloc
+- FeedBloc : stats toujours accessibles (chercheurs gratuits)
+- Settings : masque les liens premium pour chercheurs
+
+### Story 17.2 : Fix 21 warnings analyse (2 pts) — DONE
+**6 fichiers modifies :**
+- `feed_page.dart` — 6x `__`/`___` → `_` + suppression `_getCategoryName` (unused)
+- `feed_video_player.dart` — 4x `___` → `_`
+- `conversations_page.dart` — import unused supprime + 1x `__` → `_`
+- `public_recruiter_profile_page.dart` — 6x `__`/`___` → `_`
+- `location_picker_widget.dart` — 1x `__` → `_`
+- `feed_repository.dart` — doc comment `List<String>` → `List of String`
+- Resultat : **0 issues**
+
+### Story 17.3 : EmptyStateWidget reutilisable avec mascotte (3 pts) — DONE
+**Fichier cree :** `lib/shared/widgets/empty_state_widget.dart`
+- Parametres : icon, iconColor, title, subtitle, actionLabel, onAction, showMascotte, compact
+- Deux modes : full (Center + Column) et compact (petit, inline)
+
+**8 fichiers modifies :** Remplacement de 8 empty states inline :
+- feed_page, conversations_page, chat_page, my_publications_page, verification_queue_page, reports_page, subscription_management_page, faq_page
+
+### Story 17.4 : Welcome + Onboarding avec mascotte (5 pts) — DONE
+**Fichiers crees :**
+- `lib/features/auth/presentation/pages/welcome_page.dart` — Mascotte + logo + 3 boutons CTA
+- `lib/features/onboarding/presentation/pages/onboarding_page.dart` — 3 slides PageView role-specific + dots + SharedPreferences flag
+
+**Fichiers modifies :**
+- `app_router.dart` — Suppression `_WelcomePage` inline, import WelcomePage/OnboardingPage, routes onboarding
+- `register_page.dart` — Post-inscription redirige vers onboarding au lieu du feed
+
+### Story 17.5 : Gestion complete utilisateurs bloques (3 pts) — DONE
+**Fichier cree :** `lib/features/settings/presentation/pages/blocked_users_page.dart`
+- Liste utilisateurs bloques + bouton Debloquer + confirmation dialog + EmptyStateWidget
+
+**Fichiers modifies :**
+- `block_repository.dart` — +`getBlockedUsersWithDetails()` (join seeker/recruiter profiles)
+- `settings_page.dart` — Lien "Utilisateurs bloques"
+- `app_router.dart` — Route `/settings/blocked`
+- `public_recruiter_profile_page.dart` — Guard _isBlocked avant Contacter
+
+### Story 17.6 : Gate profil — completude requise pour actions (5 pts) — DONE
+**Fichier cree :** `lib/shared/widgets/profile_gate.dart`
+- Dialog bloquant "Profil incomplet (X%)" avec bouton "Completer mon profil"
+
+**Fichiers modifies :**
+- `seeker_profile_model.dart` — +getter `completionPercentage` (5x20%)
+- `recruiter_profile_model.dart` — +getter `completionPercentage` (5x20%)
+- `profile_repository.dart` — +`getProfileCompletionPercentage()`
+- `profile_page.dart` — `_ProfileCompletionCard` avec %, progress bar, badge "Profil complet" a 100%
+- `video_record_page.dart` — Gate avant _startRecording
+- `publish_offer_page.dart` — Gate avant _pickPresentation, _pickVideo, _pickPoster
+- `feed_page.dart` — Gate avant _onMessageTap (Postuler/Contacter)
+- `public_recruiter_profile_page.dart` — Gate avant _startConversation
+
+### Story 17.7 : Tests supplementaires (3 pts) — DONE
+**Fichiers crees :**
+- `test/features/feed/presentation/bloc/feed_bloc_test.dart` — 6 tests (load, empty, error, blocked filter, refresh, filters)
+- `test/shared/widgets/empty_state_widget_test.dart` — 6 tests (title, subtitle, icon, action, no-action, compact)
+- `test/features/profile/profile_completion_test.dart` — 14 tests (seeker 20-100%, recruiter 20-100%, edge cases)
+- Resultat : **51/51 tests pass** (objectif 38+)
+
+### Story 17.8 : Update docs (1 pt) — DONE
+- SESSION-RESUME.md, sprint-plan.md, MEMORY.md mis a jour
 
 ---
 
@@ -279,11 +396,13 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | **14** | **Administration + SIRET + Document (8/8 stories, 34 pts)** | **DONE** |
 | **15** | **RGPD + Signalement + Gestion abo + Tests (6/6 stories, 25 pts)** | **DONE** |
 | **16** | **Polish + Beta (6/6 stories, 17/17 pts)** | **DONE** |
+| **17** | **Finitions Pre-Beta (8/8 stories, 22/22 pts)** | **DONE** |
+| **18** | **Pivot Beta Alternance IdF (8/8 stories, 26/26 pts)** | **DONE** |
 
 ### Prochains sprints
 
 - Story reportee : 13.1 Camera in-app (8 pts, emulateur requis)
-- Sprint 17 : Camera in-app + Beta testing
+- **Sprint 19** : Review Design/UX avec agent BMAD Sally (`/ux`) — review complet de toutes les pages avant beta
 - Tous les pre-requis (admin role, bucket, Edge Functions, RLS, VIEW users) sont deployes
 
 ---
@@ -323,7 +442,7 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | Architecture | `_bmad-output/architecture.md` | COMPLETE (8/8 etapes) |
 | Architecture draft (extrait PRD) | `_bmad-output/architecture-etoile-draft.md` | Draft (reference) |
 | UX Design | `_bmad-output/ux-design-etoile-draft.md` | Draft |
-| Sprint Plan | `_bmad-output/sprint-plan.md` | Sprint 16 DONE (6/6) |
+| Sprint Plan | `_bmad-output/sprint-plan.md` | Sprint 18 DONE (8/8) |
 | Epics | `_bmad-output/epics.md` | Complet |
 | PRD Notifications | `_bmad-output/prd-notifications-push.md` | Complet |
 | Archi Notifications | `_bmad-output/architecture-notifications-push.md` | Complet |
@@ -331,5 +450,5 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-*Sauvegarde mise a jour le 2026-02-25*
-*Sprint 16 TERMINE (6/6 stories, 17/17 pts). Deprecations fix, Bloquer utilisateur, Splash screen + App icon, 25 tests, Navigation guards, Welcome page polish. App quasi-complete pour beta (manque camera 13.1).*
+*Sauvegarde mise a jour le 2026-02-28*
+*Sprint 18 TERMINE (8/8 stories, 26/26 pts). Pivot beta alternance IdF : profil seeker refonte, 2 secteurs, page recherche landing, filtres simplifies, autocomplete ville IdF. 52 tests pass, 0 issues. Next: review UX Sprint 19.*

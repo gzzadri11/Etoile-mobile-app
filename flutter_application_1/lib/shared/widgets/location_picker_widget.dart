@@ -469,7 +469,7 @@ class _AddMarkerDialogState extends State<_AddMarkerDialog> {
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
                       itemCount: _suggestions.length,
-                      separatorBuilder: (_, __) =>
+                      separatorBuilder: (_, _) =>
                           const Divider(height: 1),
                       itemBuilder: (_, i) {
                         final s = _suggestions[i];

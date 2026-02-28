@@ -7,7 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/video_upload_service.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/widgets/etoile_button.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../feed/data/repositories/feed_repository.dart';
 import '../../data/models/video_model.dart';
 import '../../data/repositories/video_repository.dart';
@@ -147,7 +147,14 @@ class _MyPublicationsPageState extends State<MyPublicationsPage>
 
   Widget _buildPublicationList(List<Video> items) {
     if (items.isEmpty) {
-      return _EmptyView(onPublish: () => context.go(AppRoutes.publish));
+      return EmptyStateWidget(
+        showMascotte: true,
+        title: 'Aucune publication',
+        subtitle:
+            'Publiez votre premiere offre video ou affiche pour attirer des candidats',
+        actionLabel: 'Publier une offre',
+        onAction: () => context.go(AppRoutes.publish),
+      );
     }
     return RefreshIndicator(
       onRefresh: _loadPublications,
@@ -455,50 +462,6 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-/// Empty state
-class _EmptyView extends StatelessWidget {
-  final VoidCallback onPublish;
-
-  const _EmptyView({required this.onPublish});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.space2Xl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.folder_open_outlined,
-              size: 64,
-              color: AppColors.greyMedium,
-            ),
-            const SizedBox(height: AppTheme.spaceLg),
-            Text(
-              'Aucune publication',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppTheme.spaceSm),
-            Text(
-              'Publiez votre premiere offre video ou affiche pour attirer des candidats',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyWarm,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppTheme.spaceLg),
-            EtoileButton(
-              label: 'Publier une offre',
-              icon: Icons.add,
-              onPressed: onPublish,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 /// Error state
 class _ErrorView extends StatelessWidget {

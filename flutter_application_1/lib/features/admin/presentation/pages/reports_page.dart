@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../data/models/report_model.dart';
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
@@ -373,34 +374,11 @@ class ReportsPage extends StatelessWidget {
   }
 
   Widget _buildEmpty(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceXl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.check_circle_outline,
-              size: 64,
-              color: AppColors.success.withAlpha(150),
-            ),
-            const SizedBox(height: AppTheme.spaceMd),
-            Text(
-              'Aucun signalement en attente',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            const SizedBox(height: AppTheme.spaceXs),
-            Text(
-              'Tous les signalements ont ete traites.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyWarm,
-                  ),
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateWidget(
+      icon: Icons.check_circle_outline,
+      iconColor: AppColors.success.withAlpha(150),
+      title: 'Aucun signalement en attente',
+      subtitle: 'Tous les signalements ont ete traites.',
     );
   }
 

@@ -3,14 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
-import '../constants/app_colors.dart';
-import '../theme/app_theme.dart';
-
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
+import '../../features/feed/presentation/pages/search_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
@@ -37,7 +35,10 @@ import '../../features/admin/presentation/pages/admin_stats_page.dart';
 import '../../features/settings/presentation/pages/contact_support_page.dart';
 import '../../features/settings/presentation/pages/faq_page.dart';
 import '../../features/settings/presentation/pages/legal_page.dart';
+import '../../features/settings/presentation/pages/blocked_users_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/auth/presentation/pages/welcome_page.dart';
+import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
 import '../../shared/widgets/splash_screen.dart';
 
@@ -55,6 +56,7 @@ abstract class AppRoutes {
   static const String onboardingRecruiter = '/onboarding/recruiter';
 
   // Main routes (with bottom navigation)
+  static const String search = '/search';
   static const String feed = '/feed';
   static const String messages = '/messages';
   static const String profile = '/profile';
@@ -76,6 +78,7 @@ abstract class AppRoutes {
   static const String help = '/settings/help';
   static const String faq = '/settings/faq';
   static const String contactSupport = '/settings/contact';
+  static const String blockedUsers = '/settings/blocked';
   static const String termsOfService = '/settings/terms';
   static const String privacyPolicy = '/settings/privacy';
   static const String premium = '/premium';
@@ -122,6 +125,9 @@ class AppRouter {
             state.matchedLocation == AppRoutes.register ||
             state.matchedLocation == AppRoutes.forgotPassword ||
             state.matchedLocation == AppRoutes.welcome;
+        final isOnboarding =
+            state.matchedLocation == AppRoutes.onboardingSeeker ||
+                state.matchedLocation == AppRoutes.onboardingRecruiter;
         final isSplash = state.matchedLocation == AppRoutes.splash;
 
         // If on splash, wait for auth check
@@ -129,17 +135,18 @@ class AppRouter {
           if (authState is AuthInitial || authState is AuthLoading) {
             return null; // Stay on splash while checking
           }
-          return isAuthenticated ? AppRoutes.feed : AppRoutes.welcome;
+          return isAuthenticated ? AppRoutes.search : AppRoutes.welcome;
         }
 
         // If not authenticated and not on auth route, redirect to welcome
-        if (!isAuthenticated && !isAuthRoute) {
+        if (!isAuthenticated && !isAuthRoute && !isOnboarding) {
           return AppRoutes.welcome;
         }
 
-        // If authenticated and on auth route, redirect to feed
+        // If authenticated and on auth route, redirect to search
+        // (but allow onboarding routes through)
         if (isAuthenticated && isAuthRoute) {
-          return AppRoutes.feed;
+          return AppRoutes.search;
         }
 
         return null;
@@ -158,7 +165,15 @@ class AppRouter {
       // Welcome/Onboarding
       GoRoute(
         path: AppRoutes.welcome,
-        builder: (context, state) => const _WelcomePage(),
+        builder: (context, state) => const WelcomePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingSeeker,
+        builder: (context, state) => const OnboardingPage(role: 'seeker'),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingRecruiter,
+        builder: (context, state) => const OnboardingPage(role: 'recruiter'),
       ),
 
       // Auth routes
@@ -181,10 +196,19 @@ class AppRouter {
         builder: (context, state, child) => MainScaffold(child: child),
         routes: [
           GoRoute(
-            path: AppRoutes.feed,
+            path: AppRoutes.search,
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: FeedPage(),
+              child: SearchPage(),
             ),
+          ),
+          GoRoute(
+            path: AppRoutes.feed,
+            pageBuilder: (context, state) {
+              final sector = state.uri.queryParameters['sector'];
+              return NoTransitionPage(
+                child: FeedPage(initialSector: sector),
+              );
+            },
           ),
           GoRoute(
             path: AppRoutes.messages,
@@ -314,6 +338,10 @@ class AppRouter {
             builder: (context, state) => const ContactSupportPage(),
           ),
           GoRoute(
+            path: 'blocked',
+            builder: (context, state) => const BlockedUsersPage(),
+          ),
+          GoRoute(
             path: 'terms',
             builder: (context, state) => LegalPage.termsOfService(),
           ),
@@ -330,7 +358,7 @@ class AppRouter {
         redirect: (context, state) {
           final authState = authBloc.state;
           if (authState is! AuthAuthenticated || !authState.isAdmin) {
-            return AppRoutes.feed;
+            return AppRoutes.search;
           }
           return null;
         },
@@ -422,96 +450,6 @@ class _SplashRedirect extends StatelessWidget {
   }
 }
 
-class _WelcomePage extends StatelessWidget {
-  const _WelcomePage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spaceLg),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-
-              // Logo
-              Container(
-                width: 64,
-                height: 64,
-                decoration: const BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.star_rounded,
-                  color: AppColors.black,
-                  size: 36,
-                ),
-              ),
-
-              const SizedBox(height: AppTheme.spaceLg),
-
-              ShaderMask(
-                shaderCallback: (bounds) =>
-                    AppColors.primaryGradient.createShader(bounds),
-                child: const Text(
-                  'ETOILE',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
-                    letterSpacing: 6,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppTheme.spaceSm),
-
-              Text(
-                '40 secondes pour briller',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.greyWarm,
-                    ),
-              ),
-
-              const Spacer(),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => context.push(AppRoutes.register),
-                  child: const Text('Je cherche un emploi'),
-                ),
-              ),
-
-              const SizedBox(height: AppTheme.spaceMd),
-
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => context.push(AppRoutes.register),
-                  child: const Text('Je recrute'),
-                ),
-              ),
-
-              const SizedBox(height: AppTheme.spaceLg),
-
-              TextButton(
-                onPressed: () => context.push(AppRoutes.login),
-                child: const Text('Deja un compte ? Se connecter'),
-              ),
-
-              const SizedBox(height: AppTheme.space2Xl),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _PremiumPage extends StatelessWidget {
   const _PremiumPage();
 
@@ -557,7 +495,7 @@ class _ErrorPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go(AppRoutes.feed),
+              onPressed: () => context.go(AppRoutes.search),
               child: const Text('Retour a l\'accueil'),
             ),
           ],

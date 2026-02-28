@@ -15,13 +15,17 @@ import '../../../report/presentation/widgets/report_dialog.dart';
 import '../../data/models/feed_item_model.dart';
 import '../bloc/feed_bloc.dart';
 import '../widgets/feed_video_player.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
+import '../../../../shared/widgets/profile_gate.dart';
 import '../widgets/video_preload_manager.dart';
 
 /// Main feed page with role-specific video content.
 ///
 /// Seekers see recruiter offer videos. Recruiters see seeker presentations.
 class FeedPage extends StatelessWidget {
-  const FeedPage({super.key});
+  final String? initialSector;
+
+  const FeedPage({super.key, this.initialSector});
 
   @override
   Widget build(BuildContext context) {
@@ -29,8 +33,16 @@ class FeedPage extends StatelessWidget {
     final userRole = authState is AuthAuthenticated ? authState.role : 'seeker';
 
     return BlocProvider(
-      create: (_) => GetIt.I<FeedBloc>()
-        ..add(FeedLoadRequested(userRole: userRole)),
+      create: (_) {
+        final bloc = GetIt.I<FeedBloc>()
+          ..add(FeedLoadRequested(userRole: userRole));
+        if (initialSector != null) {
+          bloc.add(FeedFiltersChanged(
+            filters: FeedFilters(sector: initialSector),
+          ));
+        }
+        return bloc;
+      },
       child: const _FeedView(),
     );
   }
@@ -91,7 +103,6 @@ class _FeedViewState extends State<_FeedView> {
         value: context.read<FeedBloc>(),
         child: _FilterSheet(
           currentFilters: state.filters,
-          categories: state.categories,
           userRole: state.userRole,
         ),
       ),
@@ -323,49 +334,22 @@ class _FeedViewState extends State<_FeedView> {
   }
 
   Widget _buildEmptyState(BuildContext context, FeedLoaded state) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceLg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.videocam_off_outlined,
-              size: 64,
-              color: AppColors.greyWarm,
-            ),
-            const SizedBox(height: AppTheme.spaceMd),
-            Text(
-              state.hasActiveFilters
-                  ? 'Aucun resultat pour ces filtres'
-                  : 'Aucune video disponible',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.greyWarm,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppTheme.spaceSm),
-            Text(
-              state.hasActiveFilters
-                  ? 'Essayez de modifier vos criteres de recherche'
-                  : 'Les videos apparaitront ici une fois publiees',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyMedium,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppTheme.spaceLg),
-            if (state.hasActiveFilters)
-              TextButton.icon(
-                onPressed: () {
-                  context.read<FeedBloc>().add(const FeedFiltersClear());
-                },
-                icon: const Icon(Icons.clear_all),
-                label: const Text('Effacer les filtres'),
-              ),
-          ],
-        ),
-      ),
+    if (state.hasActiveFilters) {
+      return EmptyStateWidget(
+        icon: Icons.videocam_off_outlined,
+        title: 'Aucun resultat pour ces filtres',
+        subtitle: 'Essayez de modifier vos criteres de recherche',
+        actionLabel: 'Effacer les filtres',
+        onAction: () {
+          context.read<FeedBloc>().add(const FeedFiltersClear());
+        },
+      );
+    }
+    return EmptyStateWidget(
+      icon: Icons.videocam_off_outlined,
+      title: 'Aucune video disponible',
+      subtitle: 'Les videos apparaitront ici une fois publiees',
+      showMascotte: true,
     );
   }
 
@@ -443,8 +427,8 @@ class _VideoCard extends StatelessWidget {
                 ? CachedNetworkImage(
                     imageUrl: feedItem.video.videoUrl!,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => _buildPlaceholder(),
-                    errorWidget: (_, __, ___) => _buildPlaceholder(),
+                    placeholder: (_, _) => _buildPlaceholder(),
+                    errorWidget: (_, _, _) => _buildPlaceholder(),
                   )
                 : _buildPlaceholder(),
           )
@@ -463,8 +447,8 @@ class _VideoCard extends StatelessWidget {
                 ? CachedNetworkImage(
                     imageUrl: feedItem.video.thumbnailUrl!,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => _buildPlaceholder(),
-                    errorWidget: (_, __, ___) => _buildPlaceholder(),
+                    placeholder: (_, _) => _buildPlaceholder(),
+                    errorWidget: (_, _, _) => _buildPlaceholder(),
                   )
                 : _buildPlaceholder(),
           ),
@@ -614,9 +598,13 @@ class _VideoCard extends StatelessWidget {
   }
 
   /// Open message / start conversation
-  void _onMessageTap(BuildContext context) {
+  Future<void> _onMessageTap(BuildContext context) async {
     debugPrint('[Feed] _onMessageTap called for user: ${feedItem.video.userId}');
     debugPrint('[Feed] feedItem.userName: ${feedItem.userName}');
+
+    // Check profile completion before allowing contact
+    final allowed = await checkProfileGate(context);
+    if (!allowed || !context.mounted) return;
 
     // Start conversation directly without confirmation dialog
     _startConversation(context);
@@ -853,12 +841,10 @@ class _ActionButton extends StatelessWidget {
 /// Filter bottom sheet with role-specific filters
 class _FilterSheet extends StatefulWidget {
   final FeedFilters currentFilters;
-  final List<Map<String, dynamic>> categories;
   final String userRole;
 
   const _FilterSheet({
     required this.currentFilters,
-    required this.categories,
     required this.userRole,
   });
 
@@ -966,22 +952,19 @@ class _FilterSheetState extends State<_FilterSheet> {
     );
   }
 
-  /// Seeker filters: Secteur, Localisation, Type de contrat
+  /// Seeker filters (beta): Secteur uniquement
   List<Widget> _buildSeekerFilters() {
     return [
-      // Sector filter
       _FilterSection(
         title: 'Secteur',
         options: const [
-          'Informatique',
-          'Commerce',
-          'Marketing',
-          'Finance',
-          'Sante',
-          'Education',
-          'Ingenierie',
-          'Restauration',
+          'commerce_vente',
+          'restauration_hotellerie',
         ],
+        optionLabels: const {
+          'commerce_vente': 'Commerce / Vente',
+          'restauration_hotellerie': 'Restauration / Hotellerie',
+        },
         selectedValue: _filters.sector,
         onChanged: (value) {
           setState(() {
@@ -993,145 +976,29 @@ class _FilterSheetState extends State<_FilterSheet> {
           });
         },
       ),
-      const SizedBox(height: AppTheme.spaceLg),
-
-      // Location filter
-      _FilterSection(
-        title: 'Localisation',
-        options: const [
-          'Paris',
-          'Lyon',
-          'Marseille',
-          'Bordeaux',
-          'Ile-de-France',
-          'Remote',
-        ],
-        selectedValue: _filters.region,
-        onChanged: (value) {
-          setState(() {
-            if (value == null) {
-              _filters = _filters.copyWith(clearRegion: true);
-            } else {
-              _filters = _filters.copyWith(region: value);
-            }
-          });
-        },
-      ),
-      const SizedBox(height: AppTheme.spaceLg),
-
-      // Contract type filter
-      _FilterSection(
-        title: 'Type de contrat',
-        options: const [
-          AppStrings.contractCDI,
-          AppStrings.contractCDD,
-          AppStrings.contractAlternance,
-          AppStrings.contractStage,
-          AppStrings.contractInterim,
-        ],
-        selectedValue: _filters.contractType,
-        onChanged: (value) {
-          setState(() {
-            if (value == null) {
-              _filters = _filters.copyWith(clearContractType: true);
-            } else {
-              _filters = _filters.copyWith(contractType: value);
-            }
-          });
-        },
-      ),
     ];
   }
 
-  /// Recruiter filters: Competences, Experience, Disponibilite, Salaire
+  /// Recruiter filters (beta): Domaine uniquement
   List<Widget> _buildRecruiterFilters() {
     return [
-      // Category/competences filter
-      if (widget.categories.isNotEmpty)
-        _FilterSection(
-          title: 'Competences',
-          options: widget.categories
-              .map((c) => c['name'] as String)
-              .toList(),
-          selectedValue: _filters.categoryName,
-          onChanged: (value) {
-            setState(() {
-              if (value == null) {
-                _filters = _filters.copyWith(
-                  clearCategoryId: true,
-                  clearCategoryName: true,
-                );
-              } else {
-                _filters = _filters.copyWith(
-                  categoryId: _getCategoryId(value),
-                  categoryName: value,
-                );
-              }
-            });
-          },
-        ),
-      const SizedBox(height: AppTheme.spaceLg),
-
-      // Experience level filter
       _FilterSection(
-        title: "Niveau d'experience",
+        title: 'Domaine',
         options: const [
-          'Junior (0-2 ans)',
-          'Confirme (3-5 ans)',
-          'Senior (6-10 ans)',
-          'Expert (10+ ans)',
+          'commerce_vente',
+          'restauration_hotellerie',
         ],
-        selectedValue: _filters.experienceLevel,
-        onChanged: (value) {
-          setState(() {
-            if (value == null) {
-              _filters = _filters.copyWith(clearExperienceLevel: true);
-            } else {
-              _filters = _filters.copyWith(experienceLevel: value);
-            }
-          });
+        optionLabels: const {
+          'commerce_vente': 'Commerce / Vente',
+          'restauration_hotellerie': 'Restauration / Hotellerie',
         },
-      ),
-      const SizedBox(height: AppTheme.spaceLg),
-
-      // Availability filter
-      _FilterSection(
-        title: 'Disponibilite',
-        options: const [
-          AppStrings.availabilityImmediate,
-          AppStrings.availability1Month,
-          AppStrings.availability3Months,
-        ],
-        selectedValue: _filters.availability,
+        selectedValue: _filters.sector,
         onChanged: (value) {
           setState(() {
             if (value == null) {
-              _filters = _filters.copyWith(clearAvailability: true);
+              _filters = _filters.copyWith(clearSector: true);
             } else {
-              _filters = _filters.copyWith(availability: value);
-            }
-          });
-        },
-      ),
-      const SizedBox(height: AppTheme.spaceLg),
-
-      // Salary range filter
-      _FilterSection(
-        title: 'Pretention salariale',
-        options: const [
-          '< 25k',
-          '25k - 35k',
-          '35k - 50k',
-          '50k - 70k',
-          '> 70k',
-        ],
-        selectedValue: _filters.salaryRange,
-        onChanged: (value) {
-          setState(() {
-            if (value == null) {
-              _filters = _filters.copyWith(clearSalaryRange: true);
-            } else {
-              _filters = _filters.copyWith(salaryRange: value);
+              _filters = _filters.copyWith(sector: value);
             }
           });
         },
@@ -1139,34 +1006,19 @@ class _FilterSheetState extends State<_FilterSheet> {
     ];
   }
 
-  String? _getCategoryName(String? categoryId) {
-    if (categoryId == null) return null;
-    final category = widget.categories.firstWhere(
-      (c) => c['id'] == categoryId,
-      orElse: () => <String, dynamic>{},
-    );
-    return category['name'] as String?;
-  }
-
-  String? _getCategoryId(String? categoryName) {
-    if (categoryName == null) return null;
-    final category = widget.categories.firstWhere(
-      (c) => c['name'] == categoryName,
-      orElse: () => <String, dynamic>{},
-    );
-    return category['id'] as String?;
-  }
 }
 
 class _FilterSection extends StatelessWidget {
   final String title;
   final List<String> options;
+  final Map<String, String>? optionLabels;
   final String? selectedValue;
   final ValueChanged<String?> onChanged;
 
   const _FilterSection({
     required this.title,
     required this.options,
+    this.optionLabels,
     required this.selectedValue,
     required this.onChanged,
   });
@@ -1186,8 +1038,9 @@ class _FilterSection extends StatelessWidget {
           runSpacing: AppTheme.spaceSm,
           children: options.map((option) {
             final isSelected = option == selectedValue;
+            final label = optionLabels?[option] ?? option;
             return FilterChip(
-              label: Text(option),
+              label: Text(label),
               selected: isSelected,
               onSelected: (selected) {
                 onChanged(selected ? option : null);

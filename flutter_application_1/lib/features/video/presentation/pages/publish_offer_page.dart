@@ -13,6 +13,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/services/video_upload_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
+import '../../../../shared/widgets/profile_gate.dart';
 import '../../../feed/data/repositories/feed_repository.dart';
 import '../../data/repositories/video_repository.dart';
 
@@ -89,11 +90,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _pickPresentation() async {
+    final allowed = await checkProfileGate(context);
+    if (!allowed || !mounted) return;
     _publishType = 'presentation';
     await _pickVideoFile();
   }
 
   Future<void> _pickVideo() async {
+    final allowed = await checkProfileGate(context);
+    if (!allowed || !mounted) return;
     _publishType = 'offer';
     await _pickVideoFile();
   }
@@ -134,6 +139,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _pickPoster() async {
+    final allowed = await checkProfileGate(context);
+    if (!allowed || !mounted) return;
+
     final picker = ImagePicker();
     try {
       final image = await picker.pickImage(

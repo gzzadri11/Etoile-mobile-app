@@ -108,7 +108,11 @@ class _RegisterPageState extends State<RegisterPage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            context.go(AppRoutes.feed);
+            // Navigate to onboarding based on role
+            final route = _selectedRole == 'recruiter'
+                ? AppRoutes.onboardingRecruiter
+                : AppRoutes.onboardingSeeker;
+            context.go(route);
           } else if (state is AuthEmailVerificationRequired) {
             // Show dialog for email verification
             showDialog(

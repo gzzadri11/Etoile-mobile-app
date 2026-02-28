@@ -1113,13 +1113,15 @@ SELECT plan_type, COUNT(*) FROM subscriptions WHERE status='active' GROUP BY pla
 ## Notes
 
 - Sprint 0.1 (Setup Flutter) deja complete
-- Sprints 1-16 complets (sauf camera 13.1)
+- Sprints 1-17.1 complets (sauf camera 13.1)
+- Sprint 17 (17.2-17.8) : finitions pre-beta en cours
 - Priorite: fonctionnalites core avant premium
-- Tests en continu : 25/25 tests
+- Tests en continu : 25/25 tests (cible 38+ apres Sprint 17)
 - Camera : tester UNIQUEMENT sur emulateur Android (pas Edge/web)
 - Admin role deploye en production (gzzadri@gmail.com)
 - VIEW `public.users` deploye (join auth.users + user_roles)
 - Edge Functions deployees : send-push, delete-account, export-user-data, stripe-webhook, create-payment-intent, create-subscription-intent
+- Apres Sprint 17 : Sprint 18 = Review Design/UX avec Sally (`/ux`)
 
 ---
 
@@ -1537,3 +1539,567 @@ SELECT plan_type, COUNT(*) FROM subscriptions WHERE status='active' GROUP BY pla
 
 *Sprint 16 complete le 2026-02-25 (6/6 stories, 17/17 pts)*
 *App quasi-complete pour beta (manque uniquement camera 13.1)*
+
+---
+
+## Sprint 17 : Finitions Pre-Beta 🎯
+
+**Objectif :** Corriger tous les warnings d'analyse, creer un EmptyStateWidget reutilisable avec mascotte, integrer la mascotte dans welcome/onboarding, completer la gestion du blocage, implementer la gate profil, et renforcer les tests.
+**Date de planification :** 2026-02-27
+**Velocite ciblee :** 22 points
+
+### Etat du code avant Sprint 17
+
+| Element | Statut | Detail |
+|---------|--------|--------|
+| `flutter analyze` | 21 issues | 17x unnecessary_underscores, 1x unused_element, 1x unnecessary_import, 1x unintended_html_in_doc_comment |
+| Empty states | 12+ inline | Aucun widget partage, implementations toutes differentes |
+| Mascotte | Image OK, 0 usage | `assets/images/mascotte.png` jamais referencee dans le code Dart |
+| Welcome page | Inline dans app_router | Pas de mascotte, routes onboarding declarees mais vides |
+| Gate profil | Tracking bool | Jamais bloquante — completion informative uniquement |
+| Blocage | Block OK | Pas d'unblock UI, pas de liste des bloques dans Settings |
+| Tests | 25/25 pass, 5 fichiers | Manque FeedBloc, router, profile completion |
+| Story 17.1 (B2B) | DONE | Modele B2B en place, premium chercheur supprime |
+
+---
+
+### Story 17.2 : Fix les 21 warnings d'analyse (2 pts) 🔧
+
+**En tant que** developpeur,
+**Je veux** resoudre tous les issues de `flutter analyze`,
+**Afin d'** avoir 0 issues avant la beta.
+
+**Fichiers a modifier :**
+- `lib/features/feed/presentation/pages/feed_page.dart` — lignes 446, 447x2, 466, 467x2, 1142
+- `lib/features/feed/presentation/widgets/feed_video_player.dart` — lignes 254x2, 273x2
+- `lib/features/feed/data/repositories/feed_repository.dart` — ligne 368
+- `lib/features/messages/presentation/pages/conversations_page.dart` — lignes 1, 233
+- `lib/features/profile/presentation/pages/public_recruiter_profile_page.dart` — lignes 574, 578x2, 637, 641x2
+- `lib/shared/widgets/location_picker_widget.dart` — ligne 472
+
+**21 fixes :**
+
+| # | Fichier | Ligne(s) | Fix |
+|---|---------|----------|-----|
+| 1-6 | `feed_page.dart` | 446, 447x2, 466, 467x2 | `__` / `___` → `_` (wildcard Dart 3.x) |
+| 7-10 | `feed_video_player.dart` | 254x2, 273x2 | idem |
+| 11 | `conversations_page.dart` | 233 | `__` → `_` |
+| 12-17 | `public_recruiter_profile_page.dart` | 574, 578x2, 637, 641x2 | idem |
+| 18 | `location_picker_widget.dart` | 472 | `__` → `_` |
+| 19 | `feed_repository.dart` | 368 | `<String>` dans doc comment → echapper ou reformuler |
+| 20 | `feed_page.dart` | 1142 | Supprimer `_getCategoryName` (methode non utilisee) |
+| 21 | `conversations_page.dart` | 1 | Supprimer import `flutter/foundation.dart` (redondant) |
+
+**Critere de done :** `flutter analyze` → **0 issues**
+
+---
+
+### Story 17.3 : EmptyStateWidget reutilisable avec mascotte (3 pts) 🌟
+
+**En tant que** utilisateur,
+**Je veux** voir des etats vides coherents et engageants avec la mascotte,
+**Afin que** l'app soit accueillante meme sans contenu.
+
+**Fichier a creer :** `lib/shared/widgets/empty_state_widget.dart`
+
+**Parametres du widget :**
+- `icon` (IconData, optionnel) — icone au-dessus du texte
+- `title` (String, requis) — titre principal ("Aucune video")
+- `subtitle` (String?, optionnel) — texte secondaire
+- `actionLabel` (String?, optionnel) — texte du bouton CTA
+- `onAction` (VoidCallback?, optionnel) — callback du bouton
+- `showMascotte` (bool, defaut: false) — affiche la mascotte au lieu de l'icone
+- `compact` (bool, defaut: false) — version reduite pour les sections
+
+**12+ remplacements dans :**
+- `feed_page.dart` — `_buildEmptyState` → `EmptyStateWidget`
+- `conversations_page.dart` — `_buildEmptyState` → `EmptyStateWidget`
+- `chat_page.dart` — `_buildEmptyState` → `EmptyStateWidget`
+- `my_publications_page.dart` — inline Column → `EmptyStateWidget`
+- `verification_queue_page.dart` — inline Column → `EmptyStateWidget`
+- `reports_page.dart` — inline Column → `EmptyStateWidget`
+- `subscription_management_page.dart` — inline Text → `EmptyStateWidget`
+- `stats_card.dart` — inline Text → `EmptyStateWidget(compact: true)`
+- `profile_page.dart` — inline Column → `EmptyStateWidget`
+- `faq_page.dart` — empty search → `EmptyStateWidget`
+
+**Criteres d'acceptation :**
+- [ ] Widget partage cree avec design system (AppColors, AppSpacing)
+- [ ] Mascotte affichee (image asset `assets/images/mascotte.png`) quand `showMascotte: true`
+- [ ] Tous les empty states inline remplaces par `EmptyStateWidget`
+- [ ] Design coherent : icone/mascotte en haut, titre gras, subtitle gris, bouton CTA optionnel
+- [ ] `flutter analyze` : 0 issues
+
+---
+
+### Story 17.4 : Welcome + Onboarding avec mascotte (5 pts) 🎬
+
+**En tant que** nouvel utilisateur,
+**Je veux** un accueil engageant avec la mascotte et un onboarding clair,
+**Afin de** comprendre l'app et etre guide des le depart.
+
+**Fichiers a creer :**
+- `lib/features/onboarding/presentation/pages/onboarding_page.dart` — 3 slides PageView
+- `lib/features/auth/presentation/pages/welcome_page.dart` — Extraite depuis app_router.dart
+
+**Fichiers a modifier :**
+- `lib/core/router/app_router.dart` — Supprimer `_WelcomePage` inline, importer `WelcomePage`, wirer routes onboarding
+
+**Welcome page (extraire + enrichir) :**
+- [ ] Extraire `_WelcomePage` de app_router.dart vers `welcome_page.dart`
+- [ ] Ajouter la mascotte au-dessus du logo etoile (image asset)
+- [ ] Garder les 3 boutons : "Je cherche un emploi", "Je recrute", "Se connecter"
+
+**Onboarding (3 slides PageView) :**
+- Slide 1 : Mascotte + "Enregistrez votre video en 40 secondes" (chercheur) / "Trouvez les meilleurs talents" (recruteur)
+- Slide 2 : Mascotte + "Decouvrez des profils / offres dans votre secteur"
+- Slide 3 : Mascotte + "Contactez directement par messagerie"
+- Navigation : bouton "Passer" + indicateur de page (dots) + dernier slide "Commencer"
+- "Commencer" → redirige vers le feed
+
+**Router :**
+- [ ] Route `/onboarding/seeker` et `/onboarding/recruiter` → `OnboardingPage(role:)`
+- [ ] Apres inscription → redirect vers onboarding (au lieu du feed direct)
+- [ ] Flag `hasSeenOnboarding` dans SharedPreferences pour ne montrer qu'une seule fois
+
+**Criteres d'acceptation :**
+- [ ] Mascotte visible sur la welcome page
+- [ ] Onboarding 3 slides avec PageView + dots indicator
+- [ ] Contenu adapte au role (seeker vs recruiter)
+- [ ] Nouvel utilisateur voit l'onboarding une seule fois apres inscription
+- [ ] Routes `/onboarding/seeker` et `/onboarding/recruiter` fonctionnelles
+- [ ] Utilisateur existant (flag SharedPreferences) ne revoit pas l'onboarding
+
+---
+
+### Story 17.5 : Gestion complete des utilisateurs bloques (3 pts) 🚫
+
+**En tant qu'** utilisateur,
+**Je veux** voir et gerer mes utilisateurs bloques,
+**Afin de** pouvoir debloquer quelqu'un si je le souhaite.
+
+**Fichiers a creer :**
+- `lib/features/settings/presentation/pages/blocked_users_page.dart`
+
+**Fichiers a modifier :**
+- `lib/features/settings/presentation/pages/settings_page.dart` — Ajouter lien "Utilisateurs bloques"
+- `lib/core/router/app_router.dart` — Route `/settings/blocked`
+- `lib/features/profile/presentation/pages/public_recruiter_profile_page.dart` — Verifier si bloque avant "Contacter"
+
+**Criteres d'acceptation :**
+- [ ] Page "Utilisateurs bloques" accessible depuis Settings
+- [ ] Liste les utilisateurs bloques avec nom/entreprise + date de blocage
+- [ ] Bouton "Debloquer" sur chaque item → confirmation dialog → appelle `unblockUser()`
+- [ ] Apres deblocage : SnackBar + liste rafraichie
+- [ ] Etat vide : `EmptyStateWidget` avec titre "Aucun utilisateur bloque"
+- [ ] Sur le profil public recruteur : si bloque, bouton "Contacter" desactive + message "Utilisateur bloque"
+- [ ] Route `/settings/blocked` dans GoRouter
+
+**Contexte technique :**
+- `BlockRepository` a deja `unblockUser()` et `getBlockedUserIds()` — juste pas d'UI
+- Besoin de recuperer les noms des utilisateurs bloques (join avec users/profiles)
+
+---
+
+### Story 17.6 : Gate profil — completude requise pour actions (5 pts) 🔒
+
+**En tant que** systeme,
+**Je veux** bloquer la publication et le contact si le profil est incomplet,
+**Afin d'** assurer des profils de qualite sur la plateforme.
+
+**Fichiers a modifier :**
+- `lib/features/profile/data/repositories/profile_repository.dart` — Ajouter `getProfileCompletionPercentage()`
+- `lib/features/video/presentation/pages/video_record_page.dart` — Guard avant enregistrement
+- `lib/features/video/presentation/pages/video_publish_page.dart` — Guard avant publication
+- `lib/features/feed/presentation/pages/feed_page.dart` — Guard avant "Contacter" depuis le feed
+- `lib/features/profile/presentation/pages/profile_page.dart` — Card completion avec % et barre de progression
+
+**Calcul de completude (5 categories x 20% = 100%) :**
+
+**Chercheur :**
+
+| Categorie | Champs requis | 20% |
+|-----------|---------------|-----|
+| Inscription | email + password (auto a l'inscription) | 20% |
+| Identite | firstName + lastName non vides | 20% |
+| Professionnel | categories (>=1 selectionnee) | 20% |
+| Localisation | city non vide | 20% |
+| Preferences | contractTypes (>=1) + availability non vide | 20% |
+
+**Recruteur :**
+
+| Categorie | Champs requis | 20% |
+|-----------|---------------|-----|
+| Inscription | email + password (auto a l'inscription) | 20% |
+| Entreprise | companyName (non "A completer") + sector non vide | 20% |
+| Description | description (>=50 caracteres) | 20% |
+| Localisation | city ou locations (>=1) | 20% |
+| Verification | SIRET renseigne + document uploade | 20% |
+
+**Implementation du guard :**
+- [ ] Methode `getProfileCompletionPercentage()` retourne `int` (0, 20, 40, 60, 80 ou 100)
+- [ ] Dialog bloquant "Completez votre profil (X%)" avec bouton "Completer mon profil" → navigation edit profil
+- [ ] Guard sur : enregistrement video, publication video/affiche, bouton "Contacter" dans le feed
+- [ ] `_ProfileCompletionCard` affiche le % avec `LinearProgressIndicator` colore
+- [ ] A 100% : card remplacee par badge "Profil complet" (icone check verte)
+- [ ] Inscription donne 20% (seule la categorie "Inscription" est auto-remplie)
+
+**Criteres de done :**
+- [ ] Profil incomplet → dialog bloquant a la tentative de publier ou contacter
+- [ ] Profil complet → aucun blocage, actions normales
+- [ ] Card completion avec pourcentage et barre de progression sur la page profil
+- [ ] Les 5 categories correctement evaluees pour les 2 roles
+
+---
+
+### Story 17.7 : Tests supplementaires (3 pts) 🧪
+
+**En tant que** developpeur,
+**Je veux** renforcer la couverture de tests avant la beta,
+**Afin d'** eviter les regressions.
+
+**Fichiers a creer :**
+- `test/features/feed/presentation/bloc/feed_bloc_test.dart` — 5+ tests
+- `test/shared/widgets/empty_state_widget_test.dart` — 3+ tests
+- `test/features/profile/profile_completion_test.dart` — 5+ tests
+
+**Tests FeedBloc (5+) :**
+- [ ] Load feed succes → FeedLoaded avec videos
+- [ ] Load feed vide → FeedLoaded avec liste vide
+- [ ] Filtrage par categorie fonctionne
+- [ ] Filtrage exclut utilisateurs bloques
+- [ ] Refresh feed recharge les donnees
+
+**Tests EmptyStateWidget (3+) :**
+- [ ] Affiche le titre passe en parametre
+- [ ] Affiche la mascotte quand `showMascotte: true`
+- [ ] Affiche le bouton action quand `actionLabel` + `onAction` fournis
+
+**Tests Profile Completion (5+) :**
+- [ ] Chercheur 0% → profil entierement vide
+- [ ] Chercheur 40% → inscription + identite remplis
+- [ ] Chercheur 100% → toutes les categories remplies
+- [ ] Recruteur 20% → inscription seule
+- [ ] Gate bloque si completion < 100%
+
+**Critere de done :** `flutter test` → **38+ tests pass** (25 actuels + 13+ nouveaux)
+
+---
+
+### Story 17.8 : Update docs (SESSION-RESUME + sprint plan) (1 pt) 📝
+
+**En tant que** developpeur,
+**Je veux** que la documentation reflete l'etat reel du projet,
+**Afin de** pouvoir reprendre le travail efficacement.
+
+**Fichiers a modifier :**
+- `_bmad-output/SESSION-RESUME.md` — Ajouter section Sprint 17 avec toutes les stories
+- `_bmad-output/sprint-plan.md` — Marquer Sprint 17 DONE
+- `MEMORY.md` — Mettre a jour l'etat courant si necessaire
+
+**Criteres d'acceptation :**
+- [ ] SESSION-RESUME.md documente chaque story du Sprint 17 (fichiers crees/modifies)
+- [ ] sprint-plan.md a le statut final du Sprint 17
+- [ ] Prochaine etape clairement indiquee (Sprint 18 = UX Review avec Sally)
+
+---
+
+### Resume Sprint 17
+
+| Story | Titre | Points | Dependances | Statut |
+|-------|-------|--------|-------------|--------|
+| 17.1 | Modele B2B (premium chercheur supprime) | - | Aucune | ✅ DONE |
+| 17.2 | Fix 21 warnings analyse | 2 | Aucune | ✅ DONE |
+| 17.3 | EmptyStateWidget + mascotte | 3 | Aucune | ✅ DONE |
+| 17.4 | Welcome + Onboarding mascotte | 5 | 17.3 | ✅ DONE |
+| 17.5 | Gestion utilisateurs bloques | 3 | 17.3 | ✅ DONE |
+| 17.6 | Gate profil completude | 5 | Aucune | ✅ DONE |
+| 17.7 | Tests supplementaires | 3 | 17.3, 17.6 | ✅ DONE |
+| 17.8 | Update docs | 1 | Toutes | ✅ DONE |
+| **Total** | | **22** | | **DONE** |
+
+**Ordre d'implementation recommande :**
+```
+17.2 (Fix warnings — rapide) ───┐
+17.3 (EmptyStateWidget)          ├─→ 17.4 (Welcome + Onboarding)
+17.6 (Gate profil)               ├─→ 17.5 (Blocked users)
+                                 └─→ 17.7 (Tests) → 17.8 (Docs) → DONE
+```
+
+17.2, 17.3 et 17.6 sont independantes. 17.4 et 17.5 dependent de 17.3. 17.7 attend 17.3 et 17.6. 17.8 en dernier.
+
+**Criteres de Done Sprint 17 :**
+- [x] `flutter analyze` → 0 issues
+- [x] EmptyStateWidget utilise partout avec mascotte
+- [x] Welcome page avec mascotte + onboarding 3 slides
+- [x] Utilisateurs bloques geres depuis Settings (debloquer possible)
+- [x] Gate profil bloquante sur publication et contact
+- [x] 51 tests passent (objectif 38+)
+- [x] Documentation a jour
+
+**Pre-requis :** Aucun deploiement requis (tout est cote Flutter)
+
+### Stories reportees (toutes sessions)
+
+| Story | Titre | Points | Raison |
+|-------|-------|--------|--------|
+| 13.1 | Camera in-app | 8 | Emulateur Android requis |
+
+*Sprint 17 complete le 2026-02-27 (8/8 stories, 22/22 pts)*
+*51 tests pass, 0 analyse issues. App prete pour review UX Sprint 18.*
+
+---
+
+## Sprint 18 : Pivot Beta Alternance IdF 🎯
+
+**Objectif :** Pivoter l'app pour la beta : cibler les chercheurs d'alternance en Ile-de-France, secteurs Commerce/Vente et Restauration/Hotellerie. Refonte profil chercheur, page de recherche comme landing, restrictions recruteur.
+**Date de planification :** 2026-02-27
+**Velocite ciblee :** 26 points
+
+### Decisions du pivot beta
+
+| Decision | Valeur |
+|----------|--------|
+| **Cible** | Chercheurs d'alternance en Ile-de-France |
+| **Secteurs** | Commerce/Vente + Restauration/Hotellerie uniquement |
+| **Zone geographique** | Ile-de-France uniquement |
+| **Rayon km** | Non (filtrage par departement IdF) |
+| **Landing page** | Page de recherche (secteur + departement) au lieu du feed |
+| **Profil chercheur** | Refonte : prenom, nom, age, ville, ecole, niveau etude, domaine |
+| **Profil recruteur** | Inchange sauf restriction secteurs et localisation a IdF |
+| **Completude** | 5x20% avec nouveaux champs chercheur |
+| **Gate** | < 100% = lecture seule / 100% = acces complet |
+
+---
+
+### Story 18.1 : Migration DB + Modele SeekerProfile (3 pts) 🗄️
+
+**En tant que** developpeur,
+**Je veux** adapter la base de donnees et le modele Dart pour le pivot alternance,
+**Afin que** les nouveaux champs soient disponibles.
+
+**Migration DB** — Ajouter 4 colonnes a `seeker_profiles` :
+- `age` (text) — ex: "18", "22"
+- `school` (text) — ex: "IUT Paris Descartes"
+- `study_level` (text) — ex: "bac", "bac+2"
+- `domain` (text) — ex: "commerce_vente", "restauration_hotellerie"
+
+> Les anciens champs (`categories`, `contract_types`, `experience_level`, `salary_expectation`, `availability`) restent en DB mais ne sont plus utilises dans l'app.
+
+**Modele Dart** — `seeker_profile_model.dart` :
+- Ajouter : `age`, `school`, `studyLevel`, `domain`
+- Mettre a jour `fromJson`/`toJson`
+- Nouveau `completionPercentage` :
+  - Inscription = 20% (toujours)
+  - Identite (prenom + nom + age) = 20%
+  - Etudes (ecole + niveau) = 20%
+  - Localisation (ville) = 20%
+  - Domaine = 20%
+
+**Criteres de done :**
+- [ ] Migration SQL creee et poussee sur Supabase
+- [ ] SeekerProfile model Dart mis a jour avec nouveaux champs
+- [ ] completionPercentage recalcule avec la nouvelle formule
+- [ ] Anciens champs toujours presents en DB (pas de suppression)
+- [ ] `flutter analyze` → 0 issues
+
+---
+
+### Story 18.2 : Refonte formulaire profil chercheur (5 pts) 📝
+
+**En tant que** chercheur d'alternance,
+**Je veux** remplir mon profil avec mes infos pertinentes,
+**Afin que** les recruteurs voient mon ecole, mon niveau et mon domaine.
+
+**Refonte de `edit_seeker_profile_page.dart` :**
+
+| Champ | Type Widget | Valeurs |
+|-------|-------------|---------|
+| Prenom | TextFormField | (existe deja) |
+| Nom | TextFormField | (existe deja) |
+| Age | DropdownButtonFormField | 16, 17, 18... 60 |
+| Ville | CityAutocompleteField | Autocompletion Photon filtree IdF |
+| Ecole | TextFormField | Texte libre |
+| Niveau d'etude | DropdownButtonFormField | Sans diplome, CAP/BEP, Bac, Bac+1, Bac+2, Bac+3, Bac+4, Bac+5, Bac+8 |
+| Domaine | DropdownButtonFormField | Commerce/Vente, Restauration/Hotellerie |
+
+**Supprimer du formulaire :** categories chips, contract types chips, experience dropdown, disponibilite dropdown, salaire, bio
+
+**Criteres de done :**
+- [ ] Formulaire reecrit avec les 7 champs ci-dessus
+- [ ] Tous les dropdowns fonctionnels avec `initialValue`
+- [ ] Ville avec autocompletion filtree IdF
+- [ ] Sauvegarde vers Supabase fonctionne
+- [ ] Page profil affiche les nouvelles infos
+- [ ] `flutter analyze` → 0 issues
+
+---
+
+### Story 18.3 : Autocompletion ville filtree Ile-de-France (3 pts) 🗺️
+
+**En tant que** utilisateur,
+**Je veux** chercher ma ville avec autocompletion limitee a l'Ile-de-France,
+**Afin de** trouver rapidement ma localisation.
+
+**Fichier a creer :** `lib/shared/widgets/city_autocomplete_field.dart`
+
+**Implementation :**
+- Photon API avec bbox Ile-de-France : `bbox=1.44,48.12,3.56,49.24`
+- Debounce 400ms, min 3 caracteres, max 5 resultats
+- Affiche : ville + code postal + departement
+- Reutilisable pour le formulaire profil ET la page de recherche
+- Stocke la ville selectionnee en String
+
+**Criteres de done :**
+- [ ] Widget cree et fonctionnel
+- [ ] Seules les villes d'Ile-de-France apparaissent dans les suggestions
+- [ ] Debounce 400ms pour eviter trop d'appels API
+- [ ] Gestion erreur reseau (message utilisateur)
+- [ ] Utilise dans edit_seeker_profile_page.dart
+
+---
+
+### Story 18.4 : Restrictions recruteur beta (2 pts) 🔒
+
+**En tant que** recruteur,
+**Je veux** m'inscrire dans les secteurs beta,
+**Afin de** publier des offres d'alternance en IdF.
+
+**Modifications :**
+- `edit_recruiter_profile_page.dart` : `_sectorOptions` reduit a Commerce/Vente + Restauration/Hotellerie
+- `location_picker_widget.dart` : Ajouter bbox IdF (`bbox=1.44,48.12,3.56,49.24`) dans l'appel Photon API
+- Carte centree sur IdF par defaut (lat: 48.85, lon: 2.35, zoom: 10)
+
+**Criteres de done :**
+- [ ] Dropdown secteur limite a 2 choix
+- [ ] Autocompletion adresse filtree IdF
+- [ ] Carte centree sur Paris/IdF par defaut
+- [ ] `flutter analyze` → 0 issues
+
+---
+
+### Story 18.5 : Page de recherche — nouvelle landing (5 pts) 🔍
+
+**En tant que** utilisateur (chercheur ou recruteur),
+**Je veux** arriver sur une page de recherche quand j'ouvre l'app,
+**Afin de** filtrer par secteur et zone avant de voir les resultats.
+
+**Fichier a creer :** `lib/features/search/presentation/pages/search_page.dart`
+
+**Contenu de la page :**
+- Dropdown **Domaine** : Commerce/Vente, Restauration/Hotellerie, Tous
+- Dropdown **Departement** : Paris (75), Hauts-de-Seine (92), Seine-Saint-Denis (93), Val-de-Marne (94), Essonne (91), Seine-et-Marne (77), Yvelines (78), Val-d'Oise (95), Tous
+- Bouton **"Rechercher"** → navigue vers `/feed` avec filtres pre-remplis
+- Design coherent avec l'app (AppColors, AppTheme)
+- Mascotte ou illustration possible en haut de page
+
+**Criteres de done :**
+- [ ] Page creee et fonctionnelle
+- [ ] 2 dropdowns + bouton Rechercher
+- [ ] Navigation vers feed avec filtres transmis
+- [ ] Design coherent (couleurs, typo, espacements)
+- [ ] `flutter analyze` → 0 issues
+
+---
+
+### Story 18.6 : Modification routeur + navigation (3 pts) 🧭
+
+**En tant que** utilisateur,
+**Je veux** arriver sur la page de recherche apres connexion,
+**Afin de** choisir mes filtres avant de voir le feed.
+
+**Modifications de `app_router.dart` :**
+- Landing = `/search` au lieu de `/feed`
+- `/search` dans le ShellRoute (bottom nav)
+- Bottom nav : Recherche | Feed | Messages | Profil (+ Publier pour recruteurs)
+- Redirect apres login/onboarding → `/search`
+- `/feed` accepte des filtres en argument (via `extra` ou query params)
+
+**Criteres de done :**
+- [ ] Apres login → redirection vers `/search`
+- [ ] Apres onboarding → redirection vers `/search`
+- [ ] Bottom nav inclut l'onglet Recherche
+- [ ] Feed recoit et applique les filtres de la page de recherche
+- [ ] `flutter analyze` → 0 issues
+
+---
+
+### Story 18.7 : Adaptation filtres feed (3 pts) 🎛️
+
+**En tant que** utilisateur,
+**Je veux** que le feed filtre par domaine et departement,
+**Afin de** voir les resultats pertinents pour la beta.
+
+**Modifications :**
+- `FeedFilters` : remplacer `categoryId`/`categoryName` par `domain`
+- `feed_repository.dart` : adapter `_applySeekerFilters` et `_applyRecruiterFilters` pour `domain` au lieu de `categories`
+- `_FilterSheet` dans `feed_page.dart` : mettre a jour les filtres UI (domaine + departement IdF)
+- Filtres feed coherents avec la page de recherche
+
+**Criteres de done :**
+- [ ] FeedFilters mis a jour avec `domain`
+- [ ] Filtrage feed par domaine fonctionne
+- [ ] Filtrage feed par departement fonctionne
+- [ ] Filter sheet affiche les bons filtres
+- [ ] `flutter analyze` → 0 issues
+
+---
+
+### Story 18.8 : Tests + documentation (2 pts) 🧪📝
+
+**En tant que** developpeur,
+**Je veux** que les tests et la doc refletent le pivot beta,
+**Afin d'** eviter les regressions et pouvoir reprendre facilement.
+
+**Tests a modifier :**
+- `profile_completion_test.dart` — Reecrire pour les nouveaux champs chercheur (age, school, studyLevel, domain)
+- `feed_bloc_test.dart` — Adapter si necessaire (FeedFilters changes)
+
+**Documentation a mettre a jour :**
+- `SESSION-RESUME.md`
+- `sprint-plan.md` (marquer DONE)
+- `MEMORY.md`
+
+**Criteres de done :**
+- [ ] Tous les tests passent (51+)
+- [ ] `flutter analyze` → 0 issues
+- [ ] Documentation a jour avec decisions du pivot beta
+
+---
+
+### Resume Sprint 18
+
+| Story | Titre | Points | Dependances | Statut |
+|-------|-------|--------|-------------|--------|
+| 18.1 | Migration DB + Modele SeekerProfile | 3 | Aucune | A faire |
+| 18.2 | Refonte formulaire profil chercheur | 5 | 18.1, 18.3 | A faire |
+| 18.3 | Autocompletion ville filtree IdF | 3 | Aucune | A faire |
+| 18.4 | Restrictions recruteur beta | 2 | 18.3 | A faire |
+| 18.5 | Page de recherche (landing) | 5 | 18.3 | A faire |
+| 18.6 | Routeur + navigation | 3 | 18.5 | A faire |
+| 18.7 | Adaptation filtres feed | 3 | 18.1, 18.6 | A faire |
+| 18.8 | Tests + documentation | 2 | Toutes | A faire |
+| **Total** | | **26** | | **A faire** |
+
+**Ordre d'implementation :**
+```
+18.1 (DB + Model) ──────────┐
+18.3 (Autocompletion IdF) ──┼──→ 18.2 (Formulaire chercheur)
+                            ├──→ 18.4 (Restrictions recruteur)
+                            └──→ 18.5 (Page recherche) → 18.6 (Routeur) → 18.7 (Filtres feed)
+                                                                                    └──→ 18.8 (Tests + docs)
+```
+
+18.1 et 18.3 sont independantes. 18.2 depend de 18.1 + 18.3. 18.4 et 18.5 dependent de 18.3. 18.6 depend de 18.5. 18.7 depend de 18.1 + 18.6. 18.8 en dernier.
+
+**Criteres de Done Sprint 18 :**
+- [ ] Profil chercheur refait avec nouveaux champs (age, ecole, niveau, domaine, ville IdF)
+- [ ] Profil recruteur limite a 2 secteurs + localisation IdF
+- [ ] Page de recherche comme landing (secteur + departement IdF)
+- [ ] Feed filtre par domaine et departement
+- [ ] Completude profil 5x20% recalculee
+- [ ] Tous les tests passent
+- [ ] `flutter analyze` → 0 issues
+- [ ] Documentation a jour
+
+**Pre-requis :** Migration DB a deployer sur Supabase (Story 18.1)

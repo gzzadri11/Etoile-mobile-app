@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// Model representing a job seeker's profile
+/// Model representing a job seeker's profile (alternance beta)
 class SeekerProfile extends Equatable {
   final String userId;
   final String firstName;
@@ -10,12 +10,21 @@ class SeekerProfile extends Equatable {
   final String? region;
   final String? city;
   final String? postalCode;
+
+  // Beta pivot: new fields for alternance
+  final String? age;
+  final String? school;
+  final String? studyLevel;
+  final String? domain;
+
+  // Legacy fields (kept for DB backward compatibility, no longer used in UI)
   final List<String> categories;
   final List<String> contractTypes;
   final String? experienceLevel;
   final String? availability;
   final int? salaryExpectation;
   final String? bio;
+
   final bool profileComplete;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -29,6 +38,10 @@ class SeekerProfile extends Equatable {
     this.region,
     this.city,
     this.postalCode,
+    this.age,
+    this.school,
+    this.studyLevel,
+    this.domain,
     this.categories = const [],
     this.contractTypes = const [],
     this.experienceLevel,
@@ -39,6 +52,33 @@ class SeekerProfile extends Equatable {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  /// Profile completion percentage (5 categories x 20% = 100%)
+  ///
+  /// - Inscription (20%): always complete (user registered)
+  /// - Identity (20%): firstName + lastName + age
+  /// - Studies (20%): school + studyLevel
+  /// - Location (20%): city non-empty
+  /// - Domain (20%): domain non-empty
+  int get completionPercentage {
+    int score = 20; // Inscription always complete
+    if (firstName.isNotEmpty &&
+        lastName != null &&
+        lastName!.isNotEmpty &&
+        age != null &&
+        age!.isNotEmpty) {
+      score += 20;
+    }
+    if (school != null &&
+        school!.isNotEmpty &&
+        studyLevel != null &&
+        studyLevel!.isNotEmpty) {
+      score += 20;
+    }
+    if (city != null && city!.isNotEmpty) score += 20;
+    if (domain != null && domain!.isNotEmpty) score += 20;
+    return score;
+  }
 
   /// Full name (first + last)
   String get fullName {
@@ -69,6 +109,10 @@ class SeekerProfile extends Equatable {
       region: json['region'] as String?,
       city: json['city'] as String?,
       postalCode: json['postal_code'] as String?,
+      age: json['age'] as String?,
+      school: json['school'] as String?,
+      studyLevel: json['study_level'] as String?,
+      domain: json['domain'] as String?,
       categories: (json['categories'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
@@ -97,6 +141,10 @@ class SeekerProfile extends Equatable {
       'region': region,
       'city': city,
       'postal_code': postalCode,
+      'age': age,
+      'school': school,
+      'study_level': studyLevel,
+      'domain': domain,
       'categories': categories,
       'contract_types': contractTypes,
       'experience_level': experienceLevel,
@@ -116,6 +164,10 @@ class SeekerProfile extends Equatable {
     String? region,
     String? city,
     String? postalCode,
+    String? age,
+    String? school,
+    String? studyLevel,
+    String? domain,
     List<String>? categories,
     List<String>? contractTypes,
     String? experienceLevel,
@@ -133,6 +185,10 @@ class SeekerProfile extends Equatable {
       region: region ?? this.region,
       city: city ?? this.city,
       postalCode: postalCode ?? this.postalCode,
+      age: age ?? this.age,
+      school: school ?? this.school,
+      studyLevel: studyLevel ?? this.studyLevel,
+      domain: domain ?? this.domain,
       categories: categories ?? this.categories,
       contractTypes: contractTypes ?? this.contractTypes,
       experienceLevel: experienceLevel ?? this.experienceLevel,
@@ -155,6 +211,10 @@ class SeekerProfile extends Equatable {
         region,
         city,
         postalCode,
+        age,
+        school,
+        studyLevel,
+        domain,
         categories,
         contractTypes,
         experienceLevel,

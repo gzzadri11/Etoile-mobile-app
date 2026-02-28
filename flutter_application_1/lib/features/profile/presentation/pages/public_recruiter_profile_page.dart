@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/widgets/location_map_widget.dart';
+import '../../../../shared/widgets/profile_gate.dart';
+import '../../../messages/data/repositories/block_repository.dart';
 import '../../../messages/data/repositories/conversation_repository.dart';
 import '../../../video/data/models/video_model.dart';
 import '../../../video/data/repositories/video_repository.dart';
@@ -40,9 +40,8 @@ class _PublicRecruiterProfilePageState
   List<Video> _videos = [];
   bool _isLoading = true;
   bool _isContacting = false;
+  bool _isBlocked = false;
   String? _error;
-  // Reverse-geocoded addresses keyed by "lat,lng"
-  final Map<String, String> _markerAddresses = {};
 
   @override
   void initState() {
@@ -60,18 +59,22 @@ class _PublicRecruiterProfilePageState
         videoRepo.getVideosForUser(widget.userId),
       ]);
 
+      // Check if this user is blocked
+      bool blocked = false;
+      try {
+        final blockRepo = GetIt.I<BlockRepository>();
+        blocked = await blockRepo.isBlocked(widget.userId);
+      } catch (_) {}
+
       if (mounted) {
         setState(() {
           _profile = results[0] as RecruiterProfile?;
           _videos = results[1] as List<Video>;
+          _isBlocked = blocked;
           _isLoading = false;
         });
       }
 
-      // Load addresses in background
-      if (_profile != null && _profile!.hasMapMarkers) {
-        _loadAddresses(_profile!.mapMarkers);
-      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -82,42 +85,14 @@ class _PublicRecruiterProfilePageState
     }
   }
 
-  Future<void> _loadAddresses(List<MapMarker> markers) async {
-    final dio = Dio();
-    for (final marker in markers) {
-      try {
-        final response = await dio.get(
-          'https://photon.komoot.io/reverse',
-          queryParameters: {
-            'lat': marker.latitude,
-            'lon': marker.longitude,
-          },
-        );
-        final features = response.data['features'] as List?;
-        if (features != null && features.isNotEmpty) {
-          final props = features[0]['properties'] as Map<String, dynamic>;
-          final parts = <String>[];
-          if (props['street'] != null) {
-            if (props['housenumber'] != null) {
-              parts.add('${props['housenumber']} ${props['street']}');
-            } else {
-              parts.add(props['street'] as String);
-            }
-          }
-          if (props['city'] != null) parts.add(props['city'] as String);
-          if (props['postcode'] != null) parts.add(props['postcode'] as String);
+  static const Map<String, String> _sectorLabels = {
+    'commerce_vente': 'Commerce / Vente',
+    'restauration_hotellerie': 'Restauration / Hotellerie',
+  };
 
-          if (parts.isNotEmpty && mounted) {
-            setState(() {
-              _markerAddresses['${marker.latitude},${marker.longitude}'] =
-                  parts.join(', ');
-            });
-          }
-        }
-      } catch (_) {
-        // Ignore geocoding errors
-      }
-    }
+  static String _getSectorLabel(String? sector) {
+    if (sector == null || sector.isEmpty) return '';
+    return _sectorLabels[sector] ?? sector;
   }
 
   @override
@@ -198,7 +173,7 @@ class _PublicRecruiterProfilePageState
             coverUrl: profile.coverUrl,
             logoUrl: profile.logoUrl,
             companyName: profile.companyName,
-            sector: profile.sector ?? '',
+            sector: _getSectorLabel(profile.sector),
             isVerified: profile.isVerified,
           ),
 
@@ -226,8 +201,8 @@ class _PublicRecruiterProfilePageState
                   const SizedBox(height: AppTheme.spaceLg),
                 ],
 
-                // 3. Map
-                if (profile.hasMapMarkers) ...[
+                // 3. Location (beta: city text)
+                if (profile.locations.isNotEmpty) ...[
                   Row(
                     children: [
                       const Icon(Icons.location_on,
@@ -243,32 +218,10 @@ class _PublicRecruiterProfilePageState
                     ],
                   ),
                   const SizedBox(height: AppTheme.spaceSm),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                      border: Border.all(color: AppColors.greyLight),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: LocationMapWidget(
-                      markers: profile.mapMarkers,
-                      height: 250,
-                    ),
+                  Text(
+                    profile.locations.first,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: AppTheme.spaceMd),
-
-                  // 4. Address list
-                  ...profile.mapMarkers.map((marker) {
-                    final key = '${marker.latitude},${marker.longitude}';
-                    final address = _markerAddresses[key];
-                    return ListTile(
-                      leading: const Icon(Icons.domain,
-                          color: AppColors.primaryOrange),
-                      title: Text(marker.name),
-                      subtitle: address != null ? Text(address) : null,
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                    );
-                  }),
                   const SizedBox(height: AppTheme.spaceLg),
                 ],
 
@@ -362,6 +315,20 @@ class _PublicRecruiterProfilePageState
 
   Future<void> _startConversation(Video video) async {
     if (!mounted || _isContacting) return;
+
+    // Check profile completion before allowing contact
+    final allowed = await checkProfileGate(context);
+    if (!allowed || !mounted) return;
+
+    if (_isBlocked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vous avez bloque cet utilisateur'),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
 
     final conversationRepo = GetIt.I<ConversationRepository>();
     final currentUserId = conversationRepo.currentUserId;
@@ -571,11 +538,11 @@ class _VideoThumbnailCard extends StatelessWidget {
                   ? CachedNetworkImage(
                       imageUrl: thumbnailUrl,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => const Center(
+                      placeholder: (_, _) => const Center(
                         child: Icon(Icons.play_circle_outline,
                             size: 32, color: AppColors.greyMedium),
                       ),
-                      errorWidget: (_, __, ___) => const Center(
+                      errorWidget: (_, _, _) => const Center(
                         child: Icon(Icons.play_circle_outline,
                             size: 32, color: AppColors.greyMedium),
                       ),
@@ -634,11 +601,11 @@ class _OfferThumbnailCard extends StatelessWidget {
                   ? CachedNetworkImage(
                       imageUrl: thumbnailUrl,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => const Center(
+                      placeholder: (_, _) => const Center(
                         child: Icon(Icons.play_circle_outline,
                             size: 32, color: AppColors.greyMedium),
                       ),
-                      errorWidget: (_, __, ___) => const Center(
+                      errorWidget: (_, _, _) => const Center(
                         child: Icon(Icons.play_circle_outline,
                             size: 32, color: AppColors.greyMedium),
                       ),

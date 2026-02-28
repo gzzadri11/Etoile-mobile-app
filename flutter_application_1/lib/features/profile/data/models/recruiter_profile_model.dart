@@ -84,6 +84,32 @@ class RecruiterProfile extends Equatable {
 
   bool get hasMapMarkers => mapMarkers.isNotEmpty;
 
+  /// Profile completion percentage (5 categories x 20% = 100%)
+  ///
+  /// - Inscription (20%): always complete (user registered)
+  /// - Company (20%): companyName (not "A completer") + sector non-empty
+  /// - Description (20%): description >= 50 characters
+  /// - Location (20%): locations or mapMarkers non-empty
+  /// - Verification (20%): siret filled + document uploaded
+  int get completionPercentage {
+    int score = 20; // Inscription always complete
+    if (companyName.isNotEmpty &&
+        companyName != 'A completer' &&
+        sector != null &&
+        sector!.isNotEmpty) {
+      score += 20;
+    }
+    if (description != null && description!.length >= 50) score += 20;
+    if (locations.isNotEmpty || mapMarkers.isNotEmpty) score += 20;
+    if (siret != null &&
+        siret!.isNotEmpty &&
+        documentUrl != null &&
+        documentUrl!.isNotEmpty) {
+      score += 20;
+    }
+    return score;
+  }
+
   /// Check if company is verified
   bool get isVerified => verificationStatus == 'verified';
 

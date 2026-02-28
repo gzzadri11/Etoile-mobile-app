@@ -8,7 +8,6 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
-import '../../../../shared/widgets/location_map_widget.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../data/models/seeker_profile_model.dart';
 import '../../data/models/recruiter_profile_model.dart';
@@ -103,6 +102,25 @@ class _SeekerProfileView extends StatelessWidget {
     required this.stats,
   });
 
+  static String _getDomainLabel(String? domain) {
+    const labels = {
+      'commerce_vente': 'Commerce / Vente',
+      'restauration_hotellerie': 'Restauration / Hotellerie',
+    };
+    return labels[domain] ?? domain ?? 'Non defini';
+  }
+
+  static String _buildStudyInfo(SeekerProfile profile) {
+    final parts = <String>[];
+    if (profile.school != null && profile.school!.isNotEmpty) {
+      parts.add(profile.school!);
+    }
+    if (profile.studyLevel != null && profile.studyLevel!.isNotEmpty) {
+      parts.add(profile.studyLevel!);
+    }
+    return parts.isNotEmpty ? parts.join(' - ') : 'Non defini';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,25 +150,22 @@ class _SeekerProfileView extends StatelessWidget {
               // Profile info
               _ProfileInfoCard(
                 name: profile.fullName,
-                jobTitle: profile.categories.isNotEmpty
-                    ? profile.categories.first
-                    : 'Non defini',
+                domain: _getDomainLabel(profile.domain),
                 location: profile.location.isNotEmpty
                     ? profile.location
                     : 'Non defini',
-                availability: profile.availability ?? 'Non defini',
+                studyInfo: _buildStudyInfo(profile),
               ),
 
               const SizedBox(height: AppTheme.spaceLg),
 
               // Profile completion indicator
-              if (!profile.profileComplete)
-                _ProfileCompletionCard(
-                  onComplete: () => context.push(AppRoutes.editProfile),
-                ),
+              _ProfileCompletionCard(
+                percentage: profile.completionPercentage,
+                onComplete: () => context.push(AppRoutes.editProfile),
+              ),
 
-              if (!profile.profileComplete)
-                const SizedBox(height: AppTheme.spaceLg),
+              const SizedBox(height: AppTheme.spaceLg),
 
               // Statistics card
               StatsCard(
@@ -217,6 +232,16 @@ class _RecruiterProfileView extends StatelessWidget {
     required this.stats,
   });
 
+  static const Map<String, String> _sectorLabels = {
+    'commerce_vente': 'Commerce / Vente',
+    'restauration_hotellerie': 'Restauration / Hotellerie',
+  };
+
+  static String _getSectorLabel(String? sector) {
+    if (sector == null || sector.isEmpty) return 'Non defini';
+    return _sectorLabels[sector] ?? sector;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -242,7 +267,7 @@ class _RecruiterProfileView extends StatelessWidget {
                 coverUrl: profile.coverUrl,
                 logoUrl: profile.logoUrl,
                 companyName: profile.companyName,
-                sector: profile.sector ?? 'Non defini',
+                sector: _getSectorLabel(profile.sector),
                 isVerified: profile.isVerified,
               ),
 
@@ -272,8 +297,8 @@ class _RecruiterProfileView extends StatelessWidget {
                         profile.description!.isNotEmpty)
                       const SizedBox(height: AppTheme.spaceLg),
 
-                    // Location map
-                    if (profile.hasMapMarkers) ...[
+                    // Location (beta: city text)
+                    if (profile.locations.isNotEmpty) ...[
                       Row(
                         children: [
                           const Icon(Icons.location_on,
@@ -289,16 +314,9 @@ class _RecruiterProfileView extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: AppTheme.spaceSm),
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusLg),
-                          border: Border.all(color: AppColors.greyLight),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: LocationMapWidget(
-                          markers: profile.mapMarkers,
-                        ),
+                      Text(
+                        profile.locations.first,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: AppTheme.spaceLg),
                     ],
@@ -392,14 +410,46 @@ class _RecruiterProfileView extends StatelessWidget {
   }
 }
 
-/// Profile completion card
+/// Profile completion card with percentage and progress bar.
+/// Shows a "Profil complet" badge when at 100%.
 class _ProfileCompletionCard extends StatelessWidget {
+  final int percentage;
   final VoidCallback onComplete;
 
-  const _ProfileCompletionCard({required this.onComplete});
+  const _ProfileCompletionCard({
+    required this.percentage,
+    required this.onComplete,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (percentage >= 100) {
+      // Completed badge
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        decoration: BoxDecoration(
+          color: AppColors.success.withAlpha(25),
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          border: Border.all(color: AppColors.success.withAlpha(100)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle, color: AppColors.success),
+            const SizedBox(width: AppTheme.spaceSm),
+            Text(
+              'Profil complet',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.success,
+                  ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Incomplete: show progress
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppTheme.spaceMd),
@@ -422,7 +472,25 @@ class _ProfileCompletionCard extends StatelessWidget {
                       ),
                 ),
               ),
+              Text(
+                '$percentage%',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryOrange,
+                    ),
+              ),
             ],
+          ),
+          const SizedBox(height: AppTheme.spaceSm),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: percentage / 100,
+              backgroundColor: AppColors.greyLight,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.primaryYellow),
+              minHeight: 6,
+            ),
           ),
           const SizedBox(height: AppTheme.spaceMd),
           SizedBox(
@@ -551,27 +619,16 @@ class _VideoPreviewCard extends StatelessWidget {
 /// Profile info card
 class _ProfileInfoCard extends StatelessWidget {
   final String name;
-  final String jobTitle;
+  final String domain;
   final String location;
-  final String availability;
+  final String studyInfo;
 
   const _ProfileInfoCard({
     required this.name,
-    required this.jobTitle,
+    required this.domain,
     required this.location,
-    required this.availability,
+    required this.studyInfo,
   });
-
-  String _getAvailabilityLabel(String value) {
-    const labels = {
-      'immediate': 'immediatement',
-      '1_week': 'sous 1 semaine',
-      '2_weeks': 'sous 2 semaines',
-      '1_month': 'sous 1 mois',
-      '3_months': 'sous 3 mois',
-    };
-    return labels[value] ?? value;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -594,7 +651,7 @@ class _ProfileInfoCard extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spaceXs),
           Text(
-            jobTitle,
+            domain,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppColors.greyWarm,
                 ),
@@ -620,16 +677,18 @@ class _ProfileInfoCard extends StatelessWidget {
           Row(
             children: [
               const Icon(
-                Icons.check_circle_outline,
+                Icons.school_outlined,
                 size: 16,
-                color: AppColors.success,
+                color: AppColors.greyWarm,
               ),
               const SizedBox(width: 4),
-              Text(
-                'Disponible ${_getAvailabilityLabel(availability)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.success,
-                    ),
+              Expanded(
+                child: Text(
+                  studyInfo,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.greyWarm,
+                      ),
+                ),
               ),
             ],
           ),

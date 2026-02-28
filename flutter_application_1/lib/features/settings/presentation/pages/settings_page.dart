@@ -74,6 +74,12 @@ class SettingsPage extends StatelessWidget {
             title: 'Exporter mes donnees',
             onTap: () => _showExportDataDialog(context),
           ),
+          _buildTile(
+            context,
+            icon: Icons.block,
+            title: 'Utilisateurs bloques',
+            onTap: () => context.push('/settings/blocked'),
+          ),
 
           const Divider(height: AppTheme.spaceLg),
 

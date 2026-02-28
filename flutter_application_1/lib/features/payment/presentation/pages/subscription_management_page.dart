@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 import '../bloc/payment_bloc.dart';
 import '../bloc/payment_event.dart';
 import '../bloc/payment_state.dart';
@@ -203,14 +204,10 @@ class SubscriptionManagementPage extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spaceSm),
         if (state.transactions.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppTheme.spaceLg),
-            child: Center(
-              child: Text(
-                'Aucun paiement',
-                style: TextStyle(color: AppColors.greyWarm),
-              ),
-            ),
+          const EmptyStateWidget(
+            icon: Icons.receipt_long_outlined,
+            title: 'Aucun paiement',
+            compact: true,
           )
         else
           ...state.transactions.map((tx) {

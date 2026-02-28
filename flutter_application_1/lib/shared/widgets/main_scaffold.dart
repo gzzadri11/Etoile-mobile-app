@@ -52,11 +52,12 @@ class _EtoileBottomNavBar extends StatelessWidget {
   int _getCurrentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
 
-    if (location.startsWith(AppRoutes.feed)) return 0;
-    if (location.startsWith(AppRoutes.messages)) return 1;
-    if (location.startsWith(AppRoutes.profile)) return 2;
-    if (location.startsWith(AppRoutes.record)) return 3;
-    if (location.startsWith(AppRoutes.publish)) return 3;
+    if (location.startsWith(AppRoutes.search)) return 0;
+    if (location.startsWith(AppRoutes.feed)) return 1;
+    if (location.startsWith(AppRoutes.messages)) return 2;
+    if (location.startsWith(AppRoutes.profile)) return 3;
+    if (location.startsWith(AppRoutes.record)) return 4;
+    if (location.startsWith(AppRoutes.publish)) return 4;
 
     return 0;
   }
@@ -64,15 +65,18 @@ class _EtoileBottomNavBar extends StatelessWidget {
   void _onItemTapped(BuildContext context, int index) {
     switch (index) {
       case 0:
-        context.go(AppRoutes.feed);
+        context.go(AppRoutes.search);
         break;
       case 1:
-        context.go(AppRoutes.messages);
+        context.go(AppRoutes.feed);
         break;
       case 2:
-        context.go(AppRoutes.profile);
+        context.go(AppRoutes.messages);
         break;
       case 3:
+        context.go(AppRoutes.profile);
+        break;
+      case 4:
         if (showPublishTab) {
           context.go(AppRoutes.publish);
         } else {
@@ -87,6 +91,11 @@ class _EtoileBottomNavBar extends StatelessWidget {
     final currentIndex = _getCurrentIndex(context);
 
     final items = <BottomNavigationBarItem>[
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.search_outlined),
+        activeIcon: Icon(Icons.search),
+        label: 'Rechercher',
+      ),
       const BottomNavigationBarItem(
         icon: Icon(Icons.home_outlined),
         activeIcon: Icon(Icons.home),

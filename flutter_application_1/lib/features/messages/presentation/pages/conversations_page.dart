@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +8,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/message_model.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../data/repositories/block_repository.dart';
 import '../../data/repositories/message_repository.dart';
 
@@ -185,42 +185,13 @@ class _ConversationsPageState extends State<ConversationsPage> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceLg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.chat_bubble_outline,
-              size: 64,
-              color: AppColors.primaryYellow,
-            ),
-            const SizedBox(height: AppTheme.spaceMd),
-            Text(
-              'Pas encore de messages',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppTheme.spaceSm),
-            Text(
-              'Contactez un candidat depuis le feed pour demarrer une conversation',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyWarm,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppTheme.spaceLg),
-            OutlinedButton.icon(
-              onPressed: () => context.go(AppRoutes.feed),
-              icon: const Icon(Icons.play_circle_outline),
-              label: const Text('Voir le feed'),
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateWidget(
+      showMascotte: true,
+      title: 'Pas encore de messages',
+      subtitle:
+          'Contactez un candidat depuis le feed pour demarrer une conversation',
+      actionLabel: 'Rechercher',
+      onAction: () => context.go(AppRoutes.search),
     );
   }
 
@@ -230,7 +201,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
 
     return ListView.separated(
       itemCount: _conversations.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final conversation = _conversations[index];
         return _ConversationTile(

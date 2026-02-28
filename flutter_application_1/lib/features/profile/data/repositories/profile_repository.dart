@@ -69,13 +69,8 @@ class ProfileRepository {
     final profile = await getSeekerProfile();
     if (profile == null) return false;
 
-    // Profile is complete if these fields are filled
-    return profile.firstName.isNotEmpty &&
-        profile.lastName != null &&
-        profile.lastName!.isNotEmpty &&
-        profile.city != null &&
-        profile.city!.isNotEmpty &&
-        profile.categories.isNotEmpty;
+    // Profile is complete when all 5 categories are filled (5x20%=100%)
+    return profile.completionPercentage >= 100;
   }
 
   // ===========================================================================
@@ -242,6 +237,22 @@ class ProfileRepository {
         .maybeSingle();
 
     return response?['role'] as String?;
+  }
+
+  // ===========================================================================
+  // PROFILE COMPLETION
+  // ===========================================================================
+
+  /// Get current user's profile completion percentage (0-100).
+  Future<int> getProfileCompletionPercentage() async {
+    final role = currentUserRole;
+    if (role == 'seeker') {
+      final profile = await getSeekerProfile();
+      return profile?.completionPercentage ?? 0;
+    } else {
+      final profile = await getRecruiterProfile();
+      return profile?.completionPercentage ?? 0;
+    }
   }
 
   // ===========================================================================

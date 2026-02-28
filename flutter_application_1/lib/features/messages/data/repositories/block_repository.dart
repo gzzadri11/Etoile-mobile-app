@@ -74,4 +74,51 @@ class BlockRepository {
         .map((row) => row['blocked_id'] as String)
         .toList();
   }
+
+  /// Get blocked users with display details (name, date).
+  Future<List<Map<String, dynamic>>> getBlockedUsersWithDetails() async {
+    final userId = _currentUserId;
+    if (userId == null) return [];
+
+    final response = await _supabaseClient
+        .from('blocks')
+        .select('blocked_id, created_at')
+        .eq('blocker_id', userId)
+        .order('created_at', ascending: false);
+
+    final blocks = response as List;
+    if (blocks.isEmpty) return [];
+
+    final blockedIds = blocks.map((b) => b['blocked_id'] as String).toList();
+
+    // Try to get names from seeker_profiles
+    final seekers = await _supabaseClient
+        .from('seeker_profiles')
+        .select('user_id, first_name, last_name')
+        .inFilter('user_id', blockedIds);
+
+    // Try to get names from recruiter_profiles
+    final recruiters = await _supabaseClient
+        .from('recruiter_profiles')
+        .select('user_id, company_name')
+        .inFilter('user_id', blockedIds);
+
+    final nameMap = <String, String>{};
+    for (final s in seekers as List) {
+      nameMap[s['user_id']] =
+          '${s['first_name'] ?? ''} ${s['last_name'] ?? ''}'.trim();
+    }
+    for (final r in recruiters as List) {
+      nameMap[r['user_id']] = r['company_name'] ?? 'Recruteur';
+    }
+
+    return blocks.map((b) {
+      final id = b['blocked_id'] as String;
+      return {
+        'userId': id,
+        'name': nameMap[id] ?? 'Utilisateur',
+        'blockedAt': b['created_at'] as String,
+      };
+    }).toList();
+  }
 }

@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 
 /// FAQ page with expandable sections organized by theme.
 ///
@@ -66,22 +67,9 @@ class _FaqPageState extends State<FaqPage> {
           // FAQ content
           Expanded(
             child: filteredSections.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.search_off,
-                            size: 48, color: AppColors.greyMedium),
-                        const SizedBox(height: AppTheme.spaceMd),
-                        Text(
-                          'Aucun resultat pour "$_searchQuery"',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.greyWarm,
-                                  ),
-                        ),
-                      ],
-                    ),
+                ? EmptyStateWidget(
+                    icon: Icons.search_off,
+                    title: 'Aucun resultat pour "$_searchQuery"',
                   )
                 : ListView(
                     padding: const EdgeInsets.symmetric(

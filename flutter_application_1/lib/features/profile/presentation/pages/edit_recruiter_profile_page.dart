@@ -10,7 +10,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
-import '../../../../shared/widgets/location_picker_widget.dart';
+import '../../../../shared/widgets/city_autocomplete_field.dart';
 import '../../data/models/recruiter_profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../bloc/profile_bloc.dart';
@@ -44,8 +44,8 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
   String? _pickedCoverExtension;
   String? _existingCoverUrl;
 
-  // Map markers
-  List<MapMarker> _mapMarkers = [];
+  // City (beta: IdF only)
+  String? _selectedCity;
 
   // Document upload state
   Uint8List? _pickedDocBytes;
@@ -55,25 +55,16 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
 
   bool _isInitialized = false;
 
-  // Sectors d'activite
+  // Sectors d'activite (beta: 2 secteurs uniquement)
   static const List<String> _sectorOptions = [
-    'BTP',
-    'Informatique / Tech',
-    'Commerce / Distribution',
-    'Sante / Medical',
-    'Restauration / Hotellerie',
-    'Transport / Logistique',
-    'Industrie / Production',
-    'Finance / Banque / Assurance',
-    'Education / Formation',
-    'Services aux entreprises',
-    'Immobilier',
-    'Communication / Marketing',
-    'Agriculture / Agroalimentaire',
-    'Energie / Environnement',
-    'Art / Culture / Spectacle',
-    'Autre',
+    'commerce_vente',
+    'restauration_hotellerie',
   ];
+
+  static const Map<String, String> _sectorLabels = {
+    'commerce_vente': 'Commerce / Vente',
+    'restauration_hotellerie': 'Restauration / Hotellerie',
+  };
 
   // Taille entreprise
   static const Map<String, String> _companySizeLabels = {
@@ -114,7 +105,8 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
         : null;
     _existingLogoUrl = profile.logoUrl;
     _existingCoverUrl = profile.coverUrl;
-    _mapMarkers = List.from(profile.mapMarkers);
+    _selectedCity =
+        profile.locations.isNotEmpty ? profile.locations.first : null;
 
     _isInitialized = true;
   }
@@ -314,7 +306,8 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
       website: _websiteController.text.trim(),
       sector: _selectedSector,
       companySize: _selectedCompanySize,
-      mapMarkers: _mapMarkers,
+      locations:
+          _selectedCity != null ? [_selectedCity!] : currentProfile.locations,
       logoUrl: logoUrl,
       coverUrl: coverUrl,
     );
@@ -427,7 +420,7 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                     items: _sectorOptions.map((sector) {
                       return DropdownMenuItem(
                         value: sector,
-                        child: Text(sector),
+                        child: Text(_sectorLabels[sector]!),
                       );
                     }).toList(),
                     onChanged: isSaving
@@ -473,25 +466,23 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
 
                   const SizedBox(height: AppTheme.spaceLg),
 
-                  // === Localisations sur la carte ===
-                  _buildSectionTitle('Localisations'),
+                  // === Localisation (beta: IdF uniquement) ===
+                  _buildSectionTitle('Localisation'),
+                  const SizedBox(height: AppTheme.spaceSm),
+                  Text(
+                    'Ile-de-France uniquement',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.greyWarm,
+                        ),
+                  ),
                   const SizedBox(height: AppTheme.spaceMd),
 
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(AppTheme.radiusLg),
-                      border: Border.all(color: AppColors.greyLight),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: LocationPickerWidget(
-                      initialMarkers: _mapMarkers,
-                      onMarkersChanged: (markers) {
-                        setState(() {
-                          _mapMarkers = markers;
-                        });
-                      },
-                    ),
+                  CityAutocompleteField(
+                    initialValue: _selectedCity,
+                    label: 'Ville',
+                    onCitySelected: (city) {
+                      _selectedCity = city;
+                    },
                   ),
 
                   const SizedBox(height: AppTheme.spaceLg),

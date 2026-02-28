@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../profile/data/models/recruiter_profile_model.dart';
 import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
@@ -86,34 +87,11 @@ class VerificationQueuePage extends StatelessWidget {
   }
 
   Widget _buildEmpty(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceXl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.verified_outlined,
-              size: 64,
-              color: AppColors.success.withAlpha(150),
-            ),
-            const SizedBox(height: AppTheme.spaceMd),
-            Text(
-              'Aucun recruteur en attente',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            const SizedBox(height: AppTheme.spaceXs),
-            Text(
-              'Tous les recruteurs ont ete verifies.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyWarm,
-                  ),
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateWidget(
+      icon: Icons.verified_outlined,
+      iconColor: AppColors.success.withAlpha(150),
+      title: 'Aucun recruteur en attente',
+      subtitle: 'Tous les recruteurs ont ete verifies.',
     );
   }
 

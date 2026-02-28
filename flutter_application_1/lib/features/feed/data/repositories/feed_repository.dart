@@ -365,7 +365,7 @@ class FeedRepository {
     return feedItems;
   }
 
-  /// Parse PostgreSQL array to List<String>
+  /// Parse PostgreSQL array to List of String
   List<String> _parseStringList(dynamic value) {
     if (value == null) return [];
     if (value is List) {
