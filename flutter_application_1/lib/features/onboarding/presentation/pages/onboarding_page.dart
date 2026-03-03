@@ -54,7 +54,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
     if (mounted) {
-      context.go(AppRoutes.search);
+      // Redirect to profile edit so the user completes their profile
+      if (widget.role == 'recruiter') {
+        context.go(AppRoutes.editRecruiterProfile);
+      } else {
+        context.go(AppRoutes.editProfile);
+      }
     }
   }
 

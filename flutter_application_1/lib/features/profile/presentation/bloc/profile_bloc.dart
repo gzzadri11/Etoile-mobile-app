@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/models/seeker_profile_model.dart';
 import '../../data/models/recruiter_profile_model.dart';
@@ -16,14 +17,17 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final ProfileRepository _profileRepository;
   final VideoRepository _videoRepository;
   final StatsRepository _statsRepository;
+  final SupabaseClient _supabaseClient;
 
   ProfileBloc({
     required ProfileRepository profileRepository,
     required VideoRepository videoRepository,
     required StatsRepository statsRepository,
+    required SupabaseClient supabaseClient,
   })  : _profileRepository = profileRepository,
         _videoRepository = videoRepository,
         _statsRepository = statsRepository,
+        _supabaseClient = supabaseClient,
         super(const ProfileInitial()) {
     on<ProfileLoadRequested>(_onLoadRequested);
     on<ProfileUpdateRequested>(_onUpdateRequested);
@@ -94,6 +98,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         } else {
           emit(const ProfileError(message: 'Profil non trouve'));
         }
+      } else if (role == 'admin') {
+        final userId = _profileRepository.currentUserId ?? '';
+        final email = _supabaseClient.auth.currentUser?.email ?? '';
+        emit(AdminProfileLoaded(userId: userId, email: email));
       } else {
         emit(const ProfileError(message: 'Role utilisateur inconnu'));
       }

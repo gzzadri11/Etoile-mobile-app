@@ -16,6 +16,7 @@ import '../../data/models/feed_item_model.dart';
 import '../bloc/feed_bloc.dart';
 import '../widgets/feed_video_player.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
+import '../../../../shared/widgets/etoile_badge.dart';
 import '../../../../shared/widgets/profile_gate.dart';
 import '../widgets/video_preload_manager.dart';
 
@@ -491,11 +492,23 @@ class _VideoCard extends StatelessWidget {
                   ),
                   if (feedItem.isVerified) ...[
                     const SizedBox(width: AppTheme.spaceSm),
-                    const _VerifiedBadge(),
+                    const EtoileBadge(
+                      label: 'Verifie',
+                      icon: Icons.check_circle,
+                      backgroundColor: AppColors.primaryYellow,
+                      textColor: AppColors.black,
+                      compact: true,
+                    ),
                   ],
                   if (feedItem.isRecruiter) ...[
                     const SizedBox(width: AppTheme.spaceSm),
-                    const _RecruiterBadge(),
+                    const EtoileBadge(
+                      label: 'Entreprise',
+                      icon: Icons.business,
+                      backgroundColor: AppColors.primaryOrange,
+                      textColor: AppColors.white,
+                      compact: true,
+                    ),
                   ],
                 ],
               ),
@@ -719,80 +732,6 @@ class _VideoCard extends StatelessWidget {
   }
 }
 
-/// Verified badge widget
-class _VerifiedBadge extends StatelessWidget {
-  const _VerifiedBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 6,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primaryYellow,
-        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.check_circle,
-            size: 12,
-            color: AppColors.black,
-          ),
-          const SizedBox(width: 2),
-          Text(
-            'Verifie',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Recruiter badge widget
-class _RecruiterBadge extends StatelessWidget {
-  const _RecruiterBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 6,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primaryOrange,
-        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.business,
-            size: 12,
-            color: AppColors.white,
-          ),
-          const SizedBox(width: 2),
-          Text(
-            'Entreprise',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Action button on video
 class _ActionButton extends StatelessWidget {
   final IconData icon;
@@ -807,32 +746,36 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.white.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: AppColors.white,
+                size: 24,
+              ),
             ),
-            child: Icon(
-              icon,
-              color: AppColors.white,
-              size: 24,
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.white,
+                  ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.white,
-                ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

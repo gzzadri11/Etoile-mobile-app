@@ -18,9 +18,6 @@ class VerificationQueuePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Load on build
-    context.read<AdminBloc>().add(const AdminVerificationListLoadRequested());
-
     return Scaffold(
       appBar: AppBar(
         title: BlocBuilder<AdminBloc, AdminState>(

@@ -13,7 +13,8 @@ abstract class AppStrings {
   // ONBOARDING
   // ============================================
   static const String welcomeTitle = 'Bienvenue sur Etoile';
-  static const String welcomeSubtitle = '40 secondes pour montrer qui vous etes vraiment';
+  static const String welcomeSubtitle =
+      '40 secondes pour montrer qui vous etes vraiment';
   static const String iAmSeeker = 'Je cherche un emploi';
   static const String iAmRecruiter = 'Je recrute';
 
@@ -36,8 +37,9 @@ abstract class AppStrings {
   // PROFILE SETUP
   // ============================================
   static const String tellUsAboutYou = 'Parlez-nous de vous';
-  static const String tellUsAboutYouSubtitle = 'Ces infos aident les recruteurs a vous trouver';
-  static const String firstName = 'Prenom';
+  static const String tellUsAboutYouSubtitle =
+      'Ces infos aident les recruteurs a vous trouver';
+  static const String firstName = 'Prénom';
   static const String lastName = 'Nom';
   static const String phone = 'Telephone';
   static const String sector = 'Secteur recherche';
@@ -52,7 +54,8 @@ abstract class AppStrings {
   // VIDEO RECORDING
   // ============================================
   static const String readyToShine = 'Pret a briller ?';
-  static const String noEditNoStress = 'Pas de montage, pas de stress. Juste vous.';
+  static const String noEditNoStress =
+      'Pas de montage, pas de stress. Juste vous.';
   static const String recordNow = 'Enregistrer maintenant';
   static const String later = 'Plus tard';
   static const String startRecording = 'Demarrer l\'enregistrement';
@@ -73,7 +76,8 @@ abstract class AppStrings {
   static const String search = 'Recherche';
   static const String apply = 'Appliquer';
   static const String reset = 'Reinitialiser';
-  static const String noResults = 'Aucun profil ne correspond a vos criteres. Modifiez vos filtres.';
+  static const String noResults =
+      'Aucun profil ne correspond a vos criteres. Modifiez vos filtres.';
   static const String endOfFeed = 'Vous avez tout vu ! Revenez bientot.';
 
   // ============================================
@@ -82,14 +86,18 @@ abstract class AppStrings {
   static const String messages = 'Messages';
   static const String typeMessage = 'Votre message...';
   static const String send = 'Envoyer';
-  static const String noMessages = 'Votre video est decouverte par les recruteurs';
-  static const String noMessagesSubtitle = 'Les opportunites arrivent bientot !';
+  static const String noMessages =
+      'Votre video est decouverte par les recruteurs';
+  static const String noMessagesSubtitle =
+      'Les opportunites arrivent bientot !';
   static const String today = 'Aujourd\'hui';
   static const String thisWeek = 'Cette semaine';
 
   // Message templates
-  static const String templateInterested = 'Votre profil m\'interesse, discutons !';
-  static const String templateOpportunity = 'J\'ai une opportunite qui pourrait vous convenir';
+  static const String templateInterested =
+      'Votre profil m\'interesse, discutons !';
+  static const String templateOpportunity =
+      'J\'ai une opportunite qui pourrait vous convenir';
 
   // ============================================
   // PROFILE
@@ -151,28 +159,40 @@ abstract class AppStrings {
   // ============================================
   // SUCCESS MESSAGES (Warm tone)
   // ============================================
-  static const String successVideoPublished = 'Bravo ! Votre etoile brille maintenant dans le ciel Etoile.';
-  static const String successFirstMessage = 'Bonne nouvelle ! Un recruteur s\'interesse a votre profil.';
-  static const String successMessageSent = 'Message envoye ! Croisons les doigts.';
-  static const String successVerified = 'Felicitations ! Votre compte est maintenant verifie.';
+  static const String successVideoPublished =
+      'Bravo ! Votre etoile brille maintenant dans le ciel Etoile.';
+  static const String successFirstMessage =
+      'Bonne nouvelle ! Un recruteur s\'interesse a votre profil.';
+  static const String successMessageSent =
+      'Message envoye ! Croisons les doigts.';
+  static const String successVerified =
+      'Felicitations ! Votre compte est maintenant verifie.';
 
   // ============================================
   // ERROR MESSAGES (Human tone)
   // ============================================
-  static const String errorNetwork = 'Oups, petit souci de connexion. Reessayez dans un instant.';
-  static const String errorUpload = 'Aie, la video n\'a pas pu etre envoyee. On reessaie ?';
-  static const String errorSession = 'Votre session a expire. Reconnectez-vous pour continuer.';
-  static const String errorGeneric = 'Quelque chose s\'est mal passe. Notre equipe est sur le coup !';
+  static const String errorNetwork =
+      'Oups, petit souci de connexion. Reessayez dans un instant.';
+  static const String errorUpload =
+      'Aie, la video n\'a pas pu etre envoyee. On reessaie ?';
+  static const String errorSession =
+      'Votre session a expire. Reconnectez-vous pour continuer.';
+  static const String errorGeneric =
+      'Quelque chose s\'est mal passe. Notre equipe est sur le coup !';
   static const String errorInvalidEmail = 'Veuillez entrer un email valide';
-  static const String errorInvalidPassword = 'Le mot de passe doit contenir au moins 8 caracteres';
-  static const String errorPasswordMismatch = 'Les mots de passe ne correspondent pas';
+  static const String errorInvalidPassword =
+      'Le mot de passe doit contenir au moins 8 caracteres';
+  static const String errorPasswordMismatch =
+      'Les mots de passe ne correspondent pas';
   static const String errorFieldRequired = 'Ce champ est requis';
 
   // ============================================
   // INFO MESSAGES
   // ============================================
-  static const String infoVerificationPending = 'Votre compte est en cours de verification. Patience !';
-  static const String infoStatsNonPremium = 'Votre profil a ete vu. Passez Premium pour les details.';
+  static const String infoVerificationPending =
+      'Votre compte est en cours de verification. Patience !';
+  static const String infoStatsNonPremium =
+      'Votre profil a ete vu. Passez Premium pour les details.';
 
   // ============================================
   // AVAILABILITY OPTIONS

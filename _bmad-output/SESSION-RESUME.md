@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-02-28
-**Statut** : Sprint 18 TERMINE (8/8 stories). Pivot beta alternance IdF. Sprint 13 camera toujours reportee.
+**Date de mise a jour** : 2026-03-02
+**Statut** : Sprint 21 (Admin System) EN COURS. Sprint 20 TERMINE. Sprint 13 camera toujours reportee.
 
 ---
 
@@ -16,6 +16,128 @@ flutter run -d edge
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+---
+
+## Ce qui a ete fait — Sprint 21 : Systeme Admin (2026-03-02)
+
+### Fix ProfileBloc crash pour admin — DONE
+- `profile_state.dart` : +`AdminProfileLoaded` state (userId, email)
+- `profile_bloc.dart` : +branche `role == 'admin'` dans `_onLoadRequested`, +SupabaseClient dependency
+- `profile_page.dart` : +`_AdminProfileView` (icone admin, bouton dashboard, deconnexion)
+- `injection_container.dart` : passe `supabaseClient` au ProfileBloc
+
+### Navigation admin dediee — DONE
+- `admin_scaffold.dart` : **NOUVEAU** — Bottom nav 4 onglets (Dashboard, Verifications, Signalements, Stats)
+- `app_router.dart` : Routes admin restructurees en `ShellRoute` avec `AdminScaffold`
+  - `_adminShellNavigatorKey` pour navigator separe
+  - `NoTransitionPage` sur chaque route (meme pattern que MainScaffold)
+  - Detail verification (`/admin/verifications/:userId`) hors shell (plein ecran)
+  - Guard isAdmin sur chaque route
+- Redirect splash/auth : admin → `/admin` au lieu de `/search`
+
+### Fix dispatches en build() — DONE
+- Retire `context.read<AdminBloc>().add(...)` dans `build()` de 4 pages admin :
+  - `admin_dashboard_page.dart`, `admin_stats_page.dart`, `verification_queue_page.dart`, `reports_page.dart`
+- Les events sont deja fires dans `BlocProvider.create` du router
+
+### Audit logging — DONE
+- `admin_repository.dart` : +`_logAction()` methode privee (insert audit_logs, silent catch)
+- 6 actions auditees : `recruiter_approved`, `recruiter_rejected`, `report_dismissed`, `report_actioned`, `user_suspended`, `video_suspended`
+- Migration SQL `20260302000000_audit_logs_rls.sql` : CREATE TABLE audit_logs + RLS (admin INSERT/SELECT)
+- Migration deployee en production
+
+### Nettoyage — DONE
+- `auth_bloc.dart` : retire 3 debugPrint temporaires dans `_getUserRole`
+
+### Resultats
+- **65/65 tests pass**, 0 issues flutter analyze
+- Migration deployee sur Supabase production
+
+---
+
+## Ce qui a ete fait — Sprint 20 : Ameliorations UX + Corrections A11y (2026-03-01)
+
+### Story 20.1 : Bundler Inter en local (P5) — 3 pts — DONE
+- Retire `google_fonts: ^6.2.1` des dependencies
+- Declare font Inter locale dans pubspec.yaml (4 weights: 400, 500, 600, 700)
+- Remplace 15x `GoogleFonts.inter()` par `TextStyle(fontFamily: 'Inter')` dans app_theme.dart
+- Font chargee depuis `assets/fonts/Inter-*.ttf` (fonctionne offline)
+
+### Story 20.2 : Lien "Parcourir tout le feed" plus visible (P3) — 1 pt — DONE
+- Remplace `TextButton` par `OutlinedButton.icon` avec icone `Icons.explore` dans search_page.dart
+- Bordure jaune via le theme outlined button existant
+
+### Story 20.3 : Mini progress bar formulaires profil (P4) — 2 pts — DONE
+- Ajoute `LinearProgressIndicator` (4px, couleur primaryYellow) + texte "X% complet" en haut des formulaires
+- edit_seeker_profile_page.dart : calcul temps reel (5x20%)
+- edit_recruiter_profile_page.dart : calcul temps reel (5x20%)
+
+### Story 20.4 : MascotteMessage + paliers profil (P2) — 3 pts — DONE
+- Fichier cree : `lib/shared/widgets/mascotte_message.dart`
+  - Widget Row [mascotte 48px | bulle (titre + message)]
+  - 3 variantes : info (bleu), success (vert), encouragement (jaune)
+  - Factory `forCompletion()` : 40% info, 60% encouragement, 80% success
+  - Dismissible via bouton close
+- Integre dans edit_seeker_profile_page.dart et edit_recruiter_profile_page.dart
+
+### Story 20.5 : Composant EtoileBadge (P1 component strategy) — 2 pts — DONE
+- Fichier cree : `lib/shared/widgets/etoile_badge.dart`
+  - Props : label, icon, backgroundColor, textColor, compact
+  - Height 24px (compact) / 28px (normal), borderRadius radiusMd
+- Remplace `_VerifiedBadge` et `_RecruiterBadge` inline dans feed_page.dart
+
+### Story 20.6 : Corrections accessibilite — Semantics labels — 2 pts — DONE
+- `empty_state_widget.dart` : Semantics sur mascotte Image.asset
+- `splash_screen.dart` : Semantics sur logo + titre ETOILE
+- `search_page.dart` : Semantics sur mascotte, ExcludeSemantics sur icone location decorative
+- `feed_page.dart` : Semantics button+label sur _ActionButton (Postuler/Contacter/Profil/Signaler)
+- `conversations_page.dart` : Semantics sur avatar + badge non-lu
+- `profile_page.dart` : Semantics sur video placeholder + logo recruteur
+
+### Story 20.7 : Tests + documentation — 1 pt — DONE
+- Tests crees : `test/shared/widgets/etoile_badge_test.dart` (5 tests)
+- Tests crees : `test/shared/widgets/mascotte_message_test.dart` (8 tests)
+- Resultat : **65/65 tests pass**, 0 issues flutter analyze
+- SESSION-RESUME.md mis a jour
+
+---
+
+## Ce qui a ete fait — Sprint 19 : UX Design Review (2026-02-27)
+
+### Agent BMAD Sally (UX Designer) — Workflow create-ux-design COMPLETE (14/14 steps)
+
+**Delivrable** : `_bmad-output/ux-design-specification.md` (~1400 lignes)
+
+**Contenu :**
+1. Executive Summary — Vision projet, target users, design challenges
+2. Core User Experience — Principes d'experience, moments critiques
+3. Desired Emotional Response — Journeys emotionnels seeker/recruiter
+4. UX Pattern Analysis & Inspiration — TikTok, Duolingo, Indeed, WhatsApp
+5. Design System Foundation — Material Design 3 customise Flutter
+6. Defining Core Experience — "40 secondes pour briller"
+7. Visual Design Foundation — Audit code (app_theme.dart, app_colors.dart)
+8. Design Direction Decision — "Chaleur Fonctionnelle" + 5 ameliorations P1-P5
+9. User Journey Flows — 5 parcours critiques avec diagrammes Mermaid
+10. Component Strategy — 9 widgets existants audites + 3 a creer (EtoileBadge, MascotteMessage, SkeletonLoader)
+11. UX Consistency Patterns — Boutons, feedback, forms, navigation, modals, empty states
+12. Responsive Design & Accessibility — WCAG 2.1 AA, audit contraste, checklist dev
+
+**Ameliorations prioritaires identifiees :**
+
+| ID | Amelioration | Impact | Effort |
+|----|-------------|--------|--------|
+| P1 | Gradient jaune→orange sur messages envoyes | Personnalite visuelle | Faible |
+| P2 | Mascotte aux paliers profil (40%, 60%, 80%) | Motivation | Moyen |
+| P3 | Lien "Parcourir tout le feed" plus visible | Reduction friction | Faible |
+| P4 | Mini progress bar formulaires profil | Progression | Faible |
+| P5 | Bundler Inter en local (perf/offline) | Performance | Moyen |
+
+**Actions a11y prioritaires :**
+
+- Assombrir `greyWarm` #9E9E9E → #757575 (contraste WCAG AA)
+- Ajouter Semantics labels francais sur images/icones
+- Touch targets 48px minimum partout
 
 ---
 
@@ -398,12 +520,15 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | **16** | **Polish + Beta (6/6 stories, 17/17 pts)** | **DONE** |
 | **17** | **Finitions Pre-Beta (8/8 stories, 22/22 pts)** | **DONE** |
 | **18** | **Pivot Beta Alternance IdF (8/8 stories, 26/26 pts)** | **DONE** |
+| **19** | **UX Design Review — Sally (14/14 steps)** | **DONE** |
+| **20** | **Ameliorations UX + A11y (7/7 stories, 14/14 pts)** | **DONE** |
+| **21** | **Systeme Admin (fix crash + nav dediee + audit logs)** | **DONE** |
 
 ### Prochains sprints
 
 - Story reportee : 13.1 Camera in-app (8 pts, emulateur requis)
-- **Sprint 19** : Review Design/UX avec agent BMAD Sally (`/ux`) — review complet de toutes les pages avant beta
-- Tous les pre-requis (admin role, bucket, Edge Functions, RLS, VIEW users) sont deployes
+- Preparation beta (store listing, TestFlight/Play Console)
+- Tous les pre-requis (admin role, bucket, Edge Functions, RLS, VIEW users, audit_logs) sont deployes
 
 ---
 
@@ -441,7 +566,8 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | PRD | `_bmad-output/prd-etoile-draft.md` | Valide (~85/100) |
 | Architecture | `_bmad-output/architecture.md` | COMPLETE (8/8 etapes) |
 | Architecture draft (extrait PRD) | `_bmad-output/architecture-etoile-draft.md` | Draft (reference) |
-| UX Design | `_bmad-output/ux-design-etoile-draft.md` | Draft |
+| UX Design Spec | `_bmad-output/ux-design-specification.md` | **COMPLETE** (14/14 steps) |
+| UX Design draft | `_bmad-output/ux-design-etoile-draft.md` | Draft (reference historique) |
 | Sprint Plan | `_bmad-output/sprint-plan.md` | Sprint 18 DONE (8/8) |
 | Epics | `_bmad-output/epics.md` | Complet |
 | PRD Notifications | `_bmad-output/prd-notifications-push.md` | Complet |
@@ -450,5 +576,5 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-*Sauvegarde mise a jour le 2026-02-28*
-*Sprint 18 TERMINE (8/8 stories, 26/26 pts). Pivot beta alternance IdF : profil seeker refonte, 2 secteurs, page recherche landing, filtres simplifies, autocomplete ville IdF. 52 tests pass, 0 issues. Next: review UX Sprint 19.*
+*Sauvegarde mise a jour le 2026-03-02*
+*Sprint 21 TERMINE. Systeme admin : fix crash ProfileBloc, navigation dediee (AdminScaffold + ShellRoute), redirect /admin au login, audit logging (6 actions), migration audit_logs deployee. 65/65 tests pass. Next: Preparation beta (store listing, TestFlight/Play Console).*

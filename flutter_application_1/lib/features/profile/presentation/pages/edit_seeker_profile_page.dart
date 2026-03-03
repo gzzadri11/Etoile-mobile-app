@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/city_autocomplete_field.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
+import '../../../../shared/widgets/mascotte_message.dart';
 import '../../data/models/seeker_profile_model.dart';
 import '../bloc/profile_bloc.dart';
 
@@ -31,6 +33,27 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
   String? _selectedCity;
 
   bool _isInitialized = false;
+  bool _dismissedMascotte = false;
+
+  /// Calculates real-time profile completion percentage.
+  /// Seeker: inscription(20) + identite(prenom+nom+age)(20) + etudes(ecole+niveau)(20) + localisation(ville)(20) + domaine(20)
+  int get _completionPercentage {
+    int pct = 20; // inscription always done
+    // Identite: prenom + nom + age (all 3 required for 20%)
+    final hasFirstName = _firstNameController.text.trim().isNotEmpty;
+    final hasLastName = _lastNameController.text.trim().isNotEmpty;
+    final hasAge = _selectedAge != null;
+    if (hasFirstName && hasLastName && hasAge) pct += 20;
+    // Etudes: ecole + niveau (both required for 20%)
+    final hasSchool = _schoolController.text.trim().isNotEmpty;
+    final hasStudyLevel = _selectedStudyLevel != null;
+    if (hasSchool && hasStudyLevel) pct += 20;
+    // Localisation: ville (required for 20%)
+    if (_selectedCity != null && _selectedCity!.isNotEmpty) pct += 20;
+    // Domaine (required for 20%)
+    if (_selectedDomain != null) pct += 20;
+    return pct;
+  }
 
   static const List<String> _studyLevelOptions = [
     'sans_diplome',
@@ -127,7 +150,13 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
         title: const Text('Modifier mon profil'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.search);
+            }
+          },
         ),
       ),
       body: BlocConsumer<ProfileBloc, ProfileState>(
@@ -139,7 +168,11 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                 backgroundColor: AppColors.success,
               ),
             );
-            context.pop();
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.search);
+            }
           } else if (state is ProfileError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -163,13 +196,56 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
 
           final isSaving = state is ProfileSaving;
 
-          return SingleChildScrollView(
+          return Column(
+            children: [
+              // Progress bar
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spaceMd, vertical: AppTheme.spaceSm),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: _completionPercentage / 100,
+                          backgroundColor: AppColors.greyLight,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.primaryYellow),
+                          minHeight: 4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spaceSm),
+                    Text(
+                      '$_completionPercentage% complet',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.greyWarm,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppTheme.spaceMd),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // --- Mascotte milestone message ---
+                  if (!_dismissedMascotte)
+                    Builder(builder: (context) {
+                      final msg = MascotteMessage.forCompletion(
+                        _completionPercentage,
+                        onDismiss: () =>
+                            setState(() => _dismissedMascotte = true),
+                      );
+                      return msg ?? const SizedBox.shrink();
+                    }),
+
                   // --- Identity section ---
                   _buildSectionTitle('Identite'),
                   const SizedBox(height: AppTheme.spaceMd),
@@ -314,6 +390,9 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                 ],
               ),
             ),
+          ),
+              ),
+            ],
           );
         },
       ),

@@ -576,41 +576,44 @@ class _VerificationStatusCard extends StatelessWidget {
 class _VideoPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 200,
-      decoration: BoxDecoration(
-        color: AppColors.black,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.videocam_outlined,
-                size: 48,
-                color: AppColors.white.withAlpha(180),
-              ),
-              const SizedBox(height: AppTheme.spaceSm),
-              Text(
-                'Aucune video',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.white.withAlpha(180),
-                    ),
-              ),
-              const SizedBox(height: AppTheme.spaceSm),
-              Text(
-                'Enregistrez votre video de presentation',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.white.withAlpha(120),
-                    ),
-              ),
-            ],
-          ),
-        ],
+    return Semantics(
+      label: 'Espace video de presentation - Aucune video enregistree',
+      child: Container(
+        width: double.infinity,
+        height: 200,
+        decoration: BoxDecoration(
+          color: AppColors.black,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.videocam_outlined,
+                  size: 48,
+                  color: AppColors.white.withAlpha(180),
+                ),
+                const SizedBox(height: AppTheme.spaceSm),
+                Text(
+                  'Aucune video',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.white.withAlpha(180),
+                      ),
+                ),
+                const SizedBox(height: AppTheme.spaceSm),
+                Text(
+                  'Enregistrez votre video de presentation',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.white.withAlpha(120),
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -767,24 +770,27 @@ class _RecruiterHeader extends StatelessWidget {
           Positioned(
             bottom: 0,
             left: AppTheme.spaceMd,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.white, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(40),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-              child: CircleAvatar(
-                radius: 40,
-                backgroundColor: AppColors.white,
-                backgroundImage: hasLogo ? NetworkImage(logoUrl!) : null,
-                child: !hasLogo
-                    ? const Icon(Icons.business, size: 36, color: AppColors.greyWarm)
-                    : null,
+            child: Semantics(
+              label: 'Logo de $companyName',
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(40),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: AppColors.white,
+                  backgroundImage: hasLogo ? NetworkImage(logoUrl!) : null,
+                  child: !hasLogo
+                      ? const Icon(Icons.business, size: 36, color: AppColors.greyWarm)
+                      : null,
+                ),
               ),
             ),
           ),
@@ -913,4 +919,5 @@ class _PublicationSectionCard extends StatelessWidget {
     );
   }
 }
+
 

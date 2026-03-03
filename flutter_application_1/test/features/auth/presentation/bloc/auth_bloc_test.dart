@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
 import 'package:etoile/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:etoile/features/profile/data/repositories/profile_repository.dart';
 
 // ============================================================================
 // Mocks
@@ -21,6 +22,8 @@ class MockUser extends Mock implements supa.User {}
 
 class MockSession extends Mock implements supa.Session {}
 
+class MockProfileRepository extends Mock implements ProfileRepository {}
+
 // ============================================================================
 // Tests
 // ============================================================================
@@ -29,25 +32,34 @@ void main() {
   late MockSupabaseClient mockSupabase;
   late MockGoTrueClient mockAuth;
   late MockFunctionsClient mockFunctions;
+  late MockProfileRepository mockProfileRepository;
   late StreamController<supa.AuthState> authStateController;
 
   setUp(() {
     mockSupabase = MockSupabaseClient();
     mockAuth = MockGoTrueClient();
     mockFunctions = MockFunctionsClient();
+    mockProfileRepository = MockProfileRepository();
     authStateController = StreamController<supa.AuthState>.broadcast();
 
     when(() => mockSupabase.auth).thenReturn(mockAuth);
     when(() => mockSupabase.functions).thenReturn(mockFunctions);
     when(() => mockAuth.onAuthStateChange)
         .thenAnswer((_) => authStateController.stream);
+
+    // Default: DB role query returns null (fallback to metadata)
+    when(() => mockProfileRepository.getUserRole())
+        .thenAnswer((_) async => null);
   });
 
   tearDown(() {
     authStateController.close();
   });
 
-  AuthBloc buildBloc() => AuthBloc(supabaseClient: mockSupabase);
+  AuthBloc buildBloc() => AuthBloc(
+        supabaseClient: mockSupabase,
+        profileRepository: mockProfileRepository,
+      );
 
   group('AuthCheckRequested', () {
     blocTest<AuthBloc, AuthState>(

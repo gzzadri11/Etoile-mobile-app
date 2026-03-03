@@ -57,13 +57,16 @@ class _SearchPageState extends State<SearchPage> {
             Center(
               child: Column(
                 children: [
-                  Image.asset(
-                    'assets/images/mascotte.png',
-                    height: 120,
-                    errorBuilder: (_, _, _) => const Icon(
-                      Icons.search,
-                      size: 80,
-                      color: AppColors.primaryYellow,
+                  Semantics(
+                    label: 'Mascotte Etoile',
+                    child: Image.asset(
+                      'assets/images/mascotte.png',
+                      height: 120,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.search,
+                        size: 80,
+                        color: AppColors.primaryYellow,
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppTheme.spaceMd),
@@ -137,9 +140,11 @@ class _SearchPageState extends State<SearchPage> {
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.location_on,
-                    color: AppColors.primaryOrange,
+                  const ExcludeSemantics(
+                    child: Icon(
+                      Icons.location_on,
+                      color: AppColors.primaryOrange,
+                    ),
                   ),
                   const SizedBox(width: AppTheme.spaceSm),
                   Expanded(
@@ -180,9 +185,10 @@ class _SearchPageState extends State<SearchPage> {
 
             // Browse all link
             Center(
-              child: TextButton(
+              child: OutlinedButton.icon(
                 onPressed: () => context.go(AppRoutes.feed),
-                child: const Text('Parcourir tout le feed'),
+                icon: const Icon(Icons.explore),
+                label: const Text('Parcourir tout le feed'),
               ),
             ),
 

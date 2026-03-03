@@ -257,22 +257,25 @@ class _ConversationTile extends StatelessWidget {
         horizontal: AppTheme.spaceMd,
         vertical: AppTheme.spaceSm,
       ),
-      leading: CircleAvatar(
-        radius: 28,
-        backgroundColor: AppColors.primaryYellow,
-        backgroundImage: conversation.otherUserAvatar != null
-            ? NetworkImage(conversation.otherUserAvatar!)
-            : null,
-        child: conversation.otherUserAvatar == null
-            ? Text(
-                initial,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: AppColors.white,
-                ),
-              )
-            : null,
+      leading: Semantics(
+        label: 'Avatar de $name',
+        child: CircleAvatar(
+          radius: 28,
+          backgroundColor: AppColors.primaryYellow,
+          backgroundImage: conversation.otherUserAvatar != null
+              ? NetworkImage(conversation.otherUserAvatar!)
+              : null,
+          child: conversation.otherUserAvatar == null
+              ? Text(
+                  initial,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: AppColors.white,
+                  ),
+                )
+              : null,
+        ),
       ),
       title: Row(
         children: [
@@ -324,12 +327,15 @@ class _ConversationTile extends StatelessWidget {
             ),
             if (isUnread) ...[
               const SizedBox(width: 8),
-              Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryYellow,
-                  shape: BoxShape.circle,
+              Semantics(
+                label: 'Message non lu',
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primaryYellow,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ],

@@ -14,7 +14,9 @@ import '../bloc/auth_bloc.dart';
 
 /// Registration page for new users
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  final String initialRole;
+
+  const RegisterPage({super.key, this.initialRole = 'seeker'});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -32,9 +34,15 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  String _selectedRole = 'seeker';
+  late String _selectedRole;
   bool _siretVerifying = false;
   String? _siretError;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedRole = widget.initialRole;
+  }
 
   @override
   void dispose() {

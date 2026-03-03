@@ -125,6 +125,34 @@ class AdminRepository {
   }
 
   // ===========================================================================
+  // AUDIT LOGGING
+  // ===========================================================================
+
+  /// Log an admin action to the audit_logs table.
+  Future<void> _logAction({
+    required String action,
+    String? entityType,
+    String? entityId,
+    Map<String, dynamic>? oldValues,
+    Map<String, dynamic>? newValues,
+  }) async {
+    try {
+      final adminId = _supabaseClient.auth.currentUser?.id;
+      if (adminId == null) return;
+      await _supabaseClient.from('audit_logs').insert({
+        'user_id': adminId,
+        'action': action,
+        'entity_type': entityType,
+        'entity_id': entityId,
+        'old_values': oldValues,
+        'new_values': newValues,
+      });
+    } catch (e) {
+      debugPrint('[AdminRepository] Audit log failed: $e');
+    }
+  }
+
+  // ===========================================================================
   // RECRUITER VERIFICATION
   // ===========================================================================
 
@@ -190,6 +218,12 @@ class AdminRepository {
         'verified_by': adminId,
       }).eq('user_id', userId);
 
+      await _logAction(
+        action: 'recruiter_approved',
+        entityType: 'recruiter_profile',
+        entityId: userId,
+      );
+
       debugPrint('[AdminRepository] Recruiter $userId approved');
     } catch (e) {
       debugPrint('[AdminRepository] Error approving recruiter: $e');
@@ -204,6 +238,13 @@ class AdminRepository {
         'verification_status': 'rejected',
         'rejection_reason': reason,
       }).eq('user_id', userId);
+
+      await _logAction(
+        action: 'recruiter_rejected',
+        entityType: 'recruiter_profile',
+        entityId: userId,
+        newValues: {'rejection_reason': reason},
+      );
 
       debugPrint('[AdminRepository] Recruiter $userId rejected: $reason');
     } catch (e) {
@@ -248,6 +289,12 @@ class AdminRepository {
         'reviewed_at': DateTime.now().toIso8601String(),
       }).eq('id', reportId);
 
+      await _logAction(
+        action: 'report_dismissed',
+        entityType: 'report',
+        entityId: reportId,
+      );
+
       debugPrint('[AdminRepository] Report $reportId dismissed');
     } catch (e) {
       debugPrint('[AdminRepository] Error dismissing report: $e');
@@ -272,6 +319,13 @@ class AdminRepository {
         'reviewed_at': DateTime.now().toIso8601String(),
       }).eq('id', reportId);
 
+      await _logAction(
+        action: 'report_actioned',
+        entityType: 'report',
+        entityId: reportId,
+        newValues: {'action_taken': action, 'admin_notes': notes},
+      );
+
       debugPrint('[AdminRepository] Report $reportId actioned: $action');
     } catch (e) {
       debugPrint('[AdminRepository] Error actioning report: $e');
@@ -286,6 +340,12 @@ class AdminRepository {
           .from('user_roles')
           .update({'status': 'suspended'}).eq('user_id', userId);
 
+      await _logAction(
+        action: 'user_suspended',
+        entityType: 'user',
+        entityId: userId,
+      );
+
       debugPrint('[AdminRepository] User $userId suspended');
     } catch (e) {
       debugPrint('[AdminRepository] Error suspending user: $e');
@@ -299,6 +359,12 @@ class AdminRepository {
       await _supabaseClient
           .from('videos')
           .update({'status': 'suspended'}).eq('id', videoId);
+
+      await _logAction(
+        action: 'video_suspended',
+        entityType: 'video',
+        entityId: videoId,
+      );
 
       debugPrint('[AdminRepository] Video $videoId suspended');
     } catch (e) {

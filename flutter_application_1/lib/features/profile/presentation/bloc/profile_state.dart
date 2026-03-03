@@ -75,6 +75,17 @@ class RecruiterProfileLoaded extends ProfileState {
   List<Object?> get props => [profile, presentationCount, offerCount, posterCount, isPremium, stats];
 }
 
+/// Admin profile loaded - minimal state for admin users
+class AdminProfileLoaded extends ProfileState {
+  final String userId;
+  final String email;
+
+  const AdminProfileLoaded({required this.userId, required this.email});
+
+  @override
+  List<Object?> get props => [userId, email];
+}
+
 /// Profile saved successfully
 class ProfileSaveSuccess extends ProfileState {}
 

@@ -20,9 +20,6 @@ class AdminDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Trigger load on build
-    context.read<AdminBloc>().add(const AdminDashboardLoadRequested());
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Administration'),

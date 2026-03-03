@@ -31,7 +31,9 @@ import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/verification_queue_page.dart';
 import '../../features/admin/presentation/pages/recruiter_verification_page.dart';
 import '../../features/admin/presentation/pages/reports_page.dart';
+import '../../features/admin/presentation/pages/admin_auth_page.dart';
 import '../../features/admin/presentation/pages/admin_stats_page.dart';
+import '../../features/admin/presentation/widgets/admin_scaffold.dart';
 import '../../features/settings/presentation/pages/contact_support_page.dart';
 import '../../features/settings/presentation/pages/faq_page.dart';
 import '../../features/settings/presentation/pages/legal_page.dart';
@@ -87,6 +89,7 @@ abstract class AppRoutes {
 
   // Admin routes
   static const String admin = '/admin';
+  static const String adminAuth = '/verify-admin';
   static const String adminVerifications = '/admin/verifications';
   static const String adminReports = '/admin/reports';
   static const String adminStats = '/admin/stats';
@@ -107,8 +110,14 @@ class AppRouter {
 
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
   static final _shellNavigatorKey = GlobalKey<NavigatorState>();
+  static final _adminShellNavigatorKey = GlobalKey<NavigatorState>();
 
   static GoRouter? _router;
+
+  // Admin double auth session tracking
+  static bool _adminSessionVerified = false;
+  static void verifyAdminSession() => _adminSessionVerified = true;
+  static void resetAdminSession() => _adminSessionVerified = false;
 
   /// Create the router with AuthBloc for refresh
   static GoRouter createRouter(AuthBloc authBloc) {
@@ -121,6 +130,7 @@ class AppRouter {
       redirect: (context, state) {
         final authState = authBloc.state;
         final isAuthenticated = authState is AuthAuthenticated;
+        final isLoading = authState is AuthLoading || authState is AuthInitial;
         final isAuthRoute = state.matchedLocation == AppRoutes.login ||
             state.matchedLocation == AppRoutes.register ||
             state.matchedLocation == AppRoutes.forgotPassword ||
@@ -130,23 +140,53 @@ class AppRouter {
                 state.matchedLocation == AppRoutes.onboardingRecruiter;
         final isSplash = state.matchedLocation == AppRoutes.splash;
 
+        debugPrint('[Router] redirect: location=${state.matchedLocation}, '
+            'authState=${authState.runtimeType}, isAuthenticated=$isAuthenticated');
+
         // If on splash, wait for auth check
         if (isSplash) {
-          if (authState is AuthInitial || authState is AuthLoading) {
+          if (isLoading) {
             return null; // Stay on splash while checking
           }
-          return isAuthenticated ? AppRoutes.search : AppRoutes.welcome;
+          if (isAuthenticated) {
+            final auth = authBloc.state as AuthAuthenticated;
+            debugPrint('[Router] Splash redirect: role=${auth.role}, isAdmin=${auth.isAdmin}');
+            return auth.isAdmin ? AppRoutes.adminAuth : AppRoutes.search;
+          }
+          return AppRoutes.welcome;
+        }
+
+        // CRITICAL: If auth state is Loading/Initial and we are NOT on splash,
+        // stay on the current page. This prevents the race condition where a
+        // transient AuthLoading (from onAuthStateChange re-check) causes
+        // GoRouter to redirect an admin user away from /verify-admin to /welcome.
+        if (isLoading && !isSplash) {
+          debugPrint('[Router] Auth is loading, staying on ${state.matchedLocation}');
+          return null;
         }
 
         // If not authenticated and not on auth route, redirect to welcome
         if (!isAuthenticated && !isAuthRoute && !isOnboarding) {
+          _adminSessionVerified = false;
           return AppRoutes.welcome;
         }
 
-        // If authenticated and on auth route, redirect to search
-        // (but allow onboarding routes through)
+        // If authenticated and on auth route, redirect based on role
         if (isAuthenticated && isAuthRoute) {
-          return AppRoutes.search;
+          final auth = authBloc.state as AuthAuthenticated;
+          debugPrint('[Router] Auth redirect: role=${auth.role}, isAdmin=${auth.isAdmin}');
+          return auth.isAdmin ? AppRoutes.adminAuth : AppRoutes.search;
+        }
+
+        // Double auth admin: redirect to /verify-admin if not yet verified
+        final isAdminRoute = state.matchedLocation.startsWith('/admin');
+        final isAdminAuthRoute = state.matchedLocation == AppRoutes.adminAuth;
+
+        if (isAuthenticated && isAdminRoute && !isAdminAuthRoute) {
+          final auth = authBloc.state as AuthAuthenticated;
+          if (auth.isAdmin && !_adminSessionVerified) {
+            return AppRoutes.adminAuth;
+          }
         }
 
         return null;
@@ -183,7 +223,10 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.register,
-        builder: (context, state) => const RegisterPage(),
+        builder: (context, state) {
+          final role = state.uri.queryParameters['role'] ?? 'seeker';
+          return RegisterPage(initialRole: role);
+        },
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
@@ -218,6 +261,13 @@ class AppRouter {
           ),
           GoRoute(
             path: AppRoutes.profile,
+            redirect: (context, state) {
+              final authState = authBloc.state;
+              if (authState is AuthAuthenticated && authState.isAdmin) {
+                return AppRoutes.admin;
+              }
+              return null;
+            },
             pageBuilder: (context, state) => const NoTransitionPage(
               child: ProfilePage(),
             ),
@@ -352,9 +402,95 @@ class AppRouter {
         ],
       ),
 
-      // Admin (guard: redirect non-admin to feed)
+      // Admin double auth page (full screen, outside both shells — /verify-admin)
       GoRoute(
-        path: AppRoutes.admin,
+        path: AppRoutes.adminAuth,
+        builder: (context, state) => const AdminAuthPage(),
+      ),
+
+      // Admin shell with bottom nav (guard: redirect non-admin to search)
+      ShellRoute(
+        navigatorKey: _adminShellNavigatorKey,
+        builder: (context, state, child) => AdminScaffold(child: child),
+        routes: [
+          GoRoute(
+            path: AppRoutes.admin,
+            redirect: (context, state) {
+              final authState = authBloc.state;
+              if (authState is! AuthAuthenticated || !authState.isAdmin) {
+                return AppRoutes.search;
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: BlocProvider(
+                create: (_) => AdminBloc(
+                  adminRepository: GetIt.I<AdminRepository>(),
+                )..add(const AdminDashboardLoadRequested()),
+                child: const AdminDashboardPage(),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.adminVerifications,
+            redirect: (context, state) {
+              final authState = authBloc.state;
+              if (authState is! AuthAuthenticated || !authState.isAdmin) {
+                return AppRoutes.search;
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: BlocProvider(
+                create: (_) => AdminBloc(
+                  adminRepository: GetIt.I<AdminRepository>(),
+                )..add(const AdminVerificationListLoadRequested()),
+                child: const VerificationQueuePage(),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.adminReports,
+            redirect: (context, state) {
+              final authState = authBloc.state;
+              if (authState is! AuthAuthenticated || !authState.isAdmin) {
+                return AppRoutes.search;
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: BlocProvider(
+                create: (_) => AdminBloc(
+                  adminRepository: GetIt.I<AdminRepository>(),
+                )..add(const AdminReportsListLoadRequested()),
+                child: const ReportsPage(),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.adminStats,
+            redirect: (context, state) {
+              final authState = authBloc.state;
+              if (authState is! AuthAuthenticated || !authState.isAdmin) {
+                return AppRoutes.search;
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: BlocProvider(
+                create: (_) => AdminBloc(
+                  adminRepository: GetIt.I<AdminRepository>(),
+                )..add(const AdminStatsLoadRequested()),
+                child: const AdminStatsPage(),
+              ),
+            ),
+          ),
+        ],
+      ),
+
+      // Recruiter verification detail (full screen, outside shell)
+      GoRoute(
+        path: '${AppRoutes.adminVerifications}/:userId',
         redirect: (context, state) {
           final authState = authBloc.state;
           if (authState is! AuthAuthenticated || !authState.isAdmin) {
@@ -362,55 +498,15 @@ class AppRouter {
           }
           return null;
         },
-        builder: (context, state) => BlocProvider(
-          create: (_) => AdminBloc(
-            adminRepository: GetIt.I<AdminRepository>(),
-          )..add(const AdminDashboardLoadRequested()),
-          child: const AdminDashboardPage(),
-        ),
-        routes: [
-          GoRoute(
-            path: 'verifications',
-            builder: (context, state) => BlocProvider(
-              create: (_) => AdminBloc(
-                adminRepository: GetIt.I<AdminRepository>(),
-              )..add(const AdminVerificationListLoadRequested()),
-              child: const VerificationQueuePage(),
+        builder: (context, state) {
+          final userId = state.pathParameters['userId']!;
+          return BlocProvider(
+            create: (_) => AdminBloc(
+              adminRepository: GetIt.I<AdminRepository>(),
             ),
-            routes: [
-              GoRoute(
-                path: ':userId',
-                builder: (context, state) {
-                  final userId = state.pathParameters['userId']!;
-                  return BlocProvider(
-                    create: (_) => AdminBloc(
-                      adminRepository: GetIt.I<AdminRepository>(),
-                    ),
-                    child: RecruiterVerificationPage(userId: userId),
-                  );
-                },
-              ),
-            ],
-          ),
-          GoRoute(
-            path: 'reports',
-            builder: (context, state) => BlocProvider(
-              create: (_) => AdminBloc(
-                adminRepository: GetIt.I<AdminRepository>(),
-              )..add(const AdminReportsListLoadRequested()),
-              child: const ReportsPage(),
-            ),
-          ),
-          GoRoute(
-            path: 'stats',
-            builder: (context, state) => BlocProvider(
-              create: (_) => AdminBloc(
-                adminRepository: GetIt.I<AdminRepository>(),
-              )..add(const AdminStatsLoadRequested()),
-              child: const AdminStatsPage(),
-            ),
-          ),
-        ],
+            child: RecruiterVerificationPage(userId: userId),
+          );
+        },
       ),
     ],
 

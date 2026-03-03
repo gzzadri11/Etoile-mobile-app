@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/services/push_notification_service.dart';
+import '../../../profile/data/repositories/profile_repository.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -15,10 +16,14 @@ part 'auth_state.dart';
 /// Handles login, registration, logout, and session management.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SupabaseClient _supabaseClient;
+  final ProfileRepository _profileRepository;
+  bool _isProcessingAuth = false;
 
   AuthBloc({
     required SupabaseClient supabaseClient,
+    required ProfileRepository profileRepository,
   })  : _supabaseClient = supabaseClient,
+        _profileRepository = profileRepository,
         super(const AuthInitial()) {
     on<AuthCheckRequested>(_onCheckRequested);
     on<AuthLoginRequested>(_onLoginRequested);
@@ -27,22 +32,43 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthPasswordResetRequested>(_onPasswordResetRequested);
     on<AuthDeleteAccountRequested>(_onDeleteAccountRequested);
 
-    // Listen to auth state changes
+    // Listen to auth state changes (skip during login/register to avoid race condition)
     _supabaseClient.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
       final session = data.session;
-      if (session != null) {
+      // Only re-check on sign-in when we are NOT already handling auth
+      // and NOT already authenticated. Ignore token refreshes entirely.
+      if (session != null &&
+          !_isProcessingAuth &&
+          state is! AuthAuthenticated &&
+          event != AuthChangeEvent.tokenRefreshed) {
+        debugPrint('[AuthBloc] onAuthStateChange: event=$event, re-checking');
         add(const AuthCheckRequested());
       }
     });
   }
 
   /// Check if user is already authenticated
+  ///
+  /// If we are already in [AuthAuthenticated] state, we skip emitting
+  /// [AuthLoading] to avoid triggering a GoRouter redirect cycle (race
+  /// condition where the transient Loading state makes the router think
+  /// the user is unauthenticated and redirect to /welcome or /search).
   Future<void> _onCheckRequested(
     AuthCheckRequested event,
     Emitter<AuthState> emit,
   ) async {
-    debugPrint('[AuthBloc] Checking authentication...');
-    emit(const AuthLoading());
+    final previousState = state;
+    final wasAuthenticated = previousState is AuthAuthenticated;
+
+    debugPrint('[AuthBloc] Checking authentication... (wasAuthenticated=$wasAuthenticated)');
+
+    // Only emit AuthLoading when NOT already authenticated.
+    // This prevents the transient "unauthenticated" flash that confuses
+    // GoRouter redirect logic during onAuthStateChange re-checks.
+    if (!wasAuthenticated) {
+      emit(const AuthLoading());
+    }
 
     try {
       final session = _supabaseClient.auth.currentSession;
@@ -52,12 +78,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final user = _supabaseClient.auth.currentUser;
         debugPrint('[AuthBloc] User: ${user?.email ?? 'null'}');
         if (user != null) {
-          debugPrint('[AuthBloc] Authenticated as ${user.email}');
-          emit(AuthAuthenticated(
+          final role = await _getUserRole(user);
+          final newState = AuthAuthenticated(
             userId: user.id,
             email: user.email ?? '',
-            role: _getUserRole(user),
-          ));
+            role: role,
+          );
+          // Only emit if something actually changed (avoids unnecessary
+          // GoRouter refresh that triggers redirect cycle)
+          if (previousState != newState) {
+            debugPrint('[AuthBloc] Authenticated as ${user.email} (role=$role)');
+            emit(newState);
+          } else {
+            debugPrint('[AuthBloc] Already authenticated as ${user.email}, no state change');
+          }
           return;
         }
       }
@@ -76,6 +110,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
+    _isProcessingAuth = true;
 
     try {
       final response = await _supabaseClient.auth.signInWithPassword(
@@ -90,7 +125,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthAuthenticated(
           userId: response.user!.id,
           email: response.user!.email ?? '',
-          role: _getUserRole(response.user!),
+          role: await _getUserRole(response.user!),
         ));
       } else {
         emit(const AuthError(message: 'Email ou mot de passe incorrect'));
@@ -99,6 +134,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(message: _mapAuthError(e)));
     } catch (e) {
       emit(AuthError(message: 'Une erreur est survenue: ${e.toString()}'));
+    } finally {
+      // Delay clearing the flag so that onAuthStateChange events fired
+      // by Supabase during signIn are still suppressed. Without this,
+      // the listener fires AuthCheckRequested which emits AuthLoading
+      // and triggers a GoRouter redirect race condition.
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _isProcessingAuth = false;
+      });
     }
   }
 
@@ -108,6 +151,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
+    _isProcessingAuth = true;
 
     try {
       final metadata = <String, dynamic>{
@@ -148,6 +192,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(message: _mapAuthError(e)));
     } catch (e) {
       emit(AuthError(message: 'Une erreur est survenue: ${e.toString()}'));
+    } finally {
+      // Same delayed clear as login — see _onLoginRequested for rationale
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _isProcessingAuth = false;
+      });
     }
   }
 
@@ -238,13 +287,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Extract user role from metadata
-  String _getUserRole(User user) {
+  /// Extract user role from DB (user_roles table), fallback to metadata
+  Future<String> _getUserRole(User user) async {
+    try {
+      final dbRole = await _profileRepository.getUserRole();
+      if (dbRole != null) return dbRole;
+    } catch (_) {}
     final metadata = user.userMetadata;
     if (metadata != null && metadata.containsKey('role')) {
       return metadata['role'] as String;
     }
-    return 'seeker'; // Default role
+    return 'seeker';
   }
 
   /// Map Supabase auth errors to user-friendly messages

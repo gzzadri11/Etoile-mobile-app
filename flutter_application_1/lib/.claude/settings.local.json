@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(dir:*)",
+      "Bash(npx:*)",
+      "Bash(curl -s -X POST \"https://ojslqytmuifaofojutgb.supabase.co/rest/v1/rpc/exec_sql\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qc2xxeXRtdWlmYW9mb2p1dGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNDA1ODAsImV4cCI6MjA4NTYxNjU4MH0.P5jMjocyyQ9gfrx2areBK3ChU-6ThAPvunzqk0AlHrM\")",
+      "Bash(git add:*)",
+      "Bash(curl:*)",
+      "Bash(python -c:*)",
+      "Bash(node -e:*)",
+      "Bash(flutter test:*)",
+      "Bash(git commit:*)",
+      "Bash(find:*)"
+    ]
+  }
+}

@@ -18,8 +18,6 @@ class ReportsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    context.read<AdminBloc>().add(const AdminReportsListLoadRequested());
-
     return Scaffold(
       appBar: AppBar(
         title: BlocBuilder<AdminBloc, AdminState>(

@@ -54,7 +54,12 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            context.go(AppRoutes.search);
+            // Explicit navigation based on role — bypasses unreliable
+            // GoRouter redirect which races with auth state transitions.
+            final destination =
+                state.isAdmin ? AppRoutes.adminAuth : AppRoutes.search;
+            debugPrint('[LoginPage] Authenticated, navigating to $destination');
+            context.go(destination);
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

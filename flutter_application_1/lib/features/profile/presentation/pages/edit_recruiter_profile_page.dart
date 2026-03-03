@@ -7,10 +7,12 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
 import '../../../../shared/widgets/city_autocomplete_field.dart';
+import '../../../../shared/widgets/mascotte_message.dart';
 import '../../data/models/recruiter_profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../bloc/profile_bloc.dart';
@@ -54,6 +56,27 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
   bool _isUploadingDoc = false;
 
   bool _isInitialized = false;
+  bool _dismissedMascotte = false;
+
+  /// Calculates real-time profile completion percentage.
+  /// Recruiter: inscription(20) + entreprise+secteur(20) + description>=50chars(20) + localisation(20) + siret+document(20)
+  int _completionPercentage(RecruiterProfile profile) {
+    int pct = 20; // inscription always done
+    // Entreprise + secteur
+    final hasCompany = _companyNameController.text.trim().isNotEmpty;
+    final hasSector = _selectedSector != null;
+    if (hasCompany && hasSector) pct += 20;
+    // Description >= 50 chars
+    if (_descriptionController.text.trim().length >= 50) pct += 20;
+    // Localisation
+    if (_selectedCity != null && _selectedCity!.isNotEmpty) pct += 20;
+    // SIRET + document (read from profile state, not editable in form)
+    final hasSiret = profile.siret != null && profile.siret!.isNotEmpty;
+    final hasDoc =
+        profile.documentUrl != null && profile.documentUrl!.isNotEmpty;
+    if (hasSiret && hasDoc) pct += 20;
+    return pct;
+  }
 
   // Sectors d'activite (beta: 2 secteurs uniquement)
   static const List<String> _sectorOptions = [
@@ -326,7 +349,13 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
         title: const Text('Profil entreprise'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.search);
+            }
+          },
         ),
       ),
       body: BlocConsumer<ProfileBloc, ProfileState>(
@@ -338,7 +367,11 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                 backgroundColor: AppColors.success,
               ),
             );
-            context.pop();
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.search);
+            }
           } else if (state is ProfileError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -362,7 +395,39 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
 
           final isSaving = state is ProfileSaving;
 
-          return SingleChildScrollView(
+          return Column(
+            children: [
+              // Progress bar
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spaceMd, vertical: AppTheme.spaceSm),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: _completionPercentage(profile) / 100,
+                          backgroundColor: AppColors.greyLight,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.primaryYellow),
+                          minHeight: 4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spaceSm),
+                    Text(
+                      '${_completionPercentage(profile)}% complet',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.greyWarm,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
             child: Form(
               key: _formKey,
               child: Column(
@@ -378,6 +443,17 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+
+                  // === Mascotte milestone message ===
+                  if (!_dismissedMascotte)
+                    Builder(builder: (context) {
+                      final msg = MascotteMessage.forCompletion(
+                        _completionPercentage(profile),
+                        onDismiss: () =>
+                            setState(() => _dismissedMascotte = true),
+                      );
+                      return msg ?? const SizedBox.shrink();
+                    }),
 
                   // === Informations entreprise ===
                   _buildSectionTitle('Informations entreprise'),
@@ -400,6 +476,56 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                     keyboardType: TextInputType.url,
                     enabled: !isSaving,
                   ),
+
+                  // === SIRET read-only (captured at registration) ===
+                  if (profile.siret != null && profile.siret!.isNotEmpty) ...[
+                    const SizedBox(height: AppTheme.spaceMd),
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spaceMd),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withAlpha(15),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                        border: Border.all(
+                          color: AppColors.success.withAlpha(60),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.verified, color: AppColors.success, size: 20),
+                          const SizedBox(width: AppTheme.spaceSm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'SIRET : ${profile.siret}',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                                if (profile.legalForm != null && profile.legalForm!.isNotEmpty)
+                                  Text(
+                                    'Forme juridique : ${profile.legalForm}',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: AppColors.greyWarm,
+                                        ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.lock_outline, color: AppColors.greyWarm, size: 16),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.spaceXs),
+                    Text(
+                      'Verifie lors de l\'inscription',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.greyWarm,
+                            fontStyle: FontStyle.italic,
+                          ),
+                    ),
+                  ],
 
                   const SizedBox(height: AppTheme.spaceLg),
 
@@ -527,6 +653,9 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                 ],
               ),
             ),
+          ),
+              ),
+            ],
           );
         },
       ),

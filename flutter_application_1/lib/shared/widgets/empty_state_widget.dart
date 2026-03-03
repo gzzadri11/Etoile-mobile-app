@@ -41,9 +41,12 @@ class EmptyStateWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (showMascotte)
-              Image.asset(
-                'assets/images/mascotte.png',
-                height: 120,
+              Semantics(
+                label: 'Mascotte Etoile',
+                child: Image.asset(
+                  'assets/images/mascotte.png',
+                  height: 120,
+                ),
               )
             else if (icon != null)
               Icon(

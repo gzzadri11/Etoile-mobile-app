@@ -16,8 +16,6 @@ class AdminStatsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    context.read<AdminBloc>().add(const AdminStatsLoadRequested());
-
     return Scaffold(
       appBar: AppBar(title: const Text('Statistiques')),
       body: BlocBuilder<AdminBloc, AdminState>(

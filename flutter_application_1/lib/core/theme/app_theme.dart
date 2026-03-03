@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
 
@@ -476,9 +475,10 @@ abstract class AppTheme {
   // TEXT THEME BUILDER
   // ============================================
   static TextTheme _buildTextTheme(Color textColor) {
-    return GoogleFonts.interTextTheme().copyWith(
+    return const TextTheme().copyWith(
       // H1 / Hero - 32px Bold
-      displayLarge: GoogleFonts.inter(
+      displayLarge: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 32,
         fontWeight: FontWeight.w700,
         height: 1.2,
@@ -486,7 +486,8 @@ abstract class AppTheme {
       ),
 
       // H2 / Section - 24px SemiBold
-      displayMedium: GoogleFonts.inter(
+      displayMedium: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 24,
         fontWeight: FontWeight.w600,
         height: 1.3,
@@ -494,7 +495,8 @@ abstract class AppTheme {
       ),
 
       // H3 / Card - 20px SemiBold
-      displaySmall: GoogleFonts.inter(
+      displaySmall: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 20,
         fontWeight: FontWeight.w600,
         height: 1.4,
@@ -502,7 +504,8 @@ abstract class AppTheme {
       ),
 
       // H3 / Card alternate
-      headlineLarge: GoogleFonts.inter(
+      headlineLarge: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 20,
         fontWeight: FontWeight.w600,
         height: 1.4,
@@ -510,7 +513,8 @@ abstract class AppTheme {
       ),
 
       // Body Large - 18px Regular
-      headlineMedium: GoogleFonts.inter(
+      headlineMedium: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 18,
         fontWeight: FontWeight.w400,
         height: 1.5,
@@ -518,7 +522,8 @@ abstract class AppTheme {
       ),
 
       // Title Large
-      titleLarge: GoogleFonts.inter(
+      titleLarge: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 20,
         fontWeight: FontWeight.w600,
         height: 1.4,
@@ -526,7 +531,8 @@ abstract class AppTheme {
       ),
 
       // Title Medium
-      titleMedium: GoogleFonts.inter(
+      titleMedium: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w600,
         height: 1.5,
@@ -534,7 +540,8 @@ abstract class AppTheme {
       ),
 
       // Title Small
-      titleSmall: GoogleFonts.inter(
+      titleSmall: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w600,
         height: 1.5,
@@ -542,7 +549,8 @@ abstract class AppTheme {
       ),
 
       // Body Large - 18px Regular
-      bodyLarge: GoogleFonts.inter(
+      bodyLarge: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 18,
         fontWeight: FontWeight.w400,
         height: 1.5,
@@ -550,7 +558,8 @@ abstract class AppTheme {
       ),
 
       // Body - 16px Regular
-      bodyMedium: GoogleFonts.inter(
+      bodyMedium: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w400,
         height: 1.5,
@@ -558,7 +567,8 @@ abstract class AppTheme {
       ),
 
       // Body Small - 14px Regular
-      bodySmall: GoogleFonts.inter(
+      bodySmall: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w400,
         height: 1.5,
@@ -566,7 +576,8 @@ abstract class AppTheme {
       ),
 
       // Label Large
-      labelLarge: GoogleFonts.inter(
+      labelLarge: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w600,
         height: 1.4,
@@ -574,7 +585,8 @@ abstract class AppTheme {
       ),
 
       // Caption - 12px Medium
-      labelMedium: GoogleFonts.inter(
+      labelMedium: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.w500,
         height: 1.4,
@@ -582,7 +594,8 @@ abstract class AppTheme {
       ),
 
       // Overline - 10px Bold
-      labelSmall: GoogleFonts.inter(
+      labelSmall: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 10,
         fontWeight: FontWeight.w700,
         height: 1.2,

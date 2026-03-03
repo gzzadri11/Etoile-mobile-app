@@ -128,7 +128,7 @@ Future<void> init() async {
 
   // AuthBloc - SINGLETON pour maintenir un etat coherent dans toute l'app
   sl.registerLazySingleton<AuthBloc>(
-    () => AuthBloc(supabaseClient: sl()),
+    () => AuthBloc(supabaseClient: sl(), profileRepository: sl()),
   );
 
   // ============================================
@@ -141,6 +141,7 @@ Future<void> init() async {
       profileRepository: sl(),
       videoRepository: sl(),
       statsRepository: sl(),
+      supabaseClient: sl(),
     ),
   );
 

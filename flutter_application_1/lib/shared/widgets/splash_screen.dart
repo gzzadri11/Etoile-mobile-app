@@ -73,17 +73,20 @@ class _SplashScreenState extends State<SplashScreen>
                   opacity: _fadeIn,
                   child: ScaleTransition(
                     scale: _scaleUp,
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: const BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.star_rounded,
-                        color: AppColors.black,
-                        size: 44,
+                    child: Semantics(
+                      label: 'Logo Etoile',
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: const BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.star_rounded,
+                          color: AppColors.black,
+                          size: 44,
+                        ),
                       ),
                     ),
                   ),
@@ -96,16 +99,19 @@ class _SplashScreenState extends State<SplashScreen>
                   opacity: _fadeIn,
                   child: ScaleTransition(
                     scale: _scaleUp,
-                    child: ShaderMask(
-                      shaderCallback: (bounds) =>
-                          AppColors.primaryGradient.createShader(bounds),
-                      child: const Text(
-                        'ETOILE',
-                        style: TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.white,
-                          letterSpacing: 8,
+                    child: Semantics(
+                      label: 'Etoile - Application de recrutement',
+                      child: ShaderMask(
+                        shaderCallback: (bounds) =>
+                            AppColors.primaryGradient.createShader(bounds),
+                        child: const Text(
+                          'ETOILE',
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
+                            letterSpacing: 8,
+                          ),
                         ),
                       ),
                     ),
