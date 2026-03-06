@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-03-02
-**Statut** : Sprint 21 (Admin System) EN COURS. Sprint 20 TERMINE. Sprint 13 camera toujours reportee.
+**Date de mise a jour** : 2026-03-06
+**Statut** : Sprint 22 TERMINE. Sprint 13 camera toujours reportee.
 
 ---
 
@@ -16,6 +16,55 @@ flutter run -d edge
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+---
+
+## Ce qui a ete fait — Sprint 22 : Ameliorations UX + Verification Email + Sous-secteurs (2026-03-06)
+
+### Changement 1 : Retirer mascotte de Welcome — DONE
+- `welcome_page.dart` : supprime Image.asset mascotte + SizedBox. Logo + texte ETOILE + CTAs restent.
+
+### Changement 2 : Profil recruteur sans logo — DONE
+- `edit_recruiter_profile_page.dart` : supprime logo (CircleAvatar, _pickLogo, upload), hauteur header 220→180
+- `profile_page.dart` (_RecruiterHeader) : supprime logo Positioned, hauteur 240→200, repositionner texte `left: AppTheme.spaceMd`
+- `public_recruiter_profile_page.dart` : supprime logo Positioned, hauteur 240→200, repositionner texte
+- `recruiter_profile_model.dart` : `logoUrl` garde en DB (backward compat), plus affiche ni uploade
+
+### Changement 3 : Sous-secteurs (specialites) + Constants centralisees — DONE
+- **Nouveau** : `lib/core/constants/sector_constants.dart` — secteurs, specialites par secteur, niveaux etudes, labels, helpers
+- **Migration** : `supabase/migrations/20260306000000_seeker_specialty.sql` — `ALTER TABLE seeker_profiles ADD COLUMN specialty text`
+- `seeker_profile_model.dart` : +champ `specialty` (fromJson/toJson/copyWith/props)
+- `edit_seeker_profile_page.dart` : remplace constantes locales par SectorConstants, +dropdown specialite conditionnel
+- `profile_page.dart` : affiche specialite a cote du domaine
+
+### Changement 4 : Verification email OTP a l'inscription — DONE
+- `auth_state.dart` : `AuthEmailVerificationRequired` +email +role
+- `auth_event.dart` : +`AuthVerifyOtpRequested`, +`AuthResendOtpRequested`
+- `auth_bloc.dart` : +handlers OTP (verifyOTP, resend), emit AuthEmailVerificationRequired dans register
+- `register_page.dart` : redirige vers /verify-email au lieu de dialog
+- **Nouveau** : `otp_verification_page.dart` — champ 6 chiffres, timer 60s resend, BlocConsumer
+- `app_router.dart` : +route `/verify-email` + ajout a isAuthRoute
+- **Prerequis** : activer "Enable email confirmations" dans Supabase dashboard + template OTP 6 chiffres
+
+### Changement 5 : Page recherche differenciee seeker/recruteur — DONE
+- `search_page.dart` : reecrit en wrapper role-aware (_SeekerSearchView + _RecruiterSearchView)
+  - Seeker : secteur + specialite + localisation IdF + rechercher/parcourir
+  - Recruteur : domaine + specialite + ville CityAutocompleteField + niveau etudes + rechercher/parcourir
+- `feed_page.dart` : +params `initialSpecialty`, `initialCity`, `initialStudyLevel`
+- `feed_item_model.dart` : FeedItem +specialty +studyLevel, FeedFilters +specialty +city +studyLevel
+- `feed_repository.dart` : getRecruiterFeed inclut specialty/studyLevel, _applyRecruiterFilters filtre par specialty/city/studyLevel
+- `app_router.dart` : query params supplementaires (specialty, city, studyLevel) dans route /feed
+
+### Changement 6 : Gate profil obligatoire (hard redirect) — DONE
+- `app_router.dart` : +statics `_profileComplete`, `_profileChecked`, `updateProfileComplete()`, `isProfileComplete`, `resetProfileCheck()`
+  - Redirect : si profileChecked && !profileComplete && !admin → edit profile (sauf routes autorisees)
+- `profile_bloc.dart` : appelle `AppRouter.updateProfileComplete()` apres load/save
+- `auth_bloc.dart` : pre-charge completude profil dans `_onCheckRequested`, reset dans logout
+- `edit_seeker_profile_page.dart` + `edit_recruiter_profile_page.dart` : apres save OK, check `AppRouter.isProfileComplete` pour naviguer
+
+### Resultats
+- **65/65 tests pass**, 0 issues flutter analyze
+- Migration SQL prete (a deployer via Supabase dashboard)
 
 ---
 
@@ -523,10 +572,13 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | **19** | **UX Design Review — Sally (14/14 steps)** | **DONE** |
 | **20** | **Ameliorations UX + A11y (7/7 stories, 14/14 pts)** | **DONE** |
 | **21** | **Systeme Admin (fix crash + nav dediee + audit logs)** | **DONE** |
+| **22** | **Ameliorations UX + Verification Email + Sous-secteurs (6 changements)** | **DONE** |
 
 ### Prochains sprints
 
 - Story reportee : 13.1 Camera in-app (8 pts, emulateur requis)
+- Deployer migration SQL `20260306000000_seeker_specialty.sql` via Supabase dashboard
+- Configurer Supabase : activer email confirmations + template OTP 6 chiffres
 - Preparation beta (store listing, TestFlight/Play Console)
 - Tous les pre-requis (admin role, bucket, Edge Functions, RLS, VIEW users, audit_logs) sont deployes
 
@@ -576,5 +628,5 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-*Sauvegarde mise a jour le 2026-03-02*
-*Sprint 21 TERMINE. Systeme admin : fix crash ProfileBloc, navigation dediee (AdminScaffold + ShellRoute), redirect /admin au login, audit logging (6 actions), migration audit_logs deployee. 65/65 tests pass. Next: Preparation beta (store listing, TestFlight/Play Console).*
+*Sauvegarde mise a jour le 2026-03-06*
+*Sprint 22 TERMINE. 6 ameliorations : retrait mascotte welcome, profil recruteur sans logo, sous-secteurs (specialites) + constants centralisees, verification email OTP, recherche differenciee seeker/recruteur, gate profil obligatoire (hard redirect). 65/65 tests pass. Migration SQL a deployer + config Supabase email confirmations. Next: Preparation beta (store listing, TestFlight/Play Console).*

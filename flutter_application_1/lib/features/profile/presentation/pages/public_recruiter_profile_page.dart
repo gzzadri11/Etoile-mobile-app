@@ -171,7 +171,6 @@ class _PublicRecruiterProfilePageState
           // 1. Header
           _PublicRecruiterHeader(
             coverUrl: profile.coverUrl,
-            logoUrl: profile.logoUrl,
             companyName: profile.companyName,
             sector: _getSectorLabel(profile.sector),
             isVerified: profile.isVerified,
@@ -378,14 +377,12 @@ class _PublicRecruiterProfilePageState
 /// Header with cover + logo + company info
 class _PublicRecruiterHeader extends StatelessWidget {
   final String? coverUrl;
-  final String? logoUrl;
   final String companyName;
   final String sector;
   final bool isVerified;
 
   const _PublicRecruiterHeader({
     this.coverUrl,
-    this.logoUrl,
     required this.companyName,
     required this.sector,
     required this.isVerified,
@@ -394,16 +391,15 @@ class _PublicRecruiterHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasCover = coverUrl != null && coverUrl!.isNotEmpty;
-    final hasLogo = logoUrl != null && logoUrl!.isNotEmpty;
 
     return SizedBox(
-      height: 240,
+      height: 200,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           // Cover photo
           Container(
-            height: 180,
+            height: 160,
             width: double.infinity,
             decoration: BoxDecoration(
               color: AppColors.greyLight,
@@ -426,7 +422,7 @@ class _PublicRecruiterHeader extends StatelessWidget {
           ),
           // Gradient overlay
           Positioned(
-            bottom: 60,
+            bottom: 40,
             left: 0,
             right: 0,
             height: 120,
@@ -440,36 +436,10 @@ class _PublicRecruiterHeader extends StatelessWidget {
               ),
             ),
           ),
-          // Logo
-          Positioned(
-            bottom: 0,
-            left: AppTheme.spaceMd,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.white, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(40),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-              child: CircleAvatar(
-                radius: 40,
-                backgroundColor: AppColors.white,
-                backgroundImage: hasLogo ? NetworkImage(logoUrl!) : null,
-                child: !hasLogo
-                    ? const Icon(Icons.business,
-                        size: 36, color: AppColors.greyWarm)
-                    : null,
-              ),
-            ),
-          ),
           // Company name + sector
           Positioned(
             bottom: 16,
-            left: 100,
+            left: AppTheme.spaceMd,
             right: AppTheme.spaceMd,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,6 +452,7 @@ class _PublicRecruiterHeader extends StatelessWidget {
                         style:
                             Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
+                                  color: AppColors.white,
                                 ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -499,7 +470,7 @@ class _PublicRecruiterHeader extends StatelessWidget {
                 Text(
                   sector,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.greyWarm,
+                        color: AppColors.white.withAlpha(200),
                       ),
                 ),
               ],

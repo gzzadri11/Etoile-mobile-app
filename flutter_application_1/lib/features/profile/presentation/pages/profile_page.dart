@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/sector_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
@@ -102,12 +103,12 @@ class _SeekerProfileView extends StatelessWidget {
     required this.stats,
   });
 
-  static String _getDomainLabel(String? domain) {
-    const labels = {
-      'commerce_vente': 'Commerce / Vente',
-      'restauration_hotellerie': 'Restauration / Hotellerie',
-    };
-    return labels[domain] ?? domain ?? 'Non defini';
+  static String _getDomainLabel(SeekerProfile profile) {
+    final domain = SectorConstants.getSectorLabel(profile.domain);
+    if (profile.specialty != null && profile.specialty!.isNotEmpty) {
+      return '$domain — ${SectorConstants.getSpecialtyLabel(profile.specialty)}';
+    }
+    return domain;
   }
 
   static String _buildStudyInfo(SeekerProfile profile) {
@@ -150,7 +151,7 @@ class _SeekerProfileView extends StatelessWidget {
               // Profile info
               _ProfileInfoCard(
                 name: profile.fullName,
-                domain: _getDomainLabel(profile.domain),
+                domain: _getDomainLabel(profile),
                 location: profile.location.isNotEmpty
                     ? profile.location
                     : 'Non defini',
@@ -232,14 +233,8 @@ class _RecruiterProfileView extends StatelessWidget {
     required this.stats,
   });
 
-  static const Map<String, String> _sectorLabels = {
-    'commerce_vente': 'Commerce / Vente',
-    'restauration_hotellerie': 'Restauration / Hotellerie',
-  };
-
   static String _getSectorLabel(String? sector) {
-    if (sector == null || sector.isEmpty) return 'Non defini';
-    return _sectorLabels[sector] ?? sector;
+    return SectorConstants.getSectorLabel(sector);
   }
 
   @override
@@ -265,7 +260,6 @@ class _RecruiterProfileView extends StatelessWidget {
               // === Cover + Logo header ===
               _RecruiterHeader(
                 coverUrl: profile.coverUrl,
-                logoUrl: profile.logoUrl,
                 companyName: profile.companyName,
                 sector: _getSectorLabel(profile.sector),
                 isVerified: profile.isVerified,
@@ -704,14 +698,12 @@ class _ProfileInfoCard extends StatelessWidget {
 /// Recruiter header with cover photo + logo overlay
 class _RecruiterHeader extends StatelessWidget {
   final String? coverUrl;
-  final String? logoUrl;
   final String companyName;
   final String sector;
   final bool isVerified;
 
   const _RecruiterHeader({
     this.coverUrl,
-    this.logoUrl,
     required this.companyName,
     required this.sector,
     required this.isVerified,
@@ -720,16 +712,15 @@ class _RecruiterHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasCover = coverUrl != null && coverUrl!.isNotEmpty;
-    final hasLogo = logoUrl != null && logoUrl!.isNotEmpty;
 
     return SizedBox(
-      height: 240,
+      height: 200,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           // Cover photo
           Container(
-            height: 180,
+            height: 160,
             width: double.infinity,
             decoration: BoxDecoration(
               color: AppColors.greyLight,
@@ -752,7 +743,7 @@ class _RecruiterHeader extends StatelessWidget {
           ),
           // Gradient overlay for text readability
           Positioned(
-            bottom: 60,
+            bottom: 40,
             left: 0,
             right: 0,
             height: 120,
@@ -766,38 +757,10 @@ class _RecruiterHeader extends StatelessWidget {
               ),
             ),
           ),
-          // Logo
-          Positioned(
-            bottom: 0,
-            left: AppTheme.spaceMd,
-            child: Semantics(
-              label: 'Logo de $companyName',
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.white, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(40),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  radius: 40,
-                  backgroundColor: AppColors.white,
-                  backgroundImage: hasLogo ? NetworkImage(logoUrl!) : null,
-                  child: !hasLogo
-                      ? const Icon(Icons.business, size: 36, color: AppColors.greyWarm)
-                      : null,
-                ),
-              ),
-            ),
-          ),
           // Company name + sector
           Positioned(
             bottom: 16,
-            left: 100,
+            left: AppTheme.spaceMd,
             right: AppTheme.spaceMd,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -809,6 +772,7 @@ class _RecruiterHeader extends StatelessWidget {
                         companyName,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
+                              color: AppColors.white,
                             ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -826,7 +790,7 @@ class _RecruiterHeader extends StatelessWidget {
                 Text(
                   sector,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.greyWarm,
+                        color: AppColors.white.withAlpha(200),
                       ),
                 ),
               ],

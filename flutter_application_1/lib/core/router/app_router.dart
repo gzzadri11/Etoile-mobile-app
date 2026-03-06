@@ -39,6 +39,7 @@ import '../../features/settings/presentation/pages/faq_page.dart';
 import '../../features/settings/presentation/pages/legal_page.dart';
 import '../../features/settings/presentation/pages/blocked_users_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/auth/presentation/pages/otp_verification_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
@@ -52,6 +53,7 @@ abstract class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
+  static const String otpVerification = '/verify-email';
 
   // Onboarding routes
   static const String onboardingSeeker = '/onboarding/seeker';
@@ -119,6 +121,25 @@ class AppRouter {
   static void verifyAdminSession() => _adminSessionVerified = true;
   static void resetAdminSession() => _adminSessionVerified = false;
 
+  // Profile completion gate
+  static bool _profileComplete = true;
+  static bool _profileChecked = false;
+
+  /// Called by ProfileBloc / AuthBloc after loading profile to update gate state.
+  static void updateProfileComplete(bool complete) {
+    _profileComplete = complete;
+    _profileChecked = true;
+  }
+
+  /// Whether profile is currently marked as complete.
+  static bool get isProfileComplete => _profileComplete;
+
+  /// Reset profile check on logout.
+  static void resetProfileCheck() {
+    _profileChecked = false;
+    _profileComplete = true;
+  }
+
   /// Create the router with AuthBloc for refresh
   static GoRouter createRouter(AuthBloc authBloc) {
     _router ??= GoRouter(
@@ -134,7 +155,8 @@ class AppRouter {
         final isAuthRoute = state.matchedLocation == AppRoutes.login ||
             state.matchedLocation == AppRoutes.register ||
             state.matchedLocation == AppRoutes.forgotPassword ||
-            state.matchedLocation == AppRoutes.welcome;
+            state.matchedLocation == AppRoutes.welcome ||
+            state.matchedLocation == AppRoutes.otpVerification;
         final isOnboarding =
             state.matchedLocation == AppRoutes.onboardingSeeker ||
                 state.matchedLocation == AppRoutes.onboardingRecruiter;
@@ -189,6 +211,27 @@ class AppRouter {
           }
         }
 
+        // Profile completion gate: redirect to edit profile if incomplete
+        if (isAuthenticated && _profileChecked && !_profileComplete) {
+          final auth = authBloc.state as AuthAuthenticated;
+          if (!auth.isAdmin) {
+            // Allow these routes even when profile is incomplete
+            final loc = state.matchedLocation;
+            final allowedIncomplete = loc == AppRoutes.editProfile ||
+                loc == AppRoutes.editRecruiterProfile ||
+                loc == AppRoutes.onboardingSeeker ||
+                loc == AppRoutes.onboardingRecruiter ||
+                loc == AppRoutes.otpVerification ||
+                loc == AppRoutes.settings ||
+                loc.startsWith('/settings/');
+            if (!allowedIncomplete) {
+              return auth.isRecruiter
+                  ? AppRoutes.editRecruiterProfile
+                  : AppRoutes.editProfile;
+            }
+          }
+        }
+
         return null;
       },
 
@@ -233,6 +276,16 @@ class AppRouter {
         builder: (context, state) => const ForgotPasswordPage(),
       ),
 
+      // OTP email verification
+      GoRoute(
+        path: AppRoutes.otpVerification,
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          final role = state.uri.queryParameters['role'] ?? 'seeker';
+          return OtpVerificationPage(email: email, role: role);
+        },
+      ),
+
       // Main app with bottom navigation
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -248,8 +301,16 @@ class AppRouter {
             path: AppRoutes.feed,
             pageBuilder: (context, state) {
               final sector = state.uri.queryParameters['sector'];
+              final specialty = state.uri.queryParameters['specialty'];
+              final city = state.uri.queryParameters['city'];
+              final studyLevel = state.uri.queryParameters['studyLevel'];
               return NoTransitionPage(
-                child: FeedPage(initialSector: sector),
+                child: FeedPage(
+                  initialSector: sector,
+                  initialSpecialty: specialty,
+                  initialCity: city,
+                  initialStudyLevel: studyLevel,
+                ),
               );
             },
           ),

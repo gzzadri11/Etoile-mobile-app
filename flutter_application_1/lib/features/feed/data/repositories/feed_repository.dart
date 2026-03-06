@@ -237,6 +237,9 @@ class FeedRepository {
         availability: seekerProfile['availability'] as String?,
         experienceLevel: seekerProfile['experience_level'] as String?,
         salaryExpectation: seekerProfile['salary_expectation'] as String?,
+        sector: seekerProfile['domain'] as String?,
+        specialty: seekerProfile['specialty'] as String?,
+        studyLevel: seekerProfile['study_level'] as String?,
       ));
     }
 
@@ -430,6 +433,37 @@ class FeedRepository {
   /// Apply filters for recruiter feed (filtering seeker videos)
   List<FeedItem> _applyRecruiterFilters(List<FeedItem> items, FeedFilters filters) {
     return items.where((item) {
+      // Filter by sector/domain
+      if (filters.sector != null && filters.sector!.isNotEmpty) {
+        if (item.sector == null || item.sector != filters.sector) {
+          return false;
+        }
+      }
+
+      // Filter by specialty
+      if (filters.specialty != null && filters.specialty!.isNotEmpty) {
+        if (item.specialty == null || item.specialty != filters.specialty) {
+          return false;
+        }
+      }
+
+      // Filter by city
+      if (filters.city != null && filters.city!.isNotEmpty) {
+        final filterCity = filters.city!.toLowerCase();
+        final itemCity = item.city?.toLowerCase() ?? '';
+        final itemLocation = item.userLocation?.toLowerCase() ?? '';
+        if (!itemCity.contains(filterCity) && !itemLocation.contains(filterCity)) {
+          return false;
+        }
+      }
+
+      // Filter by study level
+      if (filters.studyLevel != null && filters.studyLevel!.isNotEmpty) {
+        if (item.studyLevel == null || item.studyLevel != filters.studyLevel) {
+          return false;
+        }
+      }
+
       // Filter by category/competences
       if (filters.categoryName != null && filters.categoryName!.isNotEmpty) {
         final filterCategory = filters.categoryName!.toLowerCase();

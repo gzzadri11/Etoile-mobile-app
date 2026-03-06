@@ -83,3 +83,31 @@ class AuthDeleteAccountRequested extends AuthEvent {
 class AuthEmailVerified extends AuthEvent {
   const AuthEmailVerified();
 }
+
+/// Verify OTP code entered by user
+class AuthVerifyOtpRequested extends AuthEvent {
+  final String email;
+  final String otpCode;
+
+  const AuthVerifyOtpRequested({
+    required this.email,
+    required this.otpCode,
+  });
+
+  @override
+  List<Object> get props => [email, otpCode];
+}
+
+/// Resend OTP code
+class AuthResendOtpRequested extends AuthEvent {
+  final String email;
+  final String role;
+
+  const AuthResendOtpRequested({
+    required this.email,
+    required this.role,
+  });
+
+  @override
+  List<Object> get props => [email, role];
+}

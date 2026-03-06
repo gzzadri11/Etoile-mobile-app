@@ -122,27 +122,15 @@ class _RegisterPageState extends State<RegisterPage> {
                 : AppRoutes.onboardingSeeker;
             context.go(route);
           } else if (state is AuthEmailVerificationRequired) {
-            // Show dialog for email verification
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Verifiez votre email'),
-                content: const Text(
-                  'Un email de confirmation a ete envoye. '
-                  'Cliquez sur le lien dans l\'email puis connectez-vous.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                      context.go(AppRoutes.login);
-                    },
-                    child: const Text('Aller a la connexion'),
-                  ),
-                ],
-              ),
+            // Navigate to OTP verification page
+            final uri = Uri(
+              path: AppRoutes.otpVerification,
+              queryParameters: {
+                'email': state.email,
+                'role': state.role,
+              },
             );
+            context.push(uri.toString());
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

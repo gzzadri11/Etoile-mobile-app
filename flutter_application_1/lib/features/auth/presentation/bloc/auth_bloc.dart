@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/router/app_router.dart';
 import '../../../../core/services/push_notification_service.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 
@@ -31,6 +32,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthPasswordResetRequested>(_onPasswordResetRequested);
     on<AuthDeleteAccountRequested>(_onDeleteAccountRequested);
+    on<AuthVerifyOtpRequested>(_onVerifyOtpRequested);
+    on<AuthResendOtpRequested>(_onResendOtpRequested);
 
     // Listen to auth state changes (skip during login/register to avoid race condition)
     _supabaseClient.auth.onAuthStateChange.listen((data) {
@@ -84,6 +87,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             email: user.email ?? '',
             role: role,
           );
+          // Pre-load profile completion for gate
+          try {
+            if (role != 'admin') {
+              final pct = await _profileRepository.getProfileCompletionPercentage();
+              AppRouter.updateProfileComplete(pct >= 100);
+            }
+          } catch (_) {
+            // Ignore errors — gate will be updated later by ProfileBloc
+          }
+
           // Only emit if something actually changed (avoids unnecessary
           // GoRouter refresh that triggers redirect cycle)
           if (previousState != newState) {
@@ -183,7 +196,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             role: event.role,
           ));
         } else {
-          emit(const AuthEmailVerificationRequired());
+          emit(AuthEmailVerificationRequired(
+            email: event.email,
+            role: event.role,
+          ));
         }
       } else {
         emit(const AuthError(message: 'Erreur lors de l\'inscription'));
@@ -212,6 +228,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _removePushToken();
 
       await _supabaseClient.auth.signOut();
+      AppRouter.resetProfileCheck();
       emit(const AuthUnauthenticated());
     } catch (e) {
       emit(AuthError(message: e.toString()));
@@ -284,6 +301,66 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       debugPrint('[AuthBloc] Delete account error: $e');
       emit(AuthError(message: 'Une erreur est survenue: ${e.toString()}'));
+    }
+  }
+
+  /// Handle OTP verification
+  Future<void> _onVerifyOtpRequested(
+    AuthVerifyOtpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    _isProcessingAuth = true;
+
+    try {
+      final response = await _supabaseClient.auth.verifyOTP(
+        email: event.email,
+        token: event.otpCode,
+        type: OtpType.signup,
+      );
+
+      if (response.session != null && response.user != null) {
+        _registerPushToken();
+
+        final role = await _getUserRole(response.user!);
+        emit(AuthAuthenticated(
+          userId: response.user!.id,
+          email: response.user!.email ?? '',
+          role: role,
+        ));
+      } else {
+        emit(const AuthError(message: 'Code invalide ou expire'));
+      }
+    } on AuthException catch (e) {
+      emit(AuthError(message: _mapAuthError(e)));
+    } catch (e) {
+      emit(AuthError(message: 'Erreur de verification: ${e.toString()}'));
+    } finally {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _isProcessingAuth = false;
+      });
+    }
+  }
+
+  /// Handle OTP resend
+  Future<void> _onResendOtpRequested(
+    AuthResendOtpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      await _supabaseClient.auth.resend(
+        type: OtpType.signup,
+        email: event.email,
+      );
+      // Re-emit verification required state (keeps user on OTP page)
+      emit(AuthEmailVerificationRequired(
+        email: event.email,
+        role: event.role,
+      ));
+    } on AuthException catch (e) {
+      emit(AuthError(message: _mapAuthError(e)));
+    } catch (e) {
+      emit(AuthError(message: 'Erreur lors du renvoi: ${e.toString()}'));
     }
   }
 

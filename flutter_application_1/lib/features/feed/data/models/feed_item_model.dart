@@ -23,6 +23,8 @@ class FeedItem extends Equatable {
   final String? experienceLevel;
   final String? salaryExpectation;
   final String? sector;
+  final String? specialty;
+  final String? studyLevel;
 
   const FeedItem({
     required this.video,
@@ -40,6 +42,8 @@ class FeedItem extends Equatable {
     this.experienceLevel,
     this.salaryExpectation,
     this.sector,
+    this.specialty,
+    this.studyLevel,
   });
 
   @override
@@ -59,6 +63,8 @@ class FeedItem extends Equatable {
         experienceLevel,
         salaryExpectation,
         sector,
+        specialty,
+        studyLevel,
       ];
 }
 
@@ -72,6 +78,9 @@ class FeedFilters extends Equatable {
 
   // Role-specific filters
   final String? sector;
+  final String? specialty;
+  final String? city;
+  final String? studyLevel;
   final String? experienceLevel;
   final String? salaryRange;
 
@@ -82,6 +91,9 @@ class FeedFilters extends Equatable {
     this.contractType,
     this.availability,
     this.sector,
+    this.specialty,
+    this.city,
+    this.studyLevel,
     this.experienceLevel,
     this.salaryRange,
   });
@@ -93,6 +105,9 @@ class FeedFilters extends Equatable {
         contractType = null,
         availability = null,
         sector = null,
+        specialty = null,
+        city = null,
+        studyLevel = null,
         experienceLevel = null,
         salaryRange = null;
 
@@ -109,6 +124,12 @@ class FeedFilters extends Equatable {
     bool clearAvailability = false,
     String? sector,
     bool clearSector = false,
+    String? specialty,
+    bool clearSpecialty = false,
+    String? city,
+    bool clearCity = false,
+    String? studyLevel,
+    bool clearStudyLevel = false,
     String? experienceLevel,
     bool clearExperienceLevel = false,
     String? salaryRange,
@@ -121,6 +142,9 @@ class FeedFilters extends Equatable {
       contractType: clearContractType ? null : (contractType ?? this.contractType),
       availability: clearAvailability ? null : (availability ?? this.availability),
       sector: clearSector ? null : (sector ?? this.sector),
+      specialty: clearSpecialty ? null : (specialty ?? this.specialty),
+      city: clearCity ? null : (city ?? this.city),
+      studyLevel: clearStudyLevel ? null : (studyLevel ?? this.studyLevel),
       experienceLevel: clearExperienceLevel ? null : (experienceLevel ?? this.experienceLevel),
       salaryRange: clearSalaryRange ? null : (salaryRange ?? this.salaryRange),
     );
@@ -133,6 +157,9 @@ class FeedFilters extends Equatable {
       contractType != null ||
       availability != null ||
       sector != null ||
+      specialty != null ||
+      city != null ||
+      studyLevel != null ||
       experienceLevel != null ||
       salaryRange != null;
 
@@ -146,6 +173,9 @@ class FeedFilters extends Equatable {
         contractType,
         availability,
         sector,
+        specialty,
+        city,
+        studyLevel,
         experienceLevel,
         salaryRange,
       ];

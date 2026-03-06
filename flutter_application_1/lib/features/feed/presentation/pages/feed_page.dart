@@ -25,8 +25,17 @@ import '../widgets/video_preload_manager.dart';
 /// Seekers see recruiter offer videos. Recruiters see seeker presentations.
 class FeedPage extends StatelessWidget {
   final String? initialSector;
+  final String? initialSpecialty;
+  final String? initialCity;
+  final String? initialStudyLevel;
 
-  const FeedPage({super.key, this.initialSector});
+  const FeedPage({
+    super.key,
+    this.initialSector,
+    this.initialSpecialty,
+    this.initialCity,
+    this.initialStudyLevel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,9 +46,18 @@ class FeedPage extends StatelessWidget {
       create: (_) {
         final bloc = GetIt.I<FeedBloc>()
           ..add(FeedLoadRequested(userRole: userRole));
-        if (initialSector != null) {
+        final hasFilters = initialSector != null ||
+            initialSpecialty != null ||
+            initialCity != null ||
+            initialStudyLevel != null;
+        if (hasFilters) {
           bloc.add(FeedFiltersChanged(
-            filters: FeedFilters(sector: initialSector),
+            filters: FeedFilters(
+              sector: initialSector,
+              specialty: initialSpecialty,
+              city: initialCity,
+              studyLevel: initialStudyLevel,
+            ),
           ));
         }
         return bloc;

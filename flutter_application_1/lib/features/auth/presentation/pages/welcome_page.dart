@@ -7,7 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 
 /// Welcome page shown to unauthenticated users.
 ///
-/// Displays the app branding with mascotte, tagline,
+/// Displays the app branding with tagline,
 /// and CTA buttons for seekers, recruiters, and existing users.
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -22,14 +22,6 @@ class WelcomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-
-              // Mascotte
-              Image.asset(
-                'assets/images/mascotte.png',
-                height: 140,
-              ),
-
-              const SizedBox(height: AppTheme.spaceLg),
 
               // Logo
               Container(

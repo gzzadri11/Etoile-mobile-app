@@ -16,6 +16,7 @@ class SeekerProfile extends Equatable {
   final String? school;
   final String? studyLevel;
   final String? domain;
+  final String? specialty;
 
   // Legacy fields (kept for DB backward compatibility, no longer used in UI)
   final List<String> categories;
@@ -42,6 +43,7 @@ class SeekerProfile extends Equatable {
     this.school,
     this.studyLevel,
     this.domain,
+    this.specialty,
     this.categories = const [],
     this.contractTypes = const [],
     this.experienceLevel,
@@ -113,6 +115,7 @@ class SeekerProfile extends Equatable {
       school: json['school'] as String?,
       studyLevel: json['study_level'] as String?,
       domain: json['domain'] as String?,
+      specialty: json['specialty'] as String?,
       categories: (json['categories'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
@@ -145,6 +148,7 @@ class SeekerProfile extends Equatable {
       'school': school,
       'study_level': studyLevel,
       'domain': domain,
+      'specialty': specialty,
       'categories': categories,
       'contract_types': contractTypes,
       'experience_level': experienceLevel,
@@ -168,6 +172,7 @@ class SeekerProfile extends Equatable {
     String? school,
     String? studyLevel,
     String? domain,
+    String? specialty,
     List<String>? categories,
     List<String>? contractTypes,
     String? experienceLevel,
@@ -189,6 +194,7 @@ class SeekerProfile extends Equatable {
       school: school ?? this.school,
       studyLevel: studyLevel ?? this.studyLevel,
       domain: domain ?? this.domain,
+      specialty: specialty ?? this.specialty,
       categories: categories ?? this.categories,
       contractTypes: contractTypes ?? this.contractTypes,
       experienceLevel: experienceLevel ?? this.experienceLevel,
@@ -215,6 +221,7 @@ class SeekerProfile extends Equatable {
         school,
         studyLevel,
         domain,
+        specialty,
         categories,
         contractTypes,
         experienceLevel,

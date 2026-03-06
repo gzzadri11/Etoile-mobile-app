@@ -45,7 +45,16 @@ class AuthUnauthenticated extends AuthState {
 
 /// Email verification required after registration
 class AuthEmailVerificationRequired extends AuthState {
-  const AuthEmailVerificationRequired();
+  final String email;
+  final String role;
+
+  const AuthEmailVerificationRequired({
+    required this.email,
+    required this.role,
+  });
+
+  @override
+  List<Object> get props => [email, role];
 }
 
 /// Password reset email sent successfully

@@ -3,12 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/router/app_router.dart';
+import '../../../../core/router/app_router.dart' show AppRoutes, AppRouter;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/city_autocomplete_field.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
 import '../../../../shared/widgets/mascotte_message.dart';
+import '../../../../core/constants/sector_constants.dart';
 import '../../data/models/seeker_profile_model.dart';
 import '../bloc/profile_bloc.dart';
 
@@ -30,6 +31,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
   String? _selectedAge;
   String? _selectedStudyLevel;
   String? _selectedDomain;
+  String? _selectedSpecialty;
   String? _selectedCity;
 
   bool _isInitialized = false;
@@ -54,40 +56,6 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
     if (_selectedDomain != null) pct += 20;
     return pct;
   }
-
-  static const List<String> _studyLevelOptions = [
-    'sans_diplome',
-    'cap_bep',
-    'bac',
-    'bac+1',
-    'bac+2',
-    'bac+3',
-    'bac+4',
-    'bac+5',
-    'bac+8',
-  ];
-
-  static const Map<String, String> _studyLevelLabels = {
-    'sans_diplome': 'Sans diplome',
-    'cap_bep': 'CAP / BEP',
-    'bac': 'Bac',
-    'bac+1': 'Bac+1',
-    'bac+2': 'Bac+2 (BTS, DUT)',
-    'bac+3': 'Bac+3 (Licence)',
-    'bac+4': 'Bac+4 (Master 1)',
-    'bac+5': 'Bac+5 (Master 2, Ingenieur)',
-    'bac+8': 'Bac+8 (Doctorat)',
-  };
-
-  static const List<String> _domainOptions = [
-    'commerce_vente',
-    'restauration_hotellerie',
-  ];
-
-  static const Map<String, String> _domainLabels = {
-    'commerce_vente': 'Commerce / Vente',
-    'restauration_hotellerie': 'Restauration / Hotellerie',
-  };
 
   static final List<String> _ageOptions =
       List.generate(45, (i) => '${i + 16}');
@@ -115,11 +83,15 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
     _lastNameController.text = profile.lastName ?? '';
     _schoolController.text = profile.school ?? '';
     _selectedAge = profile.age;
-    _selectedStudyLevel = _studyLevelOptions.contains(profile.studyLevel)
+    _selectedStudyLevel = SectorConstants.studyLevelOptions.contains(profile.studyLevel)
         ? profile.studyLevel
         : null;
     _selectedDomain =
-        _domainOptions.contains(profile.domain) ? profile.domain : null;
+        SectorConstants.sectorOptions.contains(profile.domain) ? profile.domain : null;
+    _selectedSpecialty = (_selectedDomain != null &&
+            SectorConstants.getSpecialtiesForSector(_selectedDomain).contains(profile.specialty))
+        ? profile.specialty
+        : null;
     _selectedCity = profile.city;
 
     _isInitialized = true;
@@ -136,6 +108,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
       school: _schoolController.text.trim(),
       studyLevel: _selectedStudyLevel,
       domain: _selectedDomain,
+      specialty: _selectedSpecialty,
     );
 
     context.read<ProfileBloc>().add(
@@ -168,11 +141,15 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                 backgroundColor: AppColors.success,
               ),
             );
-            if (Navigator.of(context).canPop()) {
-              context.pop();
-            } else {
-              context.go(AppRoutes.search);
+            // Gate is updated by ProfileBloc._onUpdateRequested.
+            if (AppRouter.isProfileComplete) {
+              if (Navigator.of(context).canPop()) {
+                context.pop();
+              } else {
+                context.go(AppRoutes.search);
+              }
             }
+            // If incomplete, stay on page
           } else if (state is ProfileError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -316,10 +293,10 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                       ),
                     ),
-                    items: _studyLevelOptions.map((level) {
+                    items: SectorConstants.studyLevelOptions.map((level) {
                       return DropdownMenuItem(
                         value: level,
-                        child: Text(_studyLevelLabels[level]!),
+                        child: Text(SectorConstants.studyLevelLabels[level]!),
                       );
                     }).toList(),
                     onChanged: isSaving
@@ -365,17 +342,45 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                       ),
                     ),
-                    items: _domainOptions.map((domain) {
+                    items: SectorConstants.sectorOptions.map((domain) {
                       return DropdownMenuItem(
                         value: domain,
-                        child: Text(_domainLabels[domain]!),
+                        child: Text(SectorConstants.sectorLabels[domain]!),
                       );
                     }).toList(),
                     onChanged: isSaving
                         ? null
-                        : (value) => setState(() => _selectedDomain = value),
+                        : (value) => setState(() {
+                              _selectedDomain = value;
+                              _selectedSpecialty = null;
+                            }),
                     validator: (v) => v == null ? 'Champ requis' : null,
                   ),
+
+                  // Specialty dropdown (conditional on domain)
+                  if (_selectedDomain != null &&
+                      SectorConstants.getSpecialtiesForSector(_selectedDomain).isNotEmpty) ...[
+                    const SizedBox(height: AppTheme.spaceMd),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedSpecialty,
+                      decoration: InputDecoration(
+                        labelText: 'Specialite (optionnel)',
+                        prefixIcon: const Icon(Icons.star_outline),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                        ),
+                      ),
+                      items: SectorConstants.getSpecialtiesForSector(_selectedDomain).map((spec) {
+                        return DropdownMenuItem(
+                          value: spec,
+                          child: Text(SectorConstants.getSpecialtyLabel(spec)),
+                        );
+                      }).toList(),
+                      onChanged: isSaving
+                          ? null
+                          : (value) => setState(() => _selectedSpecialty = value),
+                    ),
+                  ],
 
                   const SizedBox(height: AppTheme.spaceLg * 1.5),
 
