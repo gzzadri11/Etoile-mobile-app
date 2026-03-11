@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-03-06
-**Statut** : Sprint 22 TERMINE. Sprint 13 camera toujours reportee.
+**Date de mise a jour** : 2026-03-11
+**Statut** : Sprint 22 TERMINE. Deploiement infra TERMINE. Sprint 13 camera toujours reportee.
 
 ---
 
@@ -16,6 +16,42 @@ flutter run -d edge
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+---
+
+## Ce qui a ete fait — Deploiement infra (2026-03-11)
+
+### Migrations SQL deployees en production — DONE
+- `20260303000000_fix_trigger_copy_siret.sql` — trigger `handle_new_user()` copie SIRET/SIREN/legal_form + backfill recruteurs existants
+- `20260306000000_seeker_specialty.sql` — colonne `specialty` sur `seeker_profiles` (deja existante, IF NOT EXISTS safe)
+- **15/15 migrations synchronisees** (Local = Remote)
+- Supabase CLI configure : `config.toml` + projet linke (`--workdir` = racine du projet)
+
+### Configuration Supabase Auth OTP — DONE
+- Email confirmation activee (`mailer_autoconfirm: false`)
+- Template email custom "Votre code de verification ETOILE" avec `{{ .Token }}` orange
+- OTP length corrige de 8 → **6 chiffres** (via Management API)
+- OTP expiration : 3600s (1h)
+
+### Supabase CLI corrige — DONE
+- `supabase/config.toml` cree (etait manquant)
+- Projet linke avec `--workdir "C:\...\Etoile-mobile-app"` (parent du dossier supabase/)
+- Ancien nested `supabase/supabase/` nettoye
+- Commande : `npx --prefix supabase supabase db push --workdir "C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app"`
+
+### Stripe — NOTE POUR PLUS TARD
+- Actuellement en **mode test** — garder test pendant toute la beta
+- Passage en prod Stripe a faire **juste avant soumission store** :
+  1. Completer KYC Stripe (1-3 jours, lancer en avance)
+  2. Remplacer cles `pk_test_` → `pk_live_`, `sk_test_` → `sk_live_`
+  3. Recreer webhook live + nouveau `whsec_`
+  4. Recreer Products/Prices en mode live (nouveaux `price_` IDs)
+  5. Mettre a jour Supabase secrets
+  6. Tester un vrai paiement petit montant
+
+### Resultats
+- **65/65 tests pass**, 0 issues flutter analyze
+- Toutes les migrations deployees, OTP configure
 
 ---
 
@@ -577,10 +613,11 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 ### Prochains sprints
 
 - Story reportee : 13.1 Camera in-app (8 pts, emulateur requis)
-- Deployer migration SQL `20260306000000_seeker_specialty.sql` via Supabase dashboard
-- Configurer Supabase : activer email confirmations + template OTP 6 chiffres
-- Preparation beta (store listing, TestFlight/Play Console)
-- Tous les pre-requis (admin role, bucket, Edge Functions, RLS, VIEW users, audit_logs) sont deployes
+- ~~Deployer migration SQL~~ → DONE (2026-03-11)
+- ~~Configurer Supabase email confirmations + OTP 6 chiffres~~ → DONE (2026-03-11)
+- Passage Stripe test → production (juste avant soumission store, KYC 1-3j)
+- **Preparation beta** (store listing, TestFlight/Play Console) ← PROCHAINE ETAPE
+- Tous les pre-requis infra sont deployes (migrations, OTP, admin, bucket, Edge Functions, RLS, VIEW users, audit_logs)
 
 ---
 
@@ -628,5 +665,5 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-*Sauvegarde mise a jour le 2026-03-06*
-*Sprint 22 TERMINE. 6 ameliorations : retrait mascotte welcome, profil recruteur sans logo, sous-secteurs (specialites) + constants centralisees, verification email OTP, recherche differenciee seeker/recruteur, gate profil obligatoire (hard redirect). 65/65 tests pass. Migration SQL a deployer + config Supabase email confirmations. Next: Preparation beta (store listing, TestFlight/Play Console).*
+*Sauvegarde mise a jour le 2026-03-11*
+*Sprint 22 TERMINE. Deploiement infra TERMINE (15/15 migrations, OTP 6 chiffres configure, Supabase CLI fixe). 65/65 tests pass. Stripe reste en mode test jusqu'a soumission store. Next: Preparation beta (store listing, TestFlight/Play Console).*
