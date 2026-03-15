@@ -107,7 +107,7 @@ class _ChatViewState extends State<_ChatView> {
         title: const Text('Bloquer cet utilisateur ?'),
         content: Text(
           'Vous ne recevrez plus de messages de $userName. '
-          'Cette action est reversible depuis les parametres.',
+          'Cette action est réversible depuis les paramètres.',
         ),
         actions: [
           TextButton(

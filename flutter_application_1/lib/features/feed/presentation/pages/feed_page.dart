@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/sector_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -210,14 +211,20 @@ class _FeedViewState extends State<_FeedView> {
     );
   }
 
+  /// Whether the feed has video content to display behind the AppBar.
+  bool _hasVideoContent(FeedState state) {
+    return state is FeedLoaded && !state.isEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<FeedBloc, FeedState>(
       builder: (context, state) {
+        final hasContent = _hasVideoContent(state);
         return Scaffold(
-          extendBodyBehindAppBar: true,
+          extendBodyBehindAppBar: hasContent,
           appBar: AppBar(
-            backgroundColor: Colors.transparent,
+            backgroundColor: hasContent ? Colors.transparent : AppColors.black,
             elevation: 0,
             title: _buildAppBarTitle(state),
             actions: [
@@ -268,15 +275,21 @@ class _FeedViewState extends State<_FeedView> {
 
   Widget _buildBody(BuildContext context, FeedState state) {
     if (state is FeedLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: AppColors.primaryYellow,
+      return Container(
+        color: AppColors.black,
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primaryYellow,
+          ),
         ),
       );
     }
 
     if (state is FeedError) {
-      return _buildErrorState(context, state.message);
+      return Container(
+        color: AppColors.black,
+        child: _buildErrorState(context, state.message),
+      );
     }
 
     if (state is FeedLoaded) {
@@ -353,22 +366,28 @@ class _FeedViewState extends State<_FeedView> {
   }
 
   Widget _buildEmptyState(BuildContext context, FeedLoaded state) {
-    if (state.hasActiveFilters) {
-      return EmptyStateWidget(
-        icon: Icons.videocam_off_outlined,
-        title: 'Aucun resultat pour ces filtres',
-        subtitle: 'Essayez de modifier vos criteres de recherche',
-        actionLabel: 'Effacer les filtres',
-        onAction: () {
-          context.read<FeedBloc>().add(const FeedFiltersClear());
-        },
-      );
-    }
-    return EmptyStateWidget(
-      icon: Icons.videocam_off_outlined,
-      title: 'Aucune video disponible',
-      subtitle: 'Les videos apparaitront ici une fois publiees',
-      showMascotte: true,
+    return Container(
+      color: AppColors.black,
+      child: state.hasActiveFilters
+          ? EmptyStateWidget(
+              icon: Icons.videocam_off_outlined,
+              iconColor: AppColors.greyWarm,
+              title: 'Aucun résultat pour ces filtres',
+              subtitle: 'Essayez de modifier vos critères de recherche',
+              actionLabel: 'Effacer les filtres',
+              darkMode: true,
+              onAction: () {
+                context.read<FeedBloc>().add(const FeedFiltersClear());
+              },
+            )
+          : const EmptyStateWidget(
+              icon: Icons.videocam_off_outlined,
+              iconColor: AppColors.greyWarm,
+              title: 'Aucune vidéo disponible',
+              subtitle: 'Les vidéos apparaîtront ici une fois publiées',
+              showMascotte: true,
+              darkMode: true,
+            ),
     );
   }
 
@@ -386,8 +405,10 @@ class _FeedViewState extends State<_FeedView> {
             ),
             const SizedBox(height: AppTheme.spaceMd),
             Text(
-              'Oups ! Une erreur est survenue',
-              style: Theme.of(context).textTheme.titleMedium,
+              'Oups\u00A0! Une erreur est survenue',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.white,
+                  ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppTheme.spaceSm),
@@ -406,7 +427,7 @@ class _FeedViewState extends State<_FeedView> {
                 context.read<FeedBloc>().add(FeedLoadRequested(userRole: role));
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Reessayer'),
+              label: const Text('Réessayer'),
             ),
           ],
         ),
@@ -511,7 +532,7 @@ class _VideoCard extends StatelessWidget {
                   if (feedItem.isVerified) ...[
                     const SizedBox(width: AppTheme.spaceSm),
                     const EtoileBadge(
-                      label: 'Verifie',
+                      label: 'Vérifié',
                       icon: Icons.check_circle,
                       backgroundColor: AppColors.primaryYellow,
                       textColor: AppColors.black,
@@ -913,8 +934,9 @@ class _FilterSheetState extends State<_FilterSheet> {
     );
   }
 
-  /// Seeker filters (beta): Secteur uniquement
+  /// Seeker filters (beta): Secteur + Spécialité
   List<Widget> _buildSeekerFilters() {
+    final specialties = SectorConstants.getSpecialtiesForSector(_filters.sector);
     return [
       _FilterSection(
         title: 'Secteur',
@@ -924,24 +946,45 @@ class _FilterSheetState extends State<_FilterSheet> {
         ],
         optionLabels: const {
           'commerce_vente': 'Commerce / Vente',
-          'restauration_hotellerie': 'Restauration / Hotellerie',
+          'restauration_hotellerie': 'Restauration / Hôtellerie',
         },
         selectedValue: _filters.sector,
         onChanged: (value) {
           setState(() {
             if (value == null) {
-              _filters = _filters.copyWith(clearSector: true);
+              _filters = _filters.copyWith(clearSector: true, clearSpecialty: true);
             } else {
-              _filters = _filters.copyWith(sector: value);
+              _filters = _filters.copyWith(sector: value, clearSpecialty: true);
             }
           });
         },
       ),
+      if (specialties.isNotEmpty) ...[
+        const SizedBox(height: AppTheme.spaceMd),
+        _FilterSection(
+          title: 'Spécialité',
+          options: specialties,
+          optionLabels: {
+            for (final s in specialties) s: SectorConstants.getSpecialtyLabel(s),
+          },
+          selectedValue: _filters.specialty,
+          onChanged: (value) {
+            setState(() {
+              if (value == null) {
+                _filters = _filters.copyWith(clearSpecialty: true);
+              } else {
+                _filters = _filters.copyWith(specialty: value);
+              }
+            });
+          },
+        ),
+      ],
     ];
   }
 
-  /// Recruiter filters (beta): Domaine uniquement
+  /// Recruiter filters (beta): Domaine + Spécialité
   List<Widget> _buildRecruiterFilters() {
+    final specialties = SectorConstants.getSpecialtiesForSector(_filters.sector);
     return [
       _FilterSection(
         title: 'Domaine',
@@ -951,19 +994,39 @@ class _FilterSheetState extends State<_FilterSheet> {
         ],
         optionLabels: const {
           'commerce_vente': 'Commerce / Vente',
-          'restauration_hotellerie': 'Restauration / Hotellerie',
+          'restauration_hotellerie': 'Restauration / Hôtellerie',
         },
         selectedValue: _filters.sector,
         onChanged: (value) {
           setState(() {
             if (value == null) {
-              _filters = _filters.copyWith(clearSector: true);
+              _filters = _filters.copyWith(clearSector: true, clearSpecialty: true);
             } else {
-              _filters = _filters.copyWith(sector: value);
+              _filters = _filters.copyWith(sector: value, clearSpecialty: true);
             }
           });
         },
       ),
+      if (specialties.isNotEmpty) ...[
+        const SizedBox(height: AppTheme.spaceMd),
+        _FilterSection(
+          title: 'Spécialité',
+          options: specialties,
+          optionLabels: {
+            for (final s in specialties) s: SectorConstants.getSpecialtyLabel(s),
+          },
+          selectedValue: _filters.specialty,
+          onChanged: (value) {
+            setState(() {
+              if (value == null) {
+                _filters = _filters.copyWith(clearSpecialty: true);
+              } else {
+                _filters = _filters.copyWith(specialty: value);
+              }
+            });
+          },
+        ),
+      ],
     ];
   }
 

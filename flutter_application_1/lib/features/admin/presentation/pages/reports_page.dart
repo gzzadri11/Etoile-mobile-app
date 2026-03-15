@@ -55,7 +55,8 @@ class ReportsPage extends StatelessWidget {
         },
         builder: (context, state) {
           if (state is AdminReportsListLoading ||
-              state is AdminReportActionLoading) {
+              state is AdminReportActionLoading ||
+              state is AdminInitial) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -402,7 +403,7 @@ class ReportsPage extends StatelessWidget {
                   .read<AdminBloc>()
                   .add(const AdminReportsListLoadRequested()),
               icon: const Icon(Icons.refresh),
-              label: const Text('Reessayer'),
+              label: const Text('Réessayer'),
             ),
           ],
         ),

@@ -121,16 +121,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 ? AppRoutes.onboardingRecruiter
                 : AppRoutes.onboardingSeeker;
             context.go(route);
-          } else if (state is AuthEmailVerificationRequired) {
-            // Navigate to OTP verification page
-            final uri = Uri(
-              path: AppRoutes.otpVerification,
-              queryParameters: {
-                'email': state.email,
-                'role': state.role,
-              },
-            );
-            context.push(uri.toString());
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

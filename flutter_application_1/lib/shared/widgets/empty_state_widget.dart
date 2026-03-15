@@ -16,6 +16,7 @@ class EmptyStateWidget extends StatelessWidget {
   final VoidCallback? onAction;
   final bool showMascotte;
   final bool compact;
+  final bool darkMode;
 
   const EmptyStateWidget({
     super.key,
@@ -27,6 +28,7 @@ class EmptyStateWidget extends StatelessWidget {
     this.onAction,
     this.showMascotte = false,
     this.compact = false,
+    this.darkMode = false,
   });
 
   @override
@@ -59,6 +61,7 @@ class EmptyStateWidget extends StatelessWidget {
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
+                    color: darkMode ? AppColors.white : null,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -67,7 +70,7 @@ class EmptyStateWidget extends StatelessWidget {
               Text(
                 subtitle!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.greyWarm,
+                      color: darkMode ? AppColors.greyMedium : AppColors.greyWarm,
                     ),
                 textAlign: TextAlign.center,
               ),

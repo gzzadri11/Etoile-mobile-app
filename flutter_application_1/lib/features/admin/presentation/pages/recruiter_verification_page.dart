@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -19,13 +20,8 @@ class RecruiterVerificationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Load detail
-    context
-        .read<AdminBloc>()
-        .add(AdminRecruiterDetailLoadRequested(userId: userId));
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail recruteur')),
+      appBar: AppBar(title: const Text('Détail recruteur')),
       body: BlocConsumer<AdminBloc, AdminState>(
         listener: (context, state) {
           if (state is AdminRecruiterActionSuccess) {
@@ -48,7 +44,8 @@ class RecruiterVerificationPage extends StatelessWidget {
         },
         builder: (context, state) {
           if (state is AdminRecruiterDetailLoading ||
-              state is AdminRecruiterActionLoading) {
+              state is AdminRecruiterActionLoading ||
+              state is AdminInitial) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -87,11 +84,11 @@ class RecruiterVerificationPage extends StatelessWidget {
                     label: 'Nom',
                     value: profile.companyName.isNotEmpty
                         ? profile.companyName
-                        : 'Non renseigne',
+                        : 'Non renseigné',
                   ),
                   _InfoRow(
                     label: 'SIRET',
-                    value: profile.siret ?? 'Non renseigne',
+                    value: profile.siret ?? 'Non renseigné',
                     mono: true,
                   ),
                   if (profile.siren != null)
@@ -101,7 +98,7 @@ class RecruiterVerificationPage extends StatelessWidget {
                         label: 'Forme juridique', value: profile.legalForm!),
                   _InfoRow(
                     label: 'Secteur',
-                    value: profile.sector ?? 'Non renseigne',
+                    value: profile.sector ?? 'Non renseigné',
                   ),
                   if (profile.companySize != null)
                     _InfoRow(label: 'Taille', value: profile.companySize!),
@@ -125,7 +122,7 @@ class RecruiterVerificationPage extends StatelessWidget {
                 const SizedBox(height: AppTheme.spaceMd),
 
                 // Document section
-                _buildDocumentSection(context, profile),
+                _buildDocumentSection(context, profile, state.documentSignedUrl),
 
                 const SizedBox(height: AppTheme.spaceMd),
 
@@ -209,7 +206,7 @@ class RecruiterVerificationPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'En attente de verification',
+                  'En attente de vérification',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.primaryOrange,
                         fontWeight: FontWeight.w600,
@@ -278,7 +275,7 @@ class RecruiterVerificationPage extends StatelessWidget {
   }
 
   Widget _buildDocumentSection(
-      BuildContext context, RecruiterProfile profile) {
+      BuildContext context, RecruiterProfile profile, String? signedUrl) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -291,46 +288,96 @@ class RecruiterVerificationPage extends StatelessWidget {
         const SizedBox(height: AppTheme.spaceSm),
         if (profile.documentUrl != null &&
             profile.documentUrl!.isNotEmpty) ...[
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: AppColors.success.withAlpha(80)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(AppTheme.spaceMd),
-              child: Row(
-                children: [
-                  Icon(Icons.description, color: AppColors.success),
-                  const SizedBox(width: AppTheme.spaceSm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          profile.documentType ?? 'Document',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w500),
-                        ),
-                        if (profile.documentUploadedAt != null)
+          // Document info card (tappable)
+          GestureDetector(
+            onTap: signedUrl != null
+                ? () => _openDocument(context, signedUrl, profile.documentType)
+                : null,
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: AppColors.success.withAlpha(80)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(AppTheme.spaceMd),
+                child: Row(
+                  children: [
+                    const Icon(Icons.description, color: AppColors.success),
+                    const SizedBox(width: AppTheme.spaceSm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            'Uploade le ${_formatDate(profile.documentUploadedAt!)}',
+                            profile.documentType ?? 'Document',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w500),
+                          ),
+                          if (profile.documentUploadedAt != null)
+                            Text(
+                              'Uploadé le ${_formatDate(profile.documentUploadedAt!)}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: AppColors.greyWarm),
+                            ),
+                          Text(
+                            signedUrl != null
+                                ? 'Appuyez pour visualiser'
+                                : 'Document inaccessible (vérifier les permissions storage)',
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
-                                ?.copyWith(color: AppColors.greyWarm),
+                                ?.copyWith(
+                                  color: signedUrl != null
+                                      ? AppColors.primaryOrange
+                                      : AppColors.error,
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const Icon(Icons.open_in_new,
-                      size: 20, color: AppColors.greyWarm),
-                ],
+                    const Icon(Icons.open_in_new,
+                        size: 20, color: AppColors.primaryOrange),
+                  ],
+                ),
               ),
             ),
           ),
+          // Document image preview (for image documents)
+          if (signedUrl != null &&
+              profile.documentUrl != null &&
+              !profile.documentUrl!.endsWith('.pdf')) ...[
+            const SizedBox(height: AppTheme.spaceSm),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                signedUrl,
+                width: double.infinity,
+                height: 250,
+                fit: BoxFit.contain,
+                loadingBuilder: (_, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 250,
+                    color: AppColors.greyLight,
+                    child: const Center(child: CircularProgressIndicator()),
+                  );
+                },
+                errorBuilder: (_, _, _) => Container(
+                  height: 100,
+                  color: AppColors.greyLight,
+                  child: const Center(
+                    child: Text('Impossible de charger l\'aperçu'),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ] else
           Card(
             elevation: 0,
@@ -348,7 +395,7 @@ class RecruiterVerificationPage extends StatelessWidget {
                   const SizedBox(width: AppTheme.spaceSm),
                   Expanded(
                     child: Text(
-                      'Aucun document justificatif uploade',
+                      'Aucun document justificatif uploadé',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppColors.error,
                           ),
@@ -360,6 +407,56 @@ class RecruiterVerificationPage extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  /// Open document in browser or show full-screen image dialog.
+  void _openDocument(BuildContext context, String url, String? docType) {
+    if (docType != null && docType.toLowerCase().contains('pdf')) {
+      // Open PDF in browser
+      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      // Show image in full-screen dialog
+      showDialog(
+        context: context,
+        builder: (_) => Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppBar(
+                title: Text(docType ?? 'Document'),
+                leading: IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                automaticallyImplyLeading: false,
+              ),
+              Flexible(
+                child: InteractiveViewer(
+                  child: Image.network(
+                    url,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (_, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const SizedBox(
+                        height: 300,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    },
+                    errorBuilder: (_, _, _) => const SizedBox(
+                      height: 200,
+                      child: Center(
+                        child: Text('Impossible de charger le document'),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildActions(BuildContext context) {
@@ -511,7 +608,7 @@ class RecruiterVerificationPage extends StatelessWidget {
                   .read<AdminBloc>()
                   .add(AdminRecruiterDetailLoadRequested(userId: userId)),
               icon: const Icon(Icons.refresh),
-              label: const Text('Reessayer'),
+              label: const Text('Réessayer'),
             ),
           ],
         ),
@@ -526,7 +623,7 @@ class RecruiterVerificationPage extends StatelessWidget {
   }
 
   String _formatDateTime(DateTime date) {
-    return '${_formatDate(date)} a ${date.hour.toString().padLeft(2, '0')}:'
+    return '${_formatDate(date)} à ${date.hour.toString().padLeft(2, '0')}:'
         '${date.minute.toString().padLeft(2, '0')}';
   }
 
@@ -535,9 +632,9 @@ class RecruiterVerificationPage extends StatelessWidget {
       case 'pending':
         return 'En attente';
       case 'verified':
-        return 'Verifie';
+        return 'Vérifié';
       case 'rejected':
-        return 'Rejete';
+        return 'Rejeté';
       default:
         return status;
     }

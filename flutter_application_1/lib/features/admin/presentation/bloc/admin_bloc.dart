@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/repositories/admin_repository.dart';
+import '../../../profile/data/models/recruiter_profile_model.dart';
 import 'admin_event.dart';
 import 'admin_state.dart';
 
@@ -56,7 +57,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     } catch (e) {
       debugPrint('[AdminBloc] Error loading verification list: $e');
       emit(const AdminError(
-        message: 'Impossible de charger les verifications',
+        message: 'Impossible de charger les vérifications',
       ));
     }
   }
@@ -69,15 +70,33 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
 
     try {
       final detail = await _adminRepository.getRecruiterDetail(event.userId);
+      final profile = detail['profile'] as RecruiterProfile;
+
+      // Generate signed URL for document if available
+      String? documentSignedUrl;
+      debugPrint('[AdminBloc] profile.documentUrl = ${profile.documentUrl}');
+      if (profile.documentUrl != null && profile.documentUrl!.isNotEmpty) {
+        try {
+          documentSignedUrl = await _adminRepository
+              .getDocumentSignedUrl(profile.documentUrl!);
+          debugPrint('[AdminBloc] Signed URL generated successfully');
+        } catch (e) {
+          debugPrint('[AdminBloc] Error getting document signed URL: $e');
+          debugPrint('[AdminBloc] documentUrl was: ${profile.documentUrl}');
+        }
+      } else {
+        debugPrint('[AdminBloc] No documentUrl in profile');
+      }
 
       emit(AdminRecruiterDetailLoaded(
-        profile: detail['profile'],
+        profile: profile,
         registeredAt: detail['registeredAt'],
+        documentSignedUrl: documentSignedUrl,
       ));
     } catch (e) {
       debugPrint('[AdminBloc] Error loading recruiter detail: $e');
       emit(const AdminError(
-        message: 'Impossible de charger le detail du recruteur',
+        message: 'Impossible de charger le détail du recruteur',
       ));
     }
   }
@@ -92,7 +111,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       await _adminRepository.approveRecruiter(event.userId);
 
       emit(const AdminRecruiterActionSuccess(
-        message: 'Recruteur approuve avec succes',
+        message: 'Recruteur approuvé avec succès',
       ));
     } catch (e) {
       debugPrint('[AdminBloc] Error approving recruiter: $e');
@@ -112,7 +131,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       await _adminRepository.rejectRecruiter(event.userId, event.reason);
 
       emit(const AdminRecruiterActionSuccess(
-        message: 'Recruteur rejete',
+        message: 'Recruteur rejeté',
       ));
     } catch (e) {
       debugPrint('[AdminBloc] Error rejecting recruiter: $e');
@@ -154,7 +173,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       await _adminRepository.dismissReport(event.reportId);
 
       emit(const AdminReportActionSuccess(
-        message: 'Signalement ignore',
+        message: 'Signalement ignoré',
       ));
     } catch (e) {
       debugPrint('[AdminBloc] Error dismissing report: $e');
@@ -202,9 +221,9 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       case 'suspend_user':
         return 'Utilisateur suspendu';
       case 'suspend_video':
-        return 'Video supprimee du feed';
+        return 'Vidéo supprimée du feed';
       default:
-        return 'Action effectuee';
+        return 'Action effectuée';
     }
   }
 

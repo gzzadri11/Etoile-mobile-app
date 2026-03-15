@@ -78,7 +78,7 @@ class SireneService {
           '[SireneService] API error: ${response.statusCode}',
         );
         return SiretVerificationResult.invalid(
-          'Verification impossible, reessayez plus tard',
+          'Vérification impossible, réessayez plus tard',
         );
       }
 
@@ -88,7 +88,7 @@ class SireneService {
       if (results == null || results.isEmpty) {
         debugPrint('[SireneService] SIRET not found: $cleaned');
         return SiretVerificationResult.invalid(
-          'Ce SIRET n\'est pas valide, verifiez et reessayez',
+          'Ce SIRET n\'est pas valide, vérifiez et réessayez',
         );
       }
 
@@ -106,7 +106,7 @@ class SireneService {
         if (isClosed) {
           debugPrint('[SireneService] Etablissement closed: $cleaned');
           return SiretVerificationResult.invalid(
-            'Cet etablissement est ferme',
+            'Cet établissement est fermé',
           );
         }
       }
@@ -119,7 +119,7 @@ class SireneService {
       if (companyName.isEmpty) {
         debugPrint('[SireneService] No company name found for: $cleaned');
         return SiretVerificationResult.invalid(
-          'Ce SIRET n\'est pas valide, verifiez et reessayez',
+          'Ce SIRET n\'est pas valide, vérifiez et réessayez',
         );
       }
 
@@ -143,24 +143,24 @@ class SireneService {
           e.error is SocketException) {
         debugPrint('[SireneService] Network error');
         return SiretVerificationResult.invalid(
-          'Verification impossible, verifiez votre connexion',
+          'Vérification impossible, vérifiez votre connexion',
         );
       }
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         debugPrint('[SireneService] Timeout');
         return SiretVerificationResult.invalid(
-          'Verification trop longue, reessayez plus tard',
+          'Vérification trop longue, réessayez plus tard',
         );
       }
       debugPrint('[SireneService] Dio error: $e');
       return SiretVerificationResult.invalid(
-        'Verification impossible, reessayez plus tard',
+        'Vérification impossible, réessayez plus tard',
       );
     } catch (e) {
       debugPrint('[SireneService] Unexpected error: $e');
       return SiretVerificationResult.invalid(
-        'Verification impossible, reessayez plus tard',
+        'Vérification impossible, réessayez plus tard',
       );
     }
   }

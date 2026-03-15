@@ -41,24 +41,28 @@ class _ConversationsPageState extends State<ConversationsPage> {
 
   /// Subscribe to realtime changes on conversations table
   void _subscribeToConversations() {
-    final supabase = Supabase.instance.client;
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) return;
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
 
-    debugPrint('[ConversationsPage] Subscribing to realtime conversations...');
-    _conversationsChannel = supabase
-        .channel('conversations:list:$userId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: 'conversations',
-          callback: (payload) {
-            debugPrint('[ConversationsPage] Realtime event: ${payload.eventType}');
-            // Reload full list to get enriched data
-            _loadConversations(silent: true);
-          },
-        )
-        .subscribe();
+      debugPrint('[ConversationsPage] Subscribing to realtime conversations...');
+      _conversationsChannel = supabase
+          .channel('conversations:list:$userId')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'conversations',
+            callback: (payload) {
+              debugPrint('[ConversationsPage] Realtime event: ${payload.eventType}');
+              // Reload full list to get enriched data
+              _loadConversations(silent: true);
+            },
+          )
+          .subscribe();
+    } catch (e) {
+      debugPrint('[ConversationsPage] Realtime subscription error: $e');
+    }
   }
 
   void _unsubscribe() {
@@ -165,7 +169,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
               ElevatedButton.icon(
                 onPressed: _loadConversations,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Reessayer'),
+                label: const Text('Réessayer'),
               ),
             ],
           ),
@@ -189,7 +193,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
       showMascotte: true,
       title: 'Pas encore de messages',
       subtitle:
-          'Contactez un candidat depuis le feed pour demarrer une conversation',
+          'Contactez un candidat depuis le feed pour démarrer une conversation',
       actionLabel: 'Rechercher',
       onAction: () => context.go(AppRoutes.search),
     );

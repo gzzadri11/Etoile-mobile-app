@@ -75,7 +75,7 @@ class _ProfilePageContent extends StatelessWidget {
                     onPressed: () {
                       context.read<ProfileBloc>().add(const ProfileLoadRequested());
                     },
-                    child: const Text('Reessayer'),
+                    child: const Text('Réessayer'),
                   ),
                 ],
               ),
@@ -119,7 +119,7 @@ class _SeekerProfileView extends StatelessWidget {
     if (profile.studyLevel != null && profile.studyLevel!.isNotEmpty) {
       parts.add(profile.studyLevel!);
     }
-    return parts.isNotEmpty ? parts.join(' - ') : 'Non defini';
+    return parts.isNotEmpty ? parts.join(' - ') : 'Non défini';
   }
 
   @override
@@ -154,7 +154,7 @@ class _SeekerProfileView extends StatelessWidget {
                 domain: _getDomainLabel(profile),
                 location: profile.location.isNotEmpty
                     ? profile.location
-                    : 'Non defini',
+                    : 'Non défini',
                 studyInfo: _buildStudyInfo(profile),
               ),
 
@@ -330,8 +330,8 @@ class _RecruiterProfileView extends StatelessWidget {
                       onTap: () => context.push('${AppRoutes.myPublications}?tab=presentations'),
                       child: _PublicationSectionCard(
                         icon: Icons.business,
-                        title: 'Presentations entreprise',
-                        subtitle: 'Videos de presentation',
+                        title: 'Présentations entreprise',
+                        subtitle: 'Vidéos de présentation',
                         count: presentationCount,
                       ),
                     ),
@@ -344,7 +344,7 @@ class _RecruiterProfileView extends StatelessWidget {
                       child: _PublicationSectionCard(
                         icon: Icons.work,
                         title: 'Publications de recrutement',
-                        subtitle: '${profile.videoCredits} credits video, ${profile.posterCredits} credits affiche',
+                        subtitle: '${profile.videoCredits} crédits vidéo, ${profile.posterCredits} crédits affiche',
                         count: offerCount + posterCount,
                       ),
                     ),
@@ -460,7 +460,7 @@ class _ProfileCompletionCard extends StatelessWidget {
               const SizedBox(width: AppTheme.spaceSm),
               Expanded(
                 child: Text(
-                  'Completez votre profil pour etre visible',
+                  'Complétez votre profil pour être visible',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
@@ -491,7 +491,7 @@ class _ProfileCompletionCard extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton(
               onPressed: onComplete,
-              child: const Text('Completer mon profil'),
+              child: const Text('Compléter mon profil'),
             ),
           ),
         ],
@@ -542,8 +542,8 @@ class _VerificationStatusCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   isPending
-                      ? 'Verification en cours'
-                      : 'Verification refusee',
+                      ? 'Vérification en cours'
+                      : 'Vérification refusée',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
@@ -592,14 +592,14 @@ class _VideoPreviewCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spaceSm),
                 Text(
-                  'Aucune video',
+                  'Aucune vidéo',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.white.withAlpha(180),
                       ),
                 ),
                 const SizedBox(height: AppTheme.spaceSm),
                 Text(
-                  'Enregistrez votre video de presentation',
+                  'Enregistrez votre vidéo de présentation',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.white.withAlpha(120),
                       ),

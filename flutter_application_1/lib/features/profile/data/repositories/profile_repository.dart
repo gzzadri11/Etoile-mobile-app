@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/seeker_profile_model.dart';
@@ -206,19 +205,52 @@ class ProfileRepository {
           ),
         );
 
-    // Get the URL (private bucket — use createSignedUrl for viewing)
-    final url = _supabaseClient.storage
-        .from('verification-docs')
-        .getPublicUrl(path);
-
-    // Update recruiter profile with document info
+    // Store the storage path (not public URL — bucket is private)
+    // Update recruiter profile with document info + re-submit for review
     await _supabaseClient.from('recruiter_profiles').update({
-      'document_url': url,
+      'document_url': path,
       'document_type': documentType,
       'document_uploaded_at': DateTime.now().toIso8601String(),
+      'verification_status': 'pending',
+      'rejection_reason': null,
     }).eq('user_id', userId);
 
-    return url;
+    return path;
+  }
+
+  /// Remove the current verification document from storage and profile.
+  ///
+  /// Clears document_url, document_type, document_uploaded_at and resets
+  /// verification_status so the recruiter can upload a new document.
+  Future<void> removeDocument() async {
+    final userId = currentUserId;
+    if (userId == null) throw Exception('Utilisateur non connecte');
+
+    // Try to delete file from storage (best-effort, may already be gone)
+    try {
+      final profile = await _supabaseClient
+          .from('recruiter_profiles')
+          .select('document_url')
+          .eq('user_id', userId)
+          .single();
+      final docUrl = profile['document_url'] as String?;
+      if (docUrl != null && docUrl.isNotEmpty) {
+        await _supabaseClient.storage
+            .from('verification-docs')
+            .remove([docUrl]);
+      }
+    } catch (e) {
+      debugPrint('[ProfileRepository] Storage remove failed (non-blocking): $e');
+    }
+
+    // Clear document fields in profile
+    await _supabaseClient.from('recruiter_profiles').update({
+      'document_url': null,
+      'document_type': null,
+      'document_uploaded_at': null,
+      'verification_status': 'pending',
+      'rejection_reason': null,
+    }).eq('user_id', userId);
   }
 
   // ===========================================================================

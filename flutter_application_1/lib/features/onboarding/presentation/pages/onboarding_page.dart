@@ -28,25 +28,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
   List<_OnboardingSlide> get _slides => [
         _OnboardingSlide(
           title: _isSeeker
-              ? 'Enregistrez votre video en 40 secondes'
+              ? 'Enregistrez votre vidéo en 40 secondes'
               : 'Trouvez les meilleurs talents',
           subtitle: _isSeeker
-              ? 'Presentez-vous aux recruteurs avec une video courte et percutante.'
-              : 'Decouvrez des candidats motives grace a leurs videos de presentation.',
+              ? 'Présentez-vous aux recruteurs avec une vidéo courte et percutante.'
+              : 'Découvrez des candidats motivés grâce à leurs vidéos de présentation.',
         ),
         _OnboardingSlide(
           title: _isSeeker
-              ? 'Decouvrez des offres dans votre secteur'
-              : 'Publiez vos offres en video ou en affiche',
+              ? 'Découvrez des offres dans votre secteur'
+              : 'Publiez vos offres en vidéo ou en affiche',
           subtitle: _isSeeker
-              ? 'Parcourez les offres des recruteurs et trouvez le poste ideal.'
+              ? 'Parcourez les offres des recruteurs et trouvez le poste idéal.'
               : 'Attirez les meilleurs profils avec des offres visuelles et engageantes.',
         ),
         _OnboardingSlide(
           title: 'Contactez directement par messagerie',
           subtitle: _isSeeker
-              ? 'Echangez avec les recruteurs en temps reel, sans intermediaire.'
-              : 'Discutez avec les candidats qui vous interessent, simplement.',
+              ? 'Échangez avec les recruteurs en temps réel, sans intermédiaire.'
+              : 'Discutez avec les candidats qui vous intéressent, simplement.',
         ),
       ];
 
@@ -105,14 +105,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Mascotte
-                        Image.asset(
-                          'assets/images/mascotte.png',
-                          height: 160,
-                        ),
-
-                        const SizedBox(height: AppTheme.space2Xl),
-
                         // Title
                         Text(
                           slide.title,

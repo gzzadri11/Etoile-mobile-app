@@ -129,7 +129,7 @@ class AdminDashboardPage extends StatelessWidget {
                   .read<AdminBloc>()
                   .add(const AdminDashboardLoadRequested()),
               icon: const Icon(Icons.refresh),
-              label: const Text('Reessayer'),
+              label: const Text('Réessayer'),
             ),
           ],
         ),

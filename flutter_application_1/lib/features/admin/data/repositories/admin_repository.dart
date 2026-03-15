@@ -153,6 +153,32 @@ class AdminRepository {
   }
 
   // ===========================================================================
+  // DOCUMENT SIGNED URL
+  // ===========================================================================
+
+  /// Create a signed URL for a verification document (private bucket).
+  ///
+  /// Handles both old format (full URL) and new format (path only).
+  Future<String> getDocumentSignedUrl(String storagePath) async {
+    String path = storagePath;
+    if (storagePath.startsWith('http')) {
+      // Extract path from full URL: .../verification-docs/userId/document.ext
+      const marker = 'verification-docs/';
+      final idx = storagePath.indexOf(marker);
+      if (idx != -1) {
+        path = storagePath.substring(idx + marker.length);
+      }
+    }
+
+    final signedUrl = await _supabaseClient.storage
+        .from('verification-docs')
+        .createSignedUrl(path, 3600); // 1 hour
+
+    debugPrint('[AdminRepository] Signed URL created for document: $path');
+    return signedUrl;
+  }
+
+  // ===========================================================================
   // RECRUITER VERIFICATION
   // ===========================================================================
 

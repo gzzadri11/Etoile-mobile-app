@@ -99,7 +99,7 @@ class ServerFailure extends Failure {
 /// Network-related failures (connectivity issues)
 class NetworkFailure extends Failure {
   const NetworkFailure({
-    super.message = 'Oups, petit souci de connexion. Reessayez dans un instant.',
+    super.message = 'Oups, petit souci de connexion. Réessayez dans un instant.',
     super.code = 'NETWORK_ERROR',
   });
 }
@@ -178,17 +178,17 @@ class VideoFailure extends Failure {
       );
 
   factory VideoFailure.fileTooLarge() => const VideoFailure(
-        message: 'La video est trop volumineuse (max 50 MB)',
+        message: 'La vidéo est trop volumineuse (max 50 MB)',
         code: 'FILE_TOO_LARGE',
       );
 
   factory VideoFailure.cameraPermissionDenied() => const VideoFailure(
-        message: 'Acces a la camera refuse. Activez-le dans les parametres.',
+        message: 'Accès à la caméra refusé. Activez-le dans les paramètres.',
         code: 'CAMERA_PERMISSION_DENIED',
       );
 
   factory VideoFailure.microphonePermissionDenied() => const VideoFailure(
-        message: 'Acces au microphone refuse. Activez-le dans les parametres.',
+        message: 'Accès au microphone refusé. Activez-le dans les paramètres.',
         code: 'MICROPHONE_PERMISSION_DENIED',
       );
 }

@@ -12,7 +12,7 @@ class SectorConstants {
 
   static const Map<String, String> sectorLabels = {
     'commerce_vente': 'Commerce / Vente',
-    'restauration_hotellerie': 'Restauration / Hotellerie',
+    'restauration_hotellerie': 'Restauration / Hôtellerie',
   };
 
   // --- Specialties per sector ---
@@ -38,7 +38,7 @@ class SectorConstants {
     'ecommerce': 'E-commerce',
     'service_salle': 'Service en salle',
     'cuisine': 'Cuisine',
-    'patisserie': 'Patisserie',
+    'patisserie': 'Pâtisserie',
     'bar_sommellerie': 'Bar / Sommellerie',
   };
 
@@ -56,7 +56,7 @@ class SectorConstants {
 
   /// Returns human-readable label for a sector code.
   static String getSectorLabel(String? code) {
-    if (code == null || code.isEmpty) return 'Non defini';
+    if (code == null || code.isEmpty) return 'Non défini';
     return sectorLabels[code] ?? code;
   }
 
@@ -74,14 +74,14 @@ class SectorConstants {
   ];
 
   static const Map<String, String> studyLevelLabels = {
-    'sans_diplome': 'Sans diplome',
+    'sans_diplome': 'Sans diplôme',
     'cap_bep': 'CAP / BEP',
     'bac': 'Bac',
     'bac+1': 'Bac+1',
     'bac+2': 'Bac+2 (BTS, DUT)',
     'bac+3': 'Bac+3 (Licence)',
     'bac+4': 'Bac+4 (Master 1)',
-    'bac+5': 'Bac+5 (Master 2, Ingenieur)',
+    'bac+5': 'Bac+5 (Master 2, Ingénieur)',
     'bac+8': 'Bac+8 (Doctorat)',
   };
 

@@ -87,7 +87,7 @@ class ProfileBottomSheet extends StatelessWidget {
                       _buildInfoRow(
                         context,
                         icon: Icons.schedule,
-                        label: 'Disponibilite',
+                        label: 'Disponibilité',
                         value: feedItem.availability!,
                       ),
 
@@ -102,7 +102,7 @@ class ProfileBottomSheet extends StatelessWidget {
                     if (feedItem.userTitle != null) ...[
                       const SizedBox(height: AppTheme.spaceLg),
                       Text(
-                        'A propos',
+                        'À propos',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -209,7 +209,7 @@ class ProfileBottomSheet extends StatelessWidget {
                           Icon(Icons.check_circle, size: 12, color: AppColors.black),
                           SizedBox(width: 2),
                           Text(
-                            'Verifie',
+                            'Vérifié',
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,

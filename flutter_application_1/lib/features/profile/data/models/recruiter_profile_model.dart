@@ -92,6 +92,9 @@ class RecruiterProfile extends Equatable {
   /// - Location (20%): locations or mapMarkers non-empty
   /// - Verification (20%): siret filled + document uploaded
   int get completionPercentage {
+    // Verified by admin = profile considered 100% complete
+    if (isVerified) return 100;
+
     int score = 20; // Inscription always complete
     if (companyName.isNotEmpty &&
         companyName != 'A completer' &&

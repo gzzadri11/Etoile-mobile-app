@@ -81,12 +81,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
                     // Title
                     Text(
-                      'Mot de passe oublie ?',
+                      'Mot de passe oublié ?',
                       style: Theme.of(context).textTheme.displayLarge,
                     ),
                     const SizedBox(height: AppTheme.spaceSm),
                     Text(
-                      'Entrez votre email et nous vous enverrons un lien pour reinitialiser votre mot de passe.',
+                      'Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe.',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: AppColors.greyWarm,
                           ),
@@ -131,7 +131,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     Center(
                       child: TextButton(
                         onPressed: isLoading ? null : () => context.pop(),
-                        child: const Text('Retour a la connexion'),
+                        child: const Text('Retour à la connexion'),
                       ),
                     ),
                   ],
@@ -158,13 +158,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ),
             const SizedBox(height: AppTheme.spaceLg),
             Text(
-              'Email envoye !',
+              'Email envoyé !',
               style: Theme.of(context).textTheme.displayMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppTheme.spaceMd),
             Text(
-              'Verifiez votre boite de reception et suivez le lien pour reinitialiser votre mot de passe.',
+              'Vérifiez votre boîte de réception et suivez le lien pour réinitialiser votre mot de passe.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppColors.greyWarm,
                   ),
@@ -173,7 +173,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             const SizedBox(height: AppTheme.space2Xl),
             EtoileButton(
               onPressed: () => context.pop(),
-              label: 'Retour a la connexion',
+              label: 'Retour à la connexion',
             ),
             const SizedBox(height: AppTheme.spaceMd),
             TextButton(

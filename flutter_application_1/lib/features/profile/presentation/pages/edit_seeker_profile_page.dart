@@ -66,10 +66,22 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
     _schoolController = TextEditingController();
+
+    // Listeners to recalculate completion % in real-time
+    _firstNameController.addListener(_onFieldChanged);
+    _lastNameController.addListener(_onFieldChanged);
+    _schoolController.addListener(_onFieldChanged);
+  }
+
+  void _onFieldChanged() {
+    setState(() {});
   }
 
   @override
   void dispose() {
+    _firstNameController.removeListener(_onFieldChanged);
+    _lastNameController.removeListener(_onFieldChanged);
+    _schoolController.removeListener(_onFieldChanged);
     _firstNameController.dispose();
     _lastNameController.dispose();
     _schoolController.dispose();
@@ -123,13 +135,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
         title: const Text('Modifier mon profil'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              context.pop();
-            } else {
-              context.go(AppRoutes.search);
-            }
-          },
+          onPressed: () => context.go(AppRoutes.profile),
         ),
       ),
       body: BlocConsumer<ProfileBloc, ProfileState>(
@@ -137,7 +143,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
           if (state is ProfileSaveSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Profil mis a jour'),
+                content: Text('Profil mis à jour'),
                 backgroundColor: AppColors.success,
               ),
             );
@@ -224,12 +230,12 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                     }),
 
                   // --- Identity section ---
-                  _buildSectionTitle('Identite'),
+                  _buildSectionTitle('Identité'),
                   const SizedBox(height: AppTheme.spaceMd),
 
                   EtoileTextField(
                     controller: _firstNameController,
-                    label: 'Prenom',
+                    label: 'Prénom',
                     prefixIcon: Icons.person_outline,
                     enabled: !isSaving,
                     validator: (v) =>
@@ -250,7 +256,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                   DropdownButtonFormField<String>(
                     initialValue: _selectedAge,
                     decoration: InputDecoration(
-                      labelText: 'Age',
+                      labelText: 'Âge',
                       prefixIcon: const Icon(Icons.cake_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -271,12 +277,12 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                   const SizedBox(height: AppTheme.spaceLg),
 
                   // --- Studies section ---
-                  _buildSectionTitle('Etudes'),
+                  _buildSectionTitle('Études'),
                   const SizedBox(height: AppTheme.spaceMd),
 
                   EtoileTextField(
                     controller: _schoolController,
-                    label: 'Ecole / Etablissement',
+                    label: 'École / Établissement',
                     prefixIcon: Icons.school_outlined,
                     enabled: !isSaving,
                     validator: (v) =>
@@ -287,7 +293,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                   DropdownButtonFormField<String>(
                     initialValue: _selectedStudyLevel,
                     decoration: InputDecoration(
-                      labelText: 'Niveau d\'etude',
+                      labelText: 'Niveau d\'étude',
                       prefixIcon: const Icon(Icons.menu_book_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -312,7 +318,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                   _buildSectionTitle('Localisation'),
                   const SizedBox(height: AppTheme.spaceSm),
                   Text(
-                    'Ile-de-France uniquement',
+                    'Île-de-France uniquement',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.greyWarm,
                         ),
@@ -323,14 +329,16 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                     initialValue: _selectedCity,
                     label: 'Ville',
                     onCitySelected: (city) {
-                      _selectedCity = city;
+                      setState(() {
+                        _selectedCity = city;
+                      });
                     },
                   ),
 
                   const SizedBox(height: AppTheme.spaceLg),
 
                   // --- Domain section ---
-                  _buildSectionTitle('Domaine recherche'),
+                  _buildSectionTitle('Domaine recherché'),
                   const SizedBox(height: AppTheme.spaceMd),
 
                   DropdownButtonFormField<String>(
@@ -364,7 +372,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                     DropdownButtonFormField<String>(
                       initialValue: _selectedSpecialty,
                       decoration: InputDecoration(
-                        labelText: 'Specialite (optionnel)',
+                        labelText: 'Spécialité (optionnel)',
                         prefixIcon: const Icon(Icons.star_outline),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppTheme.radiusMd),

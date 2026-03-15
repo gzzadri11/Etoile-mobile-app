@@ -20,7 +20,7 @@ class AdminStatsPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Statistiques')),
       body: BlocBuilder<AdminBloc, AdminState>(
         builder: (context, state) {
-          if (state is AdminStatsLoading) {
+          if (state is AdminStatsLoading || state is AdminInitial) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -98,14 +98,14 @@ class AdminStatsPage extends StatelessWidget {
             const SizedBox(height: AppTheme.spaceLg),
 
             // Recruiter verification section
-            _buildSectionTitle(context, 'Verification recruteurs'),
+            _buildSectionTitle(context, 'Vérification recruteurs'),
             const SizedBox(height: AppTheme.spaceSm),
             Row(
               children: [
                 Expanded(
                   child: _StatCard(
                     icon: Icons.verified,
-                    label: 'Verifies',
+                    label: 'Vérifiés',
                     value: '${stats['verifiedRecruiters'] ?? 0}',
                     color: AppColors.success,
                   ),
@@ -258,7 +258,7 @@ class AdminStatsPage extends StatelessWidget {
                   .read<AdminBloc>()
                   .add(const AdminStatsLoadRequested()),
               icon: const Icon(Icons.refresh),
-              label: const Text('Reessayer'),
+              label: const Text('Réessayer'),
             ),
           ],
         ),

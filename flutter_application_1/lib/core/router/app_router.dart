@@ -39,7 +39,8 @@ import '../../features/settings/presentation/pages/faq_page.dart';
 import '../../features/settings/presentation/pages/legal_page.dart';
 import '../../features/settings/presentation/pages/blocked_users_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
-import '../../features/auth/presentation/pages/otp_verification_page.dart';
+// OTP disabled for beta — kept for reactivation
+// import '../../features/auth/presentation/pages/otp_verification_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
@@ -155,8 +156,7 @@ class AppRouter {
         final isAuthRoute = state.matchedLocation == AppRoutes.login ||
             state.matchedLocation == AppRoutes.register ||
             state.matchedLocation == AppRoutes.forgotPassword ||
-            state.matchedLocation == AppRoutes.welcome ||
-            state.matchedLocation == AppRoutes.otpVerification;
+            state.matchedLocation == AppRoutes.welcome;
         final isOnboarding =
             state.matchedLocation == AppRoutes.onboardingSeeker ||
                 state.matchedLocation == AppRoutes.onboardingRecruiter;
@@ -219,9 +219,9 @@ class AppRouter {
             final loc = state.matchedLocation;
             final allowedIncomplete = loc == AppRoutes.editProfile ||
                 loc == AppRoutes.editRecruiterProfile ||
+                loc == AppRoutes.profile ||
                 loc == AppRoutes.onboardingSeeker ||
                 loc == AppRoutes.onboardingRecruiter ||
-                loc == AppRoutes.otpVerification ||
                 loc == AppRoutes.settings ||
                 loc.startsWith('/settings/');
             if (!allowedIncomplete) {
@@ -276,15 +276,15 @@ class AppRouter {
         builder: (context, state) => const ForgotPasswordPage(),
       ),
 
-      // OTP email verification
-      GoRoute(
-        path: AppRoutes.otpVerification,
-        builder: (context, state) {
-          final email = state.uri.queryParameters['email'] ?? '';
-          final role = state.uri.queryParameters['role'] ?? 'seeker';
-          return OtpVerificationPage(email: email, role: role);
-        },
-      ),
+      // OTP email verification — disabled for beta (page kept for reactivation)
+      // GoRoute(
+      //   path: AppRoutes.otpVerification,
+      //   builder: (context, state) {
+      //     final email = state.uri.queryParameters['email'] ?? '';
+      //     final role = state.uri.queryParameters['role'] ?? 'seeker';
+      //     return OtpVerificationPage(email: email, role: role);
+      //   },
+      // ),
 
       // Main app with bottom navigation
       ShellRoute(
@@ -407,13 +407,27 @@ class AppRouter {
         },
       ),
 
-      // Premium pages
+      // Premium pages (recruiter only — seekers redirected to search)
       GoRoute(
         path: AppRoutes.premium,
+        redirect: (context, state) {
+          final authState = authBloc.state;
+          if (authState is AuthAuthenticated && authState.isSeeker) {
+            return AppRoutes.search;
+          }
+          return null;
+        },
         builder: (context, state) => const _PremiumPage(),
       ),
       GoRoute(
         path: AppRoutes.premiumRecruiter,
+        redirect: (context, state) {
+          final authState = authBloc.state;
+          if (authState is AuthAuthenticated && authState.isSeeker) {
+            return AppRoutes.search;
+          }
+          return null;
+        },
         builder: (context, state) => BlocProvider(
           create: (_) => PaymentBloc(
             paymentRepository: GetIt.I<PaymentRepository>(),
@@ -423,6 +437,13 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.premiumManage,
+        redirect: (context, state) {
+          final authState = authBloc.state;
+          if (authState is AuthAuthenticated && authState.isSeeker) {
+            return AppRoutes.search;
+          }
+          return null;
+        },
         builder: (context, state) => BlocProvider(
           create: (_) => PaymentBloc(
             paymentRepository: GetIt.I<PaymentRepository>(),
@@ -564,7 +585,7 @@ class AppRouter {
           return BlocProvider(
             create: (_) => AdminBloc(
               adminRepository: GetIt.I<AdminRepository>(),
-            ),
+            )..add(AdminRecruiterDetailLoadRequested(userId: userId)),
             child: RecruiterVerificationPage(userId: userId),
           );
         },
@@ -653,7 +674,7 @@ class _ErrorPage extends StatelessWidget {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => context.go(AppRoutes.search),
-              child: const Text('Retour a l\'accueil'),
+              child: const Text('Retour à l\'accueil'),
             ),
           ],
         ),

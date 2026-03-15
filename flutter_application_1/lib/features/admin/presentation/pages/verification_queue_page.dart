@@ -35,7 +35,7 @@ class VerificationQueuePage extends StatelessWidget {
       ),
       body: BlocBuilder<AdminBloc, AdminState>(
         builder: (context, state) {
-          if (state is AdminVerificationListLoading) {
+          if (state is AdminVerificationListLoading || state is AdminInitial) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -114,7 +114,7 @@ class VerificationQueuePage extends StatelessWidget {
                   .read<AdminBloc>()
                   .add(const AdminVerificationListLoadRequested()),
               icon: const Icon(Icons.refresh),
-              label: const Text('Reessayer'),
+              label: const Text('Réessayer'),
             ),
           ],
         ),

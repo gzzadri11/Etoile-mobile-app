@@ -55,7 +55,9 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
 
   /// Calculates real-time profile completion percentage.
   /// Recruiter: inscription(20) + entreprise+secteur(20) + description>=50chars(20) + localisation(20) + siret+document(20)
+  /// Verified by admin = 100% automatically.
   int _completionPercentage(RecruiterProfile profile) {
+    if (profile.isVerified) return 100;
     int pct = 20; // inscription always done
     // Entreprise + secteur
     final hasCompany = _companyNameController.text.trim().isNotEmpty;
@@ -81,16 +83,16 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
 
   static const Map<String, String> _sectorLabels = {
     'commerce_vente': 'Commerce / Vente',
-    'restauration_hotellerie': 'Restauration / Hotellerie',
+    'restauration_hotellerie': 'Restauration / Hôtellerie',
   };
 
   // Taille entreprise
   static const Map<String, String> _companySizeLabels = {
-    '1-10': '1 a 10 salaries',
-    '11-50': '11 a 50 salaries',
-    '51-200': '51 a 200 salaries',
-    '201-500': '201 a 500 salaries',
-    '500+': 'Plus de 500 salaries',
+    '1-10': '1 à 10 salariés',
+    '11-50': '11 à 50 salariés',
+    '51-200': '51 à 200 salariés',
+    '201-500': '201 à 500 salariés',
+    '500+': 'Plus de 500 salariés',
   };
 
   @override
@@ -99,10 +101,20 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
     _companyNameController = TextEditingController();
     _descriptionController = TextEditingController();
     _websiteController = TextEditingController();
+
+    // Listeners to recalculate completion % in real-time
+    _companyNameController.addListener(_onFieldChanged);
+    _descriptionController.addListener(_onFieldChanged);
+  }
+
+  void _onFieldChanged() {
+    setState(() {});
   }
 
   @override
   void dispose() {
+    _companyNameController.removeListener(_onFieldChanged);
+    _descriptionController.removeListener(_onFieldChanged);
     _companyNameController.dispose();
     _descriptionController.dispose();
     _websiteController.dispose();
@@ -225,7 +237,7 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Document envoye avec succes'),
+            content: Text('Document envoyé avec succès'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -242,6 +254,66 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur upload document: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingDoc = false);
+    }
+  }
+
+  void _confirmRemoveDocument() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Retirer le document ?'),
+        content: const Text(
+          'Le document sera supprimé et vous pourrez en envoyer un nouveau. '
+          'Votre compte devra être re-vérifié par un administrateur.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _removeDocument();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.warning,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Retirer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _removeDocument() async {
+    setState(() => _isUploadingDoc = true);
+
+    try {
+      final repo = GetIt.I<ProfileRepository>();
+      await repo.removeDocument();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Document retiré'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        context.read<ProfileBloc>().add(const ProfileLoadRequested());
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -302,13 +374,7 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
         title: const Text('Profil entreprise'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              context.pop();
-            } else {
-              context.go(AppRoutes.search);
-            }
-          },
+          onPressed: () => context.go(AppRoutes.profile),
         ),
       ),
       body: BlocConsumer<ProfileBloc, ProfileState>(
@@ -316,7 +382,7 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
           if (state is ProfileSaveSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Profil mis a jour'),
+                content: Text('Profil mis à jour'),
                 backgroundColor: AppColors.success,
               ),
             );
@@ -488,13 +554,13 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                   const SizedBox(height: AppTheme.spaceLg),
 
                   // === Secteur d'activite ===
-                  _buildSectionTitle('Secteur d\'activite'),
+                  _buildSectionTitle('Secteur d\'activité'),
                   const SizedBox(height: AppTheme.spaceMd),
 
                   DropdownButtonFormField<String>(
                     initialValue: _selectedSector,
                     decoration: InputDecoration(
-                      labelText: 'Selectionnez un secteur',
+                      labelText: 'Sélectionnez un secteur',
                       prefixIcon: const Icon(Icons.category_outlined),
                       border: OutlineInputBorder(
                         borderRadius:
@@ -520,13 +586,13 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                   const SizedBox(height: AppTheme.spaceLg),
 
                   // === Taille entreprise ===
-                  _buildSectionTitle('Taille de l\'entreprise'),
+                  _buildSectionTitle('Taille de l\'entreprise (optionnel)'),
                   const SizedBox(height: AppTheme.spaceMd),
 
                   DropdownButtonFormField<String>(
                     initialValue: _selectedCompanySize,
                     decoration: InputDecoration(
-                      labelText: 'Nombre de salaries',
+                      labelText: 'Nombre de salariés',
                       prefixIcon: const Icon(Icons.people_outline),
                       border: OutlineInputBorder(
                         borderRadius:
@@ -554,7 +620,7 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                   _buildSectionTitle('Localisation'),
                   const SizedBox(height: AppTheme.spaceSm),
                   Text(
-                    'Ile-de-France uniquement',
+                    'Île-de-France uniquement',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.greyWarm,
                         ),
@@ -565,14 +631,16 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                     initialValue: _selectedCity,
                     label: 'Ville',
                     onCitySelected: (city) {
-                      _selectedCity = city;
+                      setState(() {
+                        _selectedCity = city;
+                      });
                     },
                   ),
 
                   const SizedBox(height: AppTheme.spaceLg),
 
                   // === Description ===
-                  _buildSectionTitle('Description de l\'entreprise'),
+                  _buildSectionTitle('Description de l\'entreprise (min. 50 car.)'),
                   const SizedBox(height: AppTheme.spaceMd),
 
                   TextFormField(
@@ -582,7 +650,7 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
                     enabled: !isSaving,
                     decoration: InputDecoration(
                       hintText:
-                          'Decrivez votre entreprise, votre culture, vos valeurs...',
+                          'Décrivez votre entreprise, votre culture, vos valeurs...',
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(AppTheme.radiusMd),
@@ -705,7 +773,7 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Document de verification'),
+        _buildSectionTitle('Document de vérification'),
         const SizedBox(height: AppTheme.spaceSm),
 
         // Verified state
@@ -714,10 +782,10 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
             icon: Icons.verified,
             iconColor: AppColors.success,
             borderColor: AppColors.success,
-            title: 'Compte verifie',
+            title: 'Compte vérifié',
             subtitle: profile.verifiedAt != null
-                ? 'Verifie le ${_formatDate(profile.verifiedAt!)}'
-                : 'Votre compte est verifie',
+                ? 'Vérifié le ${_formatDate(profile.verifiedAt!)}'
+                : 'Votre compte est vérifié',
           ),
         ]
         // Rejected state
@@ -726,8 +794,8 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
             icon: Icons.error,
             iconColor: AppColors.error,
             borderColor: AppColors.error,
-            title: 'Verification rejetee',
-            subtitle: profile.rejectionReason ?? 'Motif non precise',
+            title: 'Vérification rejetée',
+            subtitle: profile.rejectionReason ?? 'Motif non précisé',
           ),
           const SizedBox(height: AppTheme.spaceSm),
           Text(
@@ -748,17 +816,30 @@ class _EditRecruiterProfilePageState extends State<EditRecruiterProfilePage> {
             iconColor: AppColors.warning,
             borderColor: AppColors.warning,
             title:
-                'Document envoye${profile.documentType != null ? ' (${profile.documentType})' : ''}',
+                'Document envoyé${profile.documentType != null ? ' (${profile.documentType})' : ''}',
             subtitle: profile.documentUploadedAt != null
-                ? 'Envoye le ${_formatDate(profile.documentUploadedAt!)} — En attente de verification'
-                : 'En attente de verification par un administrateur',
+                ? 'Envoyé le ${_formatDate(profile.documentUploadedAt!)} — En attente de vérification'
+                : 'En attente de vérification par un administrateur',
+          ),
+          const SizedBox(height: AppTheme.spaceSm),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isUploadingDoc ? null : () => _confirmRemoveDocument(),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('Retirer et modifier le document'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.warning,
+                side: const BorderSide(color: AppColors.warning),
+              ),
+            ),
           ),
         ]
         // No document yet
         else ...[
           if (_pickedDocBytes == null) ...[
             Text(
-              'Uploadez un justificatif (Kbis, carte pro) pour faire verifier votre compte.',
+              'Uploadez un justificatif (Kbis, carte pro) pour faire vérifier votre compte.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.greyWarm,
                   ),

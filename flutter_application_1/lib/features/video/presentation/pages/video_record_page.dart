@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/config/app_config.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/profile_gate.dart';
@@ -147,7 +149,7 @@ class _VideoRecordPageState extends State<VideoRecordPage>
       case _RecordingState.preparation:
         return _PreparationView(
           onStart: _startRecording,
-          onClose: () => Navigator.of(context).pop(),
+          onClose: () => context.go(AppRoutes.search),
         );
       case _RecordingState.recording:
         return _RecordingView(
@@ -165,8 +167,8 @@ class _VideoRecordPageState extends State<VideoRecordPage>
         );
       case _RecordingState.success:
         return _SuccessView(
-          onViewProfile: () => Navigator.of(context).pop(),
-          onExploreFeed: () => Navigator.of(context).pop(),
+          onViewProfile: () => context.go(AppRoutes.profile),
+          onExploreFeed: () => context.go(AppRoutes.search),
         );
     }
   }

@@ -63,14 +63,16 @@ class AdminRecruiterDetailLoading extends AdminState {
 class AdminRecruiterDetailLoaded extends AdminState {
   final RecruiterProfile profile;
   final DateTime registeredAt;
+  final String? documentSignedUrl;
 
   const AdminRecruiterDetailLoaded({
     required this.profile,
     required this.registeredAt,
+    this.documentSignedUrl,
   });
 
   @override
-  List<Object?> get props => [profile, registeredAt];
+  List<Object?> get props => [profile, registeredAt, documentSignedUrl];
 }
 
 /// Emitted after a successful approve or reject action.

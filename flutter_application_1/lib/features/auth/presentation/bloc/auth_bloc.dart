@@ -185,22 +185,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (response.user != null) {
-        // Check if email confirmation is required
-        if (response.session != null) {
-          // Register FCM token for push notifications
-          _registerPushToken();
+        // Email confirmation disabled for beta — user is authenticated immediately
+        _registerPushToken();
 
-          emit(AuthAuthenticated(
-            userId: response.user!.id,
-            email: response.user!.email ?? '',
-            role: event.role,
-          ));
-        } else {
-          emit(AuthEmailVerificationRequired(
-            email: event.email,
-            role: event.role,
-          ));
-        }
+        emit(AuthAuthenticated(
+          userId: response.user!.id,
+          email: response.user!.email ?? '',
+          role: event.role,
+        ));
       } else {
         emit(const AuthError(message: 'Erreur lors de l\'inscription'));
       }

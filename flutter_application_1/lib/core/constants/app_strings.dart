@@ -14,7 +14,7 @@ abstract class AppStrings {
   // ============================================
   static const String welcomeTitle = 'Bienvenue sur Etoile';
   static const String welcomeSubtitle =
-      '40 secondes pour montrer qui vous etes vraiment';
+      '40 secondes pour montrer qui vous êtes vraiment';
   static const String iAmSeeker = 'Je cherche un emploi';
   static const String iAmRecruiter = 'Je recrute';
 
@@ -23,14 +23,14 @@ abstract class AppStrings {
   // ============================================
   static const String login = 'Connexion';
   static const String register = 'Inscription';
-  static const String logout = 'Deconnexion';
+  static const String logout = 'Déconnexion';
   static const String email = 'Email';
   static const String password = 'Mot de passe';
   static const String confirmPassword = 'Confirmer le mot de passe';
-  static const String forgotPassword = 'Mot de passe oublie ?';
-  static const String createAccount = 'Creons votre compte';
+  static const String forgotPassword = 'Mot de passe oublié ?';
+  static const String createAccount = 'Créons votre compte';
   static const String createAccountSubtitle = "C'est rapide, promis !";
-  static const String alreadyHaveAccount = 'Deja un compte ?';
+  static const String alreadyHaveAccount = 'Déjà un compte ?';
   static const String noAccount = 'Pas encore de compte ?';
 
   // ============================================
@@ -38,14 +38,14 @@ abstract class AppStrings {
   // ============================================
   static const String tellUsAboutYou = 'Parlez-nous de vous';
   static const String tellUsAboutYouSubtitle =
-      'Ces infos aident les recruteurs a vous trouver';
+      'Ces infos aident les recruteurs à vous trouver';
   static const String firstName = 'Prénom';
   static const String lastName = 'Nom';
-  static const String phone = 'Telephone';
-  static const String sector = 'Secteur recherche';
+  static const String phone = 'Téléphone';
+  static const String sector = 'Secteur recherché';
   static const String contractType = 'Type de contrat';
   static const String location = 'Localisation';
-  static const String availability = 'Disponibilite';
+  static const String availability = 'Disponibilité';
   static const String companyName = 'Nom de l\'entreprise';
   static const String siret = 'SIRET';
   static const String companyDescription = 'Description de l\'entreprise';
@@ -53,19 +53,19 @@ abstract class AppStrings {
   // ============================================
   // VIDEO RECORDING
   // ============================================
-  static const String readyToShine = 'Pret a briller ?';
+  static const String readyToShine = 'Prêt à briller ?';
   static const String noEditNoStress =
       'Pas de montage, pas de stress. Juste vous.';
   static const String recordNow = 'Enregistrer maintenant';
   static const String later = 'Plus tard';
-  static const String startRecording = 'Demarrer l\'enregistrement';
+  static const String startRecording = 'Démarrer l\'enregistrement';
   static const String reRecord = 'Re-enregistrer';
-  static const String publishVideo = 'Publier ma video';
-  static const String videoTip = 'Trouvez un endroit calme et bien eclaire';
+  static const String publishVideo = 'Publier ma vidéo';
+  static const String videoTip = 'Trouvez un endroit calme et bien éclairé';
 
   // Video phases
-  static const String phase1Prompt = 'Presentez-vous en quelques mots';
-  static const String phase2Prompt = 'Parlez de vos competences cles';
+  static const String phase1Prompt = 'Présentez-vous en quelques mots';
+  static const String phase2Prompt = 'Parlez de vos compétences clés';
   static const String phase3Prompt = 'Pourquoi vous choisir ?';
 
   // ============================================
@@ -75,10 +75,10 @@ abstract class AppStrings {
   static const String filters = 'Filtres';
   static const String search = 'Recherche';
   static const String apply = 'Appliquer';
-  static const String reset = 'Reinitialiser';
+  static const String reset = 'Réinitialiser';
   static const String noResults =
-      'Aucun profil ne correspond a vos criteres. Modifiez vos filtres.';
-  static const String endOfFeed = 'Vous avez tout vu ! Revenez bientot.';
+      'Aucun profil ne correspond à vos critères. Modifiez vos filtres.';
+  static const String endOfFeed = 'Vous avez tout vu ! Revenez bientôt.';
 
   // ============================================
   // MESSAGES
@@ -87,30 +87,30 @@ abstract class AppStrings {
   static const String typeMessage = 'Votre message...';
   static const String send = 'Envoyer';
   static const String noMessages =
-      'Votre video est decouverte par les recruteurs';
+      'Votre vidéo est découverte par les recruteurs';
   static const String noMessagesSubtitle =
-      'Les opportunites arrivent bientot !';
+      'Les opportunités arrivent bientôt !';
   static const String today = 'Aujourd\'hui';
   static const String thisWeek = 'Cette semaine';
 
   // Message templates
   static const String templateInterested =
-      'Votre profil m\'interesse, discutons !';
+      'Votre profil m\'intéresse, discutons !';
   static const String templateOpportunity =
-      'J\'ai une opportunite qui pourrait vous convenir';
+      'J\'ai une opportunité qui pourrait vous convenir';
 
   // ============================================
   // PROFILE
   // ============================================
   static const String profile = 'Profil';
   static const String editProfile = 'Modifier mon profil';
-  static const String editVideo = 'Modifier ma video';
-  static const String viewMyVideo = 'Voir ma video';
+  static const String editVideo = 'Modifier ma vidéo';
+  static const String viewMyVideo = 'Voir ma vidéo';
   static const String statistics = 'Statistiques';
-  static const String profileViewed = 'Votre profil a ete vu';
-  static const String goPremiumForDetails = 'Passez Premium pour les details';
-  static const String verifiedBadge = 'Verifie';
-  static const String pendingVerification = 'En cours de verification';
+  static const String profileViewed = 'Votre profil a été vu';
+  static const String goPremiumForDetails = 'Passez Premium pour les détails';
+  static const String verifiedBadge = 'Vérifié';
+  static const String pendingVerification = 'En cours de vérification';
 
   // ============================================
   // PREMIUM
@@ -124,21 +124,21 @@ abstract class AppStrings {
   // ============================================
   // SETTINGS
   // ============================================
-  static const String settings = 'Parametres';
+  static const String settings = 'Paramètres';
   static const String help = 'Aide';
   static const String faq = 'FAQ';
   static const String contactSupport = 'Contacter le support';
-  static const String privacyPolicy = 'Politique de confidentialite';
+  static const String privacyPolicy = 'Politique de confidentialité';
   static const String termsOfService = 'Conditions d\'utilisation';
   static const String deleteAccount = 'Supprimer mon compte';
-  static const String about = 'A propos';
+  static const String about = 'À propos';
 
   // ============================================
   // ADMIN
   // ============================================
   static const String administration = 'Administration';
   static const String adminDashboard = 'Tableau de bord';
-  static const String adminVerifications = 'Verifications';
+  static const String adminVerifications = 'Vérifications';
   static const String adminReports = 'Signalements';
   static const String adminStats = 'Statistiques';
 
@@ -152,7 +152,7 @@ abstract class AppStrings {
   static const String delete = 'Supprimer';
   static const String block = 'Bloquer';
   static const String report = 'Signaler';
-  static const String retry = 'Reessayer';
+  static const String retry = 'Réessayer';
   static const String close = 'Fermer';
   static const String back = 'Retour';
 
@@ -160,28 +160,28 @@ abstract class AppStrings {
   // SUCCESS MESSAGES (Warm tone)
   // ============================================
   static const String successVideoPublished =
-      'Bravo ! Votre etoile brille maintenant dans le ciel Etoile.';
+      'Bravo ! Votre étoile brille maintenant dans le ciel Etoile.';
   static const String successFirstMessage =
-      'Bonne nouvelle ! Un recruteur s\'interesse a votre profil.';
+      'Bonne nouvelle ! Un recruteur s\'intéresse à votre profil.';
   static const String successMessageSent =
-      'Message envoye ! Croisons les doigts.';
+      'Message envoyé ! Croisons les doigts.';
   static const String successVerified =
-      'Felicitations ! Votre compte est maintenant verifie.';
+      'Félicitations ! Votre compte est maintenant vérifié.';
 
   // ============================================
   // ERROR MESSAGES (Human tone)
   // ============================================
   static const String errorNetwork =
-      'Oups, petit souci de connexion. Reessayez dans un instant.';
+      'Oups, petit souci de connexion. Réessayez dans un instant.';
   static const String errorUpload =
-      'Aie, la video n\'a pas pu etre envoyee. On reessaie ?';
+      'Aïe, la vidéo n\'a pas pu être envoyée. On réessaie ?';
   static const String errorSession =
-      'Votre session a expire. Reconnectez-vous pour continuer.';
+      'Votre session a expiré. Reconnectez-vous pour continuer.';
   static const String errorGeneric =
-      'Quelque chose s\'est mal passe. Notre equipe est sur le coup !';
+      'Quelque chose s\'est mal passé. Notre équipe est sur le coup !';
   static const String errorInvalidEmail = 'Veuillez entrer un email valide';
   static const String errorInvalidPassword =
-      'Le mot de passe doit contenir au moins 8 caracteres';
+      'Le mot de passe doit contenir au moins 8 caractères';
   static const String errorPasswordMismatch =
       'Les mots de passe ne correspondent pas';
   static const String errorFieldRequired = 'Ce champ est requis';
@@ -190,14 +190,14 @@ abstract class AppStrings {
   // INFO MESSAGES
   // ============================================
   static const String infoVerificationPending =
-      'Votre compte est en cours de verification. Patience !';
+      'Votre compte est en cours de vérification. Patience !';
   static const String infoStatsNonPremium =
-      'Votre profil a ete vu. Passez Premium pour les details.';
+      'Votre profil a été vu. Passez Premium pour les détails.';
 
   // ============================================
   // AVAILABILITY OPTIONS
   // ============================================
-  static const String availabilityImmediate = 'Immediate';
+  static const String availabilityImmediate = 'Immédiate';
   static const String availability1Month = 'Sous 1 mois';
   static const String availability3Months = 'Sous 3 mois';
   static const String availabilityFlexible = 'Flexible';
@@ -209,5 +209,5 @@ abstract class AppStrings {
   static const String contractCDD = 'CDD';
   static const String contractAlternance = 'Alternance';
   static const String contractStage = 'Stage';
-  static const String contractInterim = 'Interim';
+  static const String contractInterim = 'Intérim';
 }

@@ -253,47 +253,47 @@ final _allSections = [
       _FaqItem(
         question: 'Puis-je modifier mes informations apres inscription ?',
         answer:
-            'Bien sur ! Vous pouvez modifier votre profil a tout moment depuis '
-            'l\'onglet Profil > Modifier mon profil. Vos modifications sont enregistrees instantanement.',
+            'Bien sûr ! Vous pouvez modifier votre profil à tout moment depuis '
+            'l\'onglet Profil > Modifier mon profil. Vos modifications sont enregistrées instantanément.',
       ),
       _FaqItem(
         question: 'Comment supprimer mon compte ?',
         answer:
-            'Rendez-vous dans Parametres > Contacter le support et faites une demande de suppression. '
-            'Conformement au RGPD, vos donnees seront supprimees sous 30 jours.',
+            'Rendez-vous dans Paramètres > Contacter le support et faites une demande de suppression. '
+            'Conformément au RGPD, vos données seront supprimées sous 30 jours.',
       ),
     ],
   ),
   const _FaqSection(
-    title: 'Video',
+    title: 'Vidéo',
     icon: Icons.videocam_outlined,
     items: [
       _FaqItem(
-        question: 'Comment enregistrer ma video de presentation ?',
+        question: 'Comment enregistrer ma vidéo de présentation ?',
         answer:
-            'Depuis l\'onglet Profil, appuyez sur "Modifier ma video". '
-            'Vous disposez de 40 secondes pour vous presenter en 3 etapes guidees. '
-            'Trouvez un endroit calme et bien eclaire pour un meilleur resultat !',
+            'Depuis l\'onglet Profil, appuyez sur "Modifier ma vidéo". '
+            'Vous disposez de 40 secondes pour vous présenter en 3 étapes guidées. '
+            'Trouvez un endroit calme et bien éclairé pour un meilleur résultat !',
       ),
       _FaqItem(
-        question: 'Puis-je re-enregistrer ma video ?',
+        question: 'Puis-je re-enregistrer ma vidéo ?',
         answer:
             'Oui, vous pouvez re-enregistrer autant de fois que vous le souhaitez '
-            'avant de publier. Une fois publiee, vous pouvez toujours en enregistrer une nouvelle '
+            'avant de publier. Une fois publiée, vous pouvez toujours en enregistrer une nouvelle '
             'qui remplacera l\'ancienne.',
       ),
       _FaqItem(
-        question: 'Quelle est la duree maximale d\'une video ?',
+        question: 'Quelle est la durée maximale d\'une vidéo ?',
         answer:
-            'Chaque video dure 40 secondes maximum, divisee en 3 phases de coaching : '
-            'presentation, competences et motivation. Ce format court permet aux recruteurs '
-            'de decouvrir rapidement votre personnalite.',
+            'Chaque vidéo dure 40 secondes maximum, divisée en 3 phases de coaching : '
+            'présentation, compétences et motivation. Ce format court permet aux recruteurs '
+            'de découvrir rapidement votre personnalité.',
       ),
       _FaqItem(
-        question: 'Ma video ne s\'uploade pas, que faire ?',
+        question: 'Ma vidéo ne s\'uploade pas, que faire ?',
         answer:
-            'Verifiez votre connexion internet et reessayez. Si le probleme persiste, '
-            'redemarrez l\'application. La taille maximale est de 50 Mo. '
+            'Vérifiez votre connexion internet et réessayez. Si le problème persiste, '
+            'redémarrez l\'application. La taille maximale est de 50 Mo. '
             'En cas de souci persistant, contactez notre support.',
       ),
     ],
@@ -305,21 +305,21 @@ final _allSections = [
       _FaqItem(
         question: 'Qui peut m\'envoyer un message ?',
         answer:
-            'Seuls les recruteurs verifies peuvent contacter les chercheurs. '
-            'Cela garantit des echanges serieux et de qualite. '
-            'Vous recevrez une notification push a chaque nouveau message.',
+            'Seuls les recruteurs vérifiés peuvent contacter les chercheurs. '
+            'Cela garantit des échanges sérieux et de qualité. '
+            'Vous recevrez une notification push à chaque nouveau message.',
       ),
       _FaqItem(
         question: 'Comment savoir si j\'ai de nouveaux messages ?',
         answer:
-            'Un badge rouge apparait sur l\'onglet Messages quand vous avez des messages non lus. '
-            'Vous recevez egalement des notifications push sur votre telephone.',
+            'Un badge rouge apparaît sur l\'onglet Messages quand vous avez des messages non lus. '
+            'Vous recevez également des notifications push sur votre téléphone.',
       ),
       _FaqItem(
         question: 'Puis-je bloquer ou signaler un utilisateur ?',
         answer:
             'Oui, dans une conversation, appuyez sur le menu (trois points) pour bloquer '
-            'ou signaler un utilisateur. Notre equipe traite chaque signalement sous 48h.',
+            'ou signaler un utilisateur. Notre équipe traite chaque signalement sous 48h.',
       ),
     ],
   ),
@@ -330,27 +330,27 @@ final _allSections = [
       _FaqItem(
         question: 'Quels sont les avantages Premium ?',
         answer:
-            'En tant que chercheur Premium (4,99 EUR/mois), vous voyez qui a consulte votre video, '
-            'acces aux statistiques detaillees et un badge Premium visible. '
-            'Les recruteurs Premium (499 EUR/mois) ont des publications incluses et un acces prioritaire.',
+            'En tant que chercheur Premium (4,99 EUR/mois), vous voyez qui a consulté votre vidéo, '
+            'accès aux statistiques détaillées et un badge Premium visible. '
+            'Les recruteurs Premium (499 EUR/mois) ont des publications incluses et un accès prioritaire.',
       ),
       _FaqItem(
-        question: 'Comment m\'abonner a Premium ?',
+        question: 'Comment m\'abonner à Premium ?',
         answer:
-            'Rendez-vous dans Parametres > Premium, puis appuyez sur "S\'abonner". '
-            'Le paiement est securise via Stripe. Vous pouvez annuler a tout moment.',
+            'Rendez-vous dans Paramètres > Premium, puis appuyez sur "S\'abonner". '
+            'Le paiement est sécurisé via Stripe. Vous pouvez annuler à tout moment.',
       ),
       _FaqItem(
         question: 'Comment annuler mon abonnement ?',
         answer:
-            'Dans Parametres > Premium, appuyez sur "Gerer mon abonnement". '
-            'Votre acces Premium reste actif jusqu\'a la fin de la periode en cours.',
+            'Dans Paramètres > Premium, appuyez sur "Gérer mon abonnement". '
+            'Votre accès Premium reste actif jusqu\'à la fin de la période en cours.',
       ),
       _FaqItem(
         question: 'Les credits sont-ils remboursables ?',
         answer:
-            'Les credits achetes a l\'unite (video ou affiche) ne sont pas remboursables '
-            'une fois utilises. Les credits non utilises restent sur votre compte sans expiration.',
+            'Les crédits achetés à l\'unité (vidéo ou affiche) ne sont pas remboursables '
+            'une fois utilisés. Les crédits non utilisés restent sur votre compte sans expiration.',
       ),
     ],
   ),
@@ -362,20 +362,20 @@ final _allSections = [
         question: 'L\'application est disponible sur quel appareil ?',
         answer:
             'Etoile est disponible sur iPhone (iOS 15+) et Android (version 10+). '
-            'Une connexion internet est necessaire pour utiliser l\'application.',
+            'Une connexion internet est nécessaire pour utiliser l\'application.',
       ),
       _FaqItem(
-        question: 'Je ne recois pas les notifications, que faire ?',
+        question: 'Je ne reçois pas les notifications, que faire ?',
         answer:
-            'Verifiez que les notifications sont autorisees dans les parametres de votre telephone '
-            '(Parametres > Applications > Etoile > Notifications). '
-            'Assurez-vous aussi que le mode "Ne pas deranger" est desactive.',
+            'Vérifiez que les notifications sont autorisées dans les paramètres de votre téléphone '
+            '(Paramètres > Applications > Etoile > Notifications). '
+            'Assurez-vous aussi que le mode "Ne pas déranger" est désactivé.',
       ),
       _FaqItem(
-        question: 'Mes donnees sont-elles en securite ?',
+        question: 'Mes données sont-elles en sécurité ?',
         answer:
-            'Absolument ! Vos donnees sont hebergees en Europe (Paris) et protegees par chiffrement. '
-            'Nous respectons le RGPD et vous pouvez exporter ou supprimer vos donnees a tout moment.',
+            'Absolument ! Vos données sont hébergées en Europe (Paris) et protégées par chiffrement. '
+            'Nous respectons le RGPD et vous pouvez exporter ou supprimer vos données à tout moment.',
       ),
     ],
   ),

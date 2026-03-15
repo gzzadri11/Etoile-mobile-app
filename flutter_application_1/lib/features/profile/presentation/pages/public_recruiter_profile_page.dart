@@ -17,7 +17,7 @@ import '../../data/repositories/profile_repository.dart';
 const _contractTypeLabels = {
   'cdi': 'CDI',
   'cdd': 'CDD',
-  'interim': 'Interim',
+  'interim': 'Intérim',
   'freelance': 'Freelance',
   'alternance': 'Alternance',
   'stage': 'Stage',
@@ -87,7 +87,7 @@ class _PublicRecruiterProfilePageState
 
   static const Map<String, String> _sectorLabels = {
     'commerce_vente': 'Commerce / Vente',
-    'restauration_hotellerie': 'Restauration / Hotellerie',
+    'restauration_hotellerie': 'Restauration / Hôtellerie',
   };
 
   static String _getSectorLabel(String? sector) {
@@ -232,7 +232,7 @@ class _PublicRecruiterProfilePageState
                           color: AppColors.primaryOrange, size: 20),
                       const SizedBox(width: AppTheme.spaceXs),
                       Text(
-                        'Presentations entreprise',
+                        'Présentations entreprise',
                         style: Theme.of(context)
                             .textTheme
                             .titleMedium
@@ -322,7 +322,7 @@ class _PublicRecruiterProfilePageState
     if (_isBlocked) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Vous avez bloque cet utilisateur'),
+          content: Text('Vous avez bloqué cet utilisateur'),
           backgroundColor: AppColors.warning,
         ),
       );
@@ -527,7 +527,7 @@ class _VideoThumbnailCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(AppTheme.spaceSm),
             child: Text(
-              video.title ?? 'Presentation',
+              video.title ?? 'Présentation',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),

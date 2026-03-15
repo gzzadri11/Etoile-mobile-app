@@ -164,6 +164,7 @@ abstract class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.greyLight,
+        floatingLabelBehavior: FloatingLabelBehavior.always,
         contentPadding: const EdgeInsets.all(spaceMd),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
@@ -397,6 +398,7 @@ abstract class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF2A2A2A),
+        floatingLabelBehavior: FloatingLabelBehavior.always,
         contentPadding: const EdgeInsets.all(spaceMd),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),

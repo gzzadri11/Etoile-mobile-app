@@ -88,7 +88,7 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
                   ),
                   const SizedBox(height: AppTheme.spaceSm),
                   Text(
-                    'Selectionnez un secteur pour decouvrir les offres en Ile-de-France',
+                    'Sélectionnez un secteur pour découvrir les offres en Île-de-France',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.greyWarm,
                         ),
@@ -102,7 +102,7 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
 
             // Sector filter
             Text(
-              'Secteur d\'activite',
+              'Secteur d\'activité',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -137,7 +137,7 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
               DropdownButtonFormField<String>(
                 initialValue: _selectedSpecialty,
                 decoration: InputDecoration(
-                  labelText: 'Specialite (optionnel)',
+                  labelText: 'Spécialité (optionnel)',
                   prefixIcon: const Icon(Icons.star_outline),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -187,14 +187,14 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Ile-de-France',
+                          'Île-de-France',
                           style:
                               Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
                         ),
                         Text(
-                          'Zone beta — bientot d\'autres regions',
+                          'Zone bêta — bientôt d\'autres régions',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: AppColors.greyWarm,
@@ -302,7 +302,7 @@ class _RecruiterSearchViewState extends State<_RecruiterSearchView> {
                   ),
                   const SizedBox(height: AppTheme.spaceSm),
                   Text(
-                    'Recherchez des candidats en Ile-de-France',
+                    'Recherchez des candidats en Île-de-France',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.greyWarm,
                         ),
@@ -351,7 +351,7 @@ class _RecruiterSearchViewState extends State<_RecruiterSearchView> {
               DropdownButtonFormField<String>(
                 initialValue: _selectedSpecialty,
                 decoration: InputDecoration(
-                  labelText: 'Specialite (optionnel)',
+                  labelText: 'Spécialité (optionnel)',
                   prefixIcon: const Icon(Icons.star_outline),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -390,7 +390,7 @@ class _RecruiterSearchViewState extends State<_RecruiterSearchView> {
 
             // Study level filter
             Text(
-              'Niveau d\'etudes',
+              'Niveau d\'études',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

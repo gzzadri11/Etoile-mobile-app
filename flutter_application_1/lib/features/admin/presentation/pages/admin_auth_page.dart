@@ -91,14 +91,14 @@ class _AdminAuthPageState extends State<AdminAuthPage> {
                 ),
                 const SizedBox(height: AppTheme.spaceLg),
                 Text(
-                  'Verification de securite',
+                  'Vérification de sécurité',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: AppTheme.spaceSm),
                 Text(
-                  'Entrez votre code d\'acces pour continuer',
+                  'Entrez votre code d\'accès pour continuer',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.greyWarm,
                       ),
