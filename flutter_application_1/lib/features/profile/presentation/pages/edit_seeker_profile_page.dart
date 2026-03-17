@@ -1,16 +1,23 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_router.dart' show AppRoutes, AppRouter;
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/circle_crop_dialog.dart';
 import '../../../../shared/widgets/city_autocomplete_field.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
 import '../../../../shared/widgets/mascotte_message.dart';
 import '../../../../core/constants/sector_constants.dart';
 import '../../data/models/seeker_profile_model.dart';
+import '../../data/repositories/profile_repository.dart';
 import '../bloc/profile_bloc.dart';
 
 /// Page for editing seeker profile (beta: alternance IdF)
@@ -34,13 +41,21 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
   String? _selectedSpecialty;
   String? _selectedCity;
 
+  Uint8List? _pickedPhotoBytes;
+  String? _pickedPhotoExtension;
+  String? _existingPhotoUrl;
+
   bool _isInitialized = false;
   bool _dismissedMascotte = false;
 
   /// Calculates real-time profile completion percentage.
-  /// Seeker: inscription(20) + identite(prenom+nom+age)(20) + etudes(ecole+niveau)(20) + localisation(ville)(20) + domaine(20)
+  /// Seeker: photo(20) + identite(prenom+nom+age)(20) + etudes(ecole+niveau)(20) + localisation(ville)(20) + domaine(20)
   int get _completionPercentage {
-    int pct = 20; // inscription always done
+    int pct = 0;
+    // Photo (20%)
+    if (_pickedPhotoBytes != null || (_existingPhotoUrl != null && _existingPhotoUrl!.isNotEmpty)) {
+      pct += 20;
+    }
     // Identite: prenom + nom + age (all 3 required for 20%)
     final hasFirstName = _firstNameController.text.trim().isNotEmpty;
     final hasLastName = _lastNameController.text.trim().isNotEmpty;
@@ -88,6 +103,44 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
     super.dispose();
   }
 
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+
+    final bytes = await picked.readAsBytes();
+
+    // Determine extension — on web, path may not have a proper extension
+    String ext = picked.path.split('.').last.toLowerCase();
+    if (kIsWeb || ext.length > 5 || !['png', 'jpg', 'jpeg', 'webp'].contains(ext)) {
+      // On web, mimeType is available; fallback to jpeg
+      final mime = picked.mimeType ?? '';
+      if (mime.contains('png')) {
+        ext = 'png';
+      } else if (mime.contains('webp')) {
+        ext = 'webp';
+      } else {
+        ext = 'jpeg';
+      }
+    }
+    final allowedExt = ext == 'png' || ext == 'webp' ? ext : 'jpeg';
+
+    if (!mounted) return;
+
+    // Open circular crop dialog
+    final croppedBytes = await CircleCropDialog.show(context, bytes);
+    if (croppedBytes == null) return; // User cancelled
+
+    setState(() {
+      _pickedPhotoBytes = croppedBytes;
+      _pickedPhotoExtension = allowedExt;
+    });
+  }
+
   void _initializeFromProfile(SeekerProfile profile) {
     if (_isInitialized) return;
 
@@ -105,12 +158,39 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
         ? profile.specialty
         : null;
     _selectedCity = profile.city;
+    _existingPhotoUrl = profile.photoUrl;
 
     _isInitialized = true;
   }
 
-  void _onSave(SeekerProfile currentProfile) {
+  Future<void> _onSave(SeekerProfile currentProfile) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    String? photoUrl = _existingPhotoUrl;
+
+    // Upload new photo if picked
+    if (_pickedPhotoBytes != null && _pickedPhotoExtension != null) {
+      try {
+        final repo = GetIt.I<ProfileRepository>();
+        photoUrl = await repo.uploadSeekerPhoto(
+          _pickedPhotoBytes!,
+          _pickedPhotoExtension!,
+        );
+        _existingPhotoUrl = photoUrl;
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur upload photo: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    if (!mounted) return;
 
     final updatedProfile = currentProfile.copyWith(
       firstName: _firstNameController.text.trim(),
@@ -121,6 +201,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
       studyLevel: _selectedStudyLevel,
       domain: _selectedDomain,
       specialty: _selectedSpecialty,
+      photoUrl: photoUrl,
     );
 
     context.read<ProfileBloc>().add(
@@ -228,6 +309,66 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                       );
                       return msg ?? const SizedBox.shrink();
                     }),
+
+                  // --- Photo section ---
+                  Center(
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          onTap: isSaving ? null : _pickPhoto,
+                          child: Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 56,
+                                backgroundColor: AppColors.greyLight,
+                                backgroundImage: _pickedPhotoBytes != null
+                                    ? MemoryImage(_pickedPhotoBytes!)
+                                    : (_existingPhotoUrl != null && _existingPhotoUrl!.isNotEmpty
+                                        ? NetworkImage(_existingPhotoUrl!) as ImageProvider
+                                        : null),
+                                child: (_pickedPhotoBytes == null &&
+                                        (_existingPhotoUrl == null || _existingPhotoUrl!.isEmpty))
+                                    ? const Icon(Icons.person, size: 56, color: AppColors.greyMedium)
+                                    : null,
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primaryYellow,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    size: 18,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spaceSm),
+                        Text(
+                          'Photo de profil',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        if (_pickedPhotoBytes == null &&
+                            (_existingPhotoUrl == null || _existingPhotoUrl!.isEmpty))
+                          Text(
+                            'Obligatoire pour compléter votre profil',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.primaryOrange,
+                                ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spaceLg),
 
                   // --- Identity section ---
                   _buildSectionTitle('Identité'),

@@ -1,120 +1,163 @@
 import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
 
-/// Manages video preloading for smooth feed scrolling
-/// Keeps a cache of initialized video controllers for nearby videos
-class VideoPreloadManager {
-  final int preloadCount;
+/// Manages video preloading for smooth feed scrolling.
+///
+/// Strategy: prioritize current video bandwidth. Only preload NEXT
+/// video after the current one starts playing. This avoids concurrent
+/// downloads stealing bandwidth from the video the user is watching.
+class VideoPreloadManager extends ChangeNotifier {
   final Map<String, VideoPlayerController> _controllers = {};
   final Map<String, bool> _isInitialized = {};
-  final List<String> _loadOrder = []; // Track order for LRU eviction
+  final List<String> _loadOrder = [];
 
-  VideoPreloadManager({this.preloadCount = 2});
+  /// Current index the user is viewing
+  int _currentIndex = -1;
+  List<String?> _videoUrls = [];
 
-  /// Get or create a controller for the given video URL
-  /// Returns null if not yet initialized (will trigger async init)
+  /// Whether we've started preloading the next video
+  bool _nextPreloaded = false;
+
+  /// Max controllers in cache (current + next + previous = 3)
+  static const int _maxControllers = 4;
+
+  /// Get cached controller for the given video URL
   VideoPlayerController? getController(String videoUrl) {
     return _controllers[videoUrl];
   }
 
-  /// Check if controller is initialized and ready
+  /// Check if controller is initialized and ready to play
   bool isReady(String videoUrl) {
     return _isInitialized[videoUrl] == true;
   }
 
-  /// Preload videos around the current index
-  Future<void> preloadAround({
+  /// Called when user swipes to a new page.
+  ///
+  /// Immediately starts loading the current video. Does NOT preload
+  /// next videos — that happens via [onCurrentVideoPlaying] once the
+  /// current video has enough buffer to play smoothly.
+  void onPageChanged({
     required int currentIndex,
     required List<String?> videoUrls,
-  }) async {
-    // Calculate which indexes to preload
-    final indexesToPreload = <int>[];
+  }) {
+    _currentIndex = currentIndex;
+    _videoUrls = videoUrls;
+    _nextPreloaded = false;
 
-    // Current video (highest priority)
-    indexesToPreload.add(currentIndex);
+    final currentUrl = _urlAt(currentIndex);
+    if (currentUrl == null) return;
 
-    // Next videos
-    for (int i = 1; i <= preloadCount; i++) {
-      if (currentIndex + i < videoUrls.length) {
-        indexesToPreload.add(currentIndex + i);
+    // Priority: initialize current video immediately
+    if (!_controllers.containsKey(currentUrl)) {
+      _initializeController(currentUrl);
+    }
+
+    // Update LRU
+    _loadOrder.remove(currentUrl);
+    _loadOrder.add(currentUrl);
+
+    // Pause all other videos
+    for (final entry in _controllers.entries) {
+      if (entry.key != currentUrl) {
+        entry.value.pause();
       }
     }
 
-    // Previous video (for back-swiping)
-    if (currentIndex > 0) {
-      indexesToPreload.add(currentIndex - 1);
+    // Evict old controllers to free memory & network
+    _evictOldControllers(currentIndex);
+  }
+
+  /// Call this when the current video starts playing (has enough buffer).
+  /// Triggers preloading of the NEXT video only.
+  void onCurrentVideoPlaying() {
+    if (_nextPreloaded) return;
+    _nextPreloaded = true;
+
+    final nextUrl = _urlAt(_currentIndex + 1);
+    if (nextUrl != null && !_controllers.containsKey(nextUrl)) {
+      debugPrint('[VideoPreload] Current playing → preloading next');
+      _initializeController(nextUrl);
+      _loadOrder.remove(nextUrl);
+      _loadOrder.add(nextUrl);
     }
 
-    // Get URLs to preload
-    final urlsToPreload = <String>[];
-    for (final index in indexesToPreload) {
-      final url = videoUrls[index];
-      if (url != null && url.isNotEmpty) {
-        urlsToPreload.add(url);
-      }
+    // Also ensure previous is cached (for back-swipe)
+    final prevUrl = _urlAt(_currentIndex - 1);
+    if (prevUrl != null && !_controllers.containsKey(prevUrl)) {
+      _initializeController(prevUrl);
+      _loadOrder.remove(prevUrl);
+      _loadOrder.add(prevUrl);
     }
+  }
 
-    // Initialize controllers for URLs that don't have one yet
-    for (final url in urlsToPreload) {
-      if (!_controllers.containsKey(url)) {
-        await _initializeController(url);
-      }
-      // Update load order (move to end = most recently used)
-      _loadOrder.remove(url);
-      _loadOrder.add(url);
-    }
-
-    // Evict old controllers if we have too many
-    _evictOldControllers(urlsToPreload);
+  String? _urlAt(int index) {
+    if (index < 0 || index >= _videoUrls.length) return null;
+    final url = _videoUrls[index];
+    return (url != null && url.isNotEmpty) ? url : null;
   }
 
   Future<void> _initializeController(String videoUrl) async {
     try {
       final controller = VideoPlayerController.networkUrl(
         Uri.parse(videoUrl),
+        httpHeaders: const {'Connection': 'keep-alive'},
       );
 
       _controllers[videoUrl] = controller;
       _isInitialized[videoUrl] = false;
+      notifyListeners();
 
       await controller.initialize();
-      controller.setLooping(true);
 
+      // Verify controller still exists (might have been evicted)
+      if (_controllers[videoUrl] != controller) {
+        controller.dispose();
+        return;
+      }
+
+      controller.setLooping(true);
       _isInitialized[videoUrl] = true;
 
-      debugPrint('[VideoPreload] Initialized: ${videoUrl.substring(0, 50)}...');
+      debugPrint('[VideoPreload] Ready: ${_shortUrl(videoUrl)}');
+      notifyListeners();
     } catch (e) {
-      debugPrint('[VideoPreload] Failed to initialize: $e');
+      debugPrint('[VideoPreload] Failed: ${_shortUrl(videoUrl)} — $e');
+      final existing = _controllers[videoUrl];
+      if (existing != null) {
+        existing.dispose();
+      }
       _controllers.remove(videoUrl);
       _isInitialized.remove(videoUrl);
     }
   }
 
-  void _evictOldControllers(List<String> keepUrls) {
-    // Keep at most (preloadCount * 2 + 1) controllers
-    final maxControllers = preloadCount * 2 + 2;
+  void _evictOldControllers(int currentIndex) {
+    // Keep controllers for current, prev, next only
+    final keepUrls = <String>{};
+    for (final i in [currentIndex - 1, currentIndex, currentIndex + 1]) {
+      final url = _urlAt(i);
+      if (url != null) keepUrls.add(url);
+    }
 
-    while (_controllers.length > maxControllers && _loadOrder.isNotEmpty) {
+    while (_controllers.length > _maxControllers && _loadOrder.isNotEmpty) {
       final oldestUrl = _loadOrder.first;
 
-      // Don't evict if it's in the keep list
       if (keepUrls.contains(oldestUrl)) {
         _loadOrder.removeAt(0);
-        _loadOrder.add(oldestUrl); // Move to end
+        _loadOrder.add(oldestUrl);
         continue;
       }
 
-      // Dispose and remove
       final controller = _controllers.remove(oldestUrl);
       controller?.dispose();
       _isInitialized.remove(oldestUrl);
       _loadOrder.removeAt(0);
 
-      debugPrint('[VideoPreload] Evicted: ${oldestUrl.substring(0, 50)}...');
+      debugPrint('[VideoPreload] Evicted: ${_shortUrl(oldestUrl)}');
     }
   }
 
-  /// Play a specific video (pause all others)
+  /// Play a specific video and pause all others.
   void playVideo(String videoUrl) {
     for (final entry in _controllers.entries) {
       if (entry.key == videoUrl) {
@@ -127,14 +170,18 @@ class VideoPreloadManager {
     }
   }
 
-  /// Pause all videos
+  /// Pause all videos.
   void pauseAll() {
     for (final controller in _controllers.values) {
       controller.pause();
     }
   }
 
-  /// Dispose all controllers
+  String _shortUrl(String url) {
+    return url.length > 60 ? '${url.substring(0, 60)}...' : url;
+  }
+
+  @override
   void dispose() {
     for (final controller in _controllers.values) {
       controller.dispose();
@@ -142,5 +189,6 @@ class VideoPreloadManager {
     _controllers.clear();
     _isInitialized.clear();
     _loadOrder.clear();
+    super.dispose();
   }
 }

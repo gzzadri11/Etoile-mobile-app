@@ -67,6 +67,7 @@ class Conversation extends Equatable {
   final String? otherUserAvatar;
   final String? otherUserTitle;
   final bool isOtherUserVerified;
+  final String? otherUserRole;
 
   const Conversation({
     required this.id,
@@ -82,6 +83,7 @@ class Conversation extends Equatable {
     this.otherUserAvatar,
     this.otherUserTitle,
     this.isOtherUserVerified = false,
+    this.otherUserRole,
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
@@ -126,6 +128,7 @@ class Conversation extends Equatable {
     String? otherUserAvatar,
     String? otherUserTitle,
     bool? isOtherUserVerified,
+    String? otherUserRole,
   }) {
     return Conversation(
       id: id,
@@ -141,9 +144,10 @@ class Conversation extends Equatable {
       otherUserAvatar: otherUserAvatar ?? this.otherUserAvatar,
       otherUserTitle: otherUserTitle ?? this.otherUserTitle,
       isOtherUserVerified: isOtherUserVerified ?? this.isOtherUserVerified,
+      otherUserRole: otherUserRole ?? this.otherUserRole,
     );
   }
 
   @override
-  List<Object?> get props => [id, participant1, participant2, lastMessageAt];
+  List<Object?> get props => [id, participant1, participant2, lastMessageAt, otherUserRole];
 }

@@ -254,8 +254,10 @@ class MessageRepository {
         final name = '$firstName $lastName'.trim();
         return conversation.copyWith(
           otherUserName: name.isNotEmpty ? name : 'Utilisateur',
+          otherUserAvatar: seekerProfile['photo_url'] as String?,
           otherUserTitle: seekerProfile['bio'] as String?,
           isOtherUserVerified: false,
+          otherUserRole: 'seeker',
         );
       }
 
@@ -272,6 +274,7 @@ class MessageRepository {
           otherUserAvatar: recruiterProfile['logo_url'] as String?,
           otherUserTitle: recruiterProfile['sector'] as String?,
           isOtherUserVerified: recruiterProfile['verification_status'] == 'verified',
+          otherUserRole: 'recruiter',
         );
       }
 

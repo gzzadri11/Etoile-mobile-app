@@ -1,16 +1,19 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../core/constants/app_colors.dart';
 
-/// Video player widget for feed items
-/// Handles autoplay, pause on swipe, and tap to play/pause
-/// Can use an external controller (for preloading) or create its own
+/// Video player widget for feed items.
+///
+/// Waits for preloaded controller from the manager. Falls back to creating
+/// its own after a short timeout. Shows buffering progress while loading.
 class FeedVideoPlayer extends StatefulWidget {
   final String videoUrl;
   final String? thumbnailUrl;
   final bool isActive;
   final VoidCallback? onVideoEnd;
+  final VoidCallback? onVideoPlaying;
   final VideoPlayerController? externalController;
   final bool isExternalReady;
 
@@ -20,6 +23,7 @@ class FeedVideoPlayer extends StatefulWidget {
     this.thumbnailUrl,
     required this.isActive,
     this.onVideoEnd,
+    this.onVideoPlaying,
     this.externalController,
     this.isExternalReady = false,
   });
@@ -34,6 +38,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
   bool _isPlaying = false;
   bool _showControls = false;
   bool _hasError = false;
+  bool _hasNotifiedPlaying = false;
 
   VideoPlayerController? get _controller =>
       widget.externalController ?? _ownController;
@@ -46,34 +51,49 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    // Only create own controller if no external one provided
-    if (widget.externalController == null) {
-      _initializeOwnVideo();
-    } else if (widget.isActive && widget.isExternalReady) {
-      _playVideo();
+
+    if (widget.externalController != null) {
+      widget.externalController!.addListener(_videoListener);
+      if (widget.isActive && widget.isExternalReady) {
+        _playVideo();
+      }
+    } else {
+      // No external controller — wait briefly, then create own
+      _scheduleFallbackInit();
     }
+  }
+
+  void _scheduleFallbackInit() {
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+      if (widget.externalController == null && _ownController == null) {
+        _initializeOwnVideo();
+      }
+    });
   }
 
   @override
   void didUpdateWidget(FeedVideoPlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Handle external controller changes
+    // External controller appeared or changed
     if (widget.externalController != oldWidget.externalController) {
+      oldWidget.externalController?.removeListener(_videoListener);
+
       if (widget.externalController != null) {
-        // Dispose own controller if we now have an external one
+        widget.externalController!.addListener(_videoListener);
         _disposeOwnController();
       } else if (widget.externalController == null && _ownController == null) {
-        // Create own controller if external was removed
-        _initializeOwnVideo();
+        _scheduleFallbackInit();
       }
     }
 
-    // Handle active state changes - defer to avoid setState during build
+    // Active state changed
     if (widget.isActive != oldWidget.isActive) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         if (widget.isActive) {
+          _hasNotifiedPlaying = false;
           _playVideo();
         } else {
           _pauseVideo();
@@ -81,7 +101,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
       });
     }
 
-    // Handle external ready state changes - defer to avoid setState during build
+    // External controller became ready
     if (widget.isExternalReady != oldWidget.isExternalReady) {
       if (widget.isActive && widget.isExternalReady) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -91,11 +111,12 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
       }
     }
 
-    // Handle video URL changes (only for own controller)
+    // Video URL changed
     if (widget.videoUrl != oldWidget.videoUrl &&
         widget.externalController == null) {
       _disposeOwnController();
-      _initializeOwnVideo();
+      _hasNotifiedPlaying = false;
+      _scheduleFallbackInit();
     }
   }
 
@@ -103,6 +124,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
     try {
       _ownController = VideoPlayerController.networkUrl(
         Uri.parse(widget.videoUrl),
+        httpHeaders: const {'Connection': 'keep-alive'},
       );
 
       await _ownController!.initialize();
@@ -120,6 +142,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
         }
       }
     } catch (e) {
+      debugPrint('[FeedVideoPlayer] Init error: $e');
       if (mounted) {
         setState(() {
           _hasError = true;
@@ -140,7 +163,21 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
       });
     }
 
-    if (controller.value.position >= controller.value.duration) {
+    // Notify parent that video is playing (for preload trigger)
+    if (isPlaying && !_hasNotifiedPlaying) {
+      _hasNotifiedPlaying = true;
+      widget.onVideoPlaying?.call();
+    }
+
+    // Trigger rebuild for buffering progress updates
+    if (mounted) {
+      setState(() {});
+    }
+
+    // Detect video end
+    final position = controller.value.position;
+    final duration = controller.value.duration;
+    if (duration > Duration.zero && position >= duration) {
       widget.onVideoEnd?.call();
     }
   }
@@ -178,15 +215,9 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
       _playVideo();
     }
 
-    setState(() {
-      _showControls = true;
-    });
+    setState(() => _showControls = true);
     Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _showControls = false;
-        });
-      }
+      if (mounted) setState(() => _showControls = false);
     });
   }
 
@@ -199,9 +230,15 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
 
   @override
   void dispose() {
-    // Only dispose our own controller, not external ones
+    widget.externalController?.removeListener(_videoListener);
     _disposeOwnController();
     super.dispose();
+  }
+
+  bool get _isBuffering {
+    final controller = _controller;
+    if (controller == null || !_isInitialized) return false;
+    return controller.value.isBuffering;
   }
 
   @override
@@ -226,7 +263,16 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
             else
               _buildLoadingState(),
 
-            // Play/Pause overlay - only show when user taps (not on pause from scroll)
+            // Buffering overlay (video initialized but still buffering)
+            if (_isInitialized && _isBuffering)
+              const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryYellow,
+                  strokeWidth: 3,
+                ),
+              ),
+
+            // Play/Pause overlay
             if (_showControls) _buildPlayPauseOverlay(),
 
             // Progress bar at bottom
@@ -248,14 +294,28 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
       fit: StackFit.expand,
       children: [
         if (widget.thumbnailUrl != null)
-          Image.network(
-            widget.thumbnailUrl!,
+          CachedNetworkImage(
+            imageUrl: widget.thumbnailUrl!,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            placeholder: (_, _) => const SizedBox.shrink(),
+            errorWidget: (_, _, _) => const SizedBox.shrink(),
           ),
-        const Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primaryYellow,
+        Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(
+                color: AppColors.primaryYellow,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Chargement...',
+                style: TextStyle(
+                  color: AppColors.white.withValues(alpha: 0.7),
+                  fontSize: 13,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -267,10 +327,10 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
       fit: StackFit.expand,
       children: [
         if (widget.thumbnailUrl != null)
-          Image.network(
-            widget.thumbnailUrl!,
+          CachedNetworkImage(
+            imageUrl: widget.thumbnailUrl!,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(color: AppColors.black),
+            errorWidget: (_, _, _) => Container(color: AppColors.black),
           )
         else
           Container(color: AppColors.black),
@@ -293,9 +353,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
               const SizedBox(height: 16),
               TextButton.icon(
                 onPressed: () {
-                  setState(() {
-                    _hasError = false;
-                  });
+                  setState(() => _hasError = false);
                   _initializeOwnVideo();
                 },
                 icon: const Icon(Icons.refresh, color: AppColors.white),

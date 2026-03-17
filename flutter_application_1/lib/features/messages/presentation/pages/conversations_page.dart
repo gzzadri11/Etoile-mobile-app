@@ -11,6 +11,7 @@ import '../../data/models/message_model.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../data/repositories/block_repository.dart';
 import '../../data/repositories/message_repository.dart';
+import '../../../profile/data/repositories/profile_repository.dart';
 
 /// Conversations list page
 class ConversationsPage extends StatefulWidget {
@@ -25,10 +26,12 @@ class _ConversationsPageState extends State<ConversationsPage> {
   bool _isLoading = true;
   String? _error;
   RealtimeChannel? _conversationsChannel;
+  String? _currentUserRole;
 
   @override
   void initState() {
     super.initState();
+    _currentUserRole = GetIt.I<ProfileRepository>().currentUserRole;
     _loadConversations();
     _subscribeToConversations();
   }
@@ -208,10 +211,19 @@ class _ConversationsPageState extends State<ConversationsPage> {
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final conversation = _conversations[index];
+        final otherUserId = conversation.getOtherParticipantId(currentUserId);
         return _ConversationTile(
           conversation: conversation,
           currentUserId: currentUserId,
-          onTap: () => context.push(AppRoutes.chatWith(conversation.id)),
+          onTap: () {
+            // Recruiter tapping on a seeker → open public profile first
+            if (_currentUserRole == 'recruiter' &&
+                conversation.otherUserRole == 'seeker') {
+              context.push(AppRoutes.publicProfileFor(otherUserId));
+            } else {
+              context.push(AppRoutes.chatWith(conversation.id));
+            }
+          },
         );
       },
     );

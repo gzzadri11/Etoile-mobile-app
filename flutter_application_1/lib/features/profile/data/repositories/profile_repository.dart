@@ -176,6 +176,29 @@ class ProfileRepository {
     return url;
   }
 
+  /// Upload seeker photo to Supabase Storage and return public URL
+  Future<String> uploadSeekerPhoto(Uint8List bytes, String extension) async {
+    final userId = currentUserId;
+    if (userId == null) throw Exception('Utilisateur non connecte');
+
+    final path = '$userId/photo.$extension';
+
+    await _supabaseClient.storage.from('seeker-photos').uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: 'image/$extension',
+          ),
+        );
+
+    final url = _supabaseClient.storage
+        .from('seeker-photos')
+        .getPublicUrl(path);
+
+    return url;
+  }
+
   // ===========================================================================
   // DOCUMENT JUSTIFICATIF
   // ===========================================================================

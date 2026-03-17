@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-03-11
-**Statut** : Sprint 22 TERMINE. Deploiement infra TERMINE. Sprint 13 camera toujours reportee.
+**Date de mise a jour** : 2026-03-17
+**Statut** : Sprint 24 TERMINE. Sprint 23 TERMINE. Deploiement infra TERMINE. Sprint 13 camera toujours reportee.
 
 ---
 
@@ -16,6 +16,68 @@ flutter run -d edge
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+---
+
+## Ce qui a ete fait — Sprint 24 : Photo profil chercheur + Profil public + Feed optimise (2026-03-17)
+
+### Changement 1 : Photo profil chercheur — DONE
+- `seeker_profile_model.dart` : +champ `photoUrl` (fromJson/toJson/copyWith/props)
+- `edit_seeker_profile_page.dart` : photo picker (ImagePicker) + crop circulaire (CircleCropDialog) + upload Supabase Storage
+- `profile_repository.dart` : +`uploadSeekerPhoto()` (bucket `seeker-photos`), +`getSeekerProfileById()`
+- `profile_page.dart` : affiche photo dans header seeker (CircleAvatar avec NetworkImage)
+- **Completude profil redefinie** : photo(20%) + identite(20%) + etudes(20%) + localisation(20%) + domaine(20%) = 100%
+  - L'ancien 20% "inscription" est remplace par 20% "photo" (obligatoire pour completer)
+- **Nouveau** : `circle_crop_dialog.dart` — dialog plein ecran crop circulaire (lib `crop_your_image`)
+
+### Changement 2 : Profil public chercheur — DONE
+- **Nouveau** : `public_seeker_profile_page.dart` — page read-only vue par recruteurs
+  - Header avec photo + nom + age
+  - Infos : ecole/niveau, ville, domaine/specialite
+  - Grille videos avec thumbnails (CachedNetworkImage)
+  - Bouton "Envoyer un message" (recruteurs uniquement, gate profil, guard block)
+- `app_router.dart` : route `/public-profile/:userId` transformee en `_PublicProfileRouter` intelligent
+  - Charge seeker + recruiter profiles en parallele, detecte le role, redirige vers la bonne page
+
+### Changement 3 : Optimisation preload video feed — DONE
+- `video_preload_manager.dart` : reecrit — strategie bandwidth-aware
+  - Priorite : charge video courante d'abord, preload suivante APRES que la courante joue
+  - Cache LRU max 4 controleurs (prev, current, next, +1 buffer)
+  - Extends ChangeNotifier pour rebuild reactifs
+  - Header HTTP `Connection: keep-alive` sur toutes les requetes
+- `feed_video_player.dart` : integration nouveau preload manager
+  - Fallback 600ms : attend controleur precharge, sinon cree le sien
+  - Indicateur buffering separe du loading
+  - CachedNetworkImage pour thumbnails
+  - Meilleure gestion lifecycle + disposal
+- `feed_page.dart` : integration listener pattern avec preload manager
+
+### Changement 4 : Navigation messagerie vers profils — DONE
+- `conversations_page.dart` : recruteurs voient profil public seeker avant le chat
+- `chat_page.dart` : titre cliquable → navigation vers profil public de l'interlocuteur
+- `message_model.dart` : +champ `otherUserRole` sur Conversation
+- `message_repository.dart` : hydrate `otherUserRole` + `otherUserAvatar` (photo_url seeker / logo_url recruiter)
+
+### Changement 5 : Migration categories → secteurs (publish) — DONE
+- `publish_offer_page.dart` : dropdown categories dynamiques remplace par secteurs statiques (SectorConstants)
+- `feed_repository.dart` : suppression `_loadCategories`
+- Labels "Categorie" → "Secteur" dans l'UI
+
+### Changement 6 : Migration SQL — A DEPLOYER
+- `20260318000000_seeker_photo_url.sql` : `ALTER TABLE seeker_profiles ADD COLUMN photo_url`
+  - Bucket storage `seeker-photos` (public, 5MB max, images only)
+  - RLS : upload/update own folder, public read
+
+### Resultats
+- **69/69 tests pass** (4 nouveaux tests profil), 0 issues flutter analyze
+- Dependency ajoutee : `crop_your_image: ^1.1.0`
+- Migration SQL prete (a deployer via `supabase db push`)
+
+---
+
+## Ce qui a ete fait — Sprint 23 : Correction 9 bugs beta + admin RLS + verification auto 100% (2026-03-11)
+
+*(Commite le 2026-03-11 — voir commit 649d654)*
 
 ---
 
@@ -609,12 +671,13 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | **20** | **Ameliorations UX + A11y (7/7 stories, 14/14 pts)** | **DONE** |
 | **21** | **Systeme Admin (fix crash + nav dediee + audit logs)** | **DONE** |
 | **22** | **Ameliorations UX + Verification Email + Sous-secteurs (6 changements)** | **DONE** |
+| **23** | **Correction 9 bugs beta + admin RLS + verification auto 100%** | **DONE** |
+| **24** | **Photo profil chercheur + Profil public seeker + Feed optimise + Nav messagerie (6 changements)** | **DONE** |
 
 ### Prochains sprints
 
 - Story reportee : 13.1 Camera in-app (8 pts, emulateur requis)
-- ~~Deployer migration SQL~~ → DONE (2026-03-11)
-- ~~Configurer Supabase email confirmations + OTP 6 chiffres~~ → DONE (2026-03-11)
+- Deployer migration SQL `20260318000000_seeker_photo_url.sql`
 - Passage Stripe test → production (juste avant soumission store, KYC 1-3j)
 - **Preparation beta** (store listing, TestFlight/Play Console) ← PROCHAINE ETAPE
 - Tous les pre-requis infra sont deployes (migrations, OTP, admin, bucket, Edge Functions, RLS, VIEW users, audit_logs)
@@ -665,5 +728,5 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-*Sauvegarde mise a jour le 2026-03-11*
-*Sprint 22 TERMINE. Deploiement infra TERMINE (15/15 migrations, OTP 6 chiffres configure, Supabase CLI fixe). 65/65 tests pass. Stripe reste en mode test jusqu'a soumission store. Next: Preparation beta (store listing, TestFlight/Play Console).*
+*Sauvegarde mise a jour le 2026-03-17*
+*Sprint 24 TERMINE. Photo profil chercheur + profil public seeker + feed optimise + nav messagerie. 69/69 tests pass. Migration seeker_photo_url a deployer. Stripe reste en mode test. Next: Deployer migration + preparation beta.*

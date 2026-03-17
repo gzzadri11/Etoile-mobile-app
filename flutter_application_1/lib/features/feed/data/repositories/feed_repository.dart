@@ -228,6 +228,7 @@ class FeedRepository {
           seekerProfile['city'] as String?,
           seekerProfile['region'] as String?,
         ),
+        userAvatarUrl: seekerProfile['photo_url'] as String?,
         isRecruiter: false,
         isVerified: false,
         region: seekerProfile['region'] as String?,
@@ -323,6 +324,7 @@ class FeedRepository {
             seekerProfile['city'] as String?,
             seekerProfile['region'] as String?,
           ),
+          userAvatarUrl: seekerProfile['photo_url'] as String?,
           isRecruiter: false,
           isVerified: false,
           // Filterable fields

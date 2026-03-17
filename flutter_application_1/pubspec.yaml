@@ -39,6 +39,7 @@ dependencies:
   chewie: ^1.8.5
   camera: ^0.11.0+2
   image_picker: ^1.1.2
+  crop_your_image: ^1.1.0
 
   # Map
   flutter_map: ^7.0.2

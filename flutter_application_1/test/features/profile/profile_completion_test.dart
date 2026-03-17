@@ -15,6 +15,7 @@ void main() {
       String? studyLevel,
       String? city,
       String? domain,
+      String? photoUrl,
     }) {
       return SeekerProfile(
         userId: 'user-1',
@@ -25,18 +26,25 @@ void main() {
         studyLevel: studyLevel,
         city: city,
         domain: domain,
+        photoUrl: photoUrl,
         createdAt: now,
         updatedAt: now,
       );
     }
 
-    test('returns 20% for empty profile (inscription only)', () {
+    test('returns 0% for empty profile (no photo, no fields)', () {
       final profile = buildSeeker();
+      expect(profile.completionPercentage, 0);
+    });
+
+    test('returns 20% with photo only', () {
+      final profile = buildSeeker(photoUrl: 'https://example.com/photo.jpg');
       expect(profile.completionPercentage, 20);
     });
 
-    test('returns 40% with inscription + identity (firstName+lastName+age)', () {
+    test('returns 40% with photo + identity (firstName+lastName+age)', () {
       final profile = buildSeeker(
+        photoUrl: 'https://example.com/photo.jpg',
         firstName: 'Jean',
         lastName: 'Dupont',
         age: '22',
@@ -44,23 +52,33 @@ void main() {
       expect(profile.completionPercentage, 40);
     });
 
+    test('identity without photo gives only 20%', () {
+      final profile = buildSeeker(
+        firstName: 'Jean',
+        lastName: 'Dupont',
+        age: '22',
+      );
+      expect(profile.completionPercentage, 20);
+    });
+
     test('identity requires all three: firstName, lastName, age', () {
       // Only firstName → no identity bonus
-      expect(buildSeeker(firstName: 'Jean').completionPercentage, 20);
+      expect(buildSeeker(firstName: 'Jean', photoUrl: 'https://x.com/p.jpg').completionPercentage, 20);
       // firstName + lastName but no age → no identity bonus
       expect(
-        buildSeeker(firstName: 'Jean', lastName: 'Dupont').completionPercentage,
+        buildSeeker(firstName: 'Jean', lastName: 'Dupont', photoUrl: 'https://x.com/p.jpg').completionPercentage,
         20,
       );
       // firstName + age but no lastName → no identity bonus
       expect(
-        buildSeeker(firstName: 'Jean', age: '22').completionPercentage,
+        buildSeeker(firstName: 'Jean', age: '22', photoUrl: 'https://x.com/p.jpg').completionPercentage,
         20,
       );
     });
 
-    test('returns 60% with identity + studies (school+studyLevel)', () {
+    test('returns 60% with photo + identity + studies (school+studyLevel)', () {
       final profile = buildSeeker(
+        photoUrl: 'https://example.com/photo.jpg',
         firstName: 'Jean',
         lastName: 'Dupont',
         age: '22',
@@ -74,6 +92,7 @@ void main() {
       // Only school → no studies bonus
       expect(
         buildSeeker(
+          photoUrl: 'https://example.com/photo.jpg',
           firstName: 'Jean',
           lastName: 'Dupont',
           age: '22',
@@ -84,6 +103,7 @@ void main() {
       // Only studyLevel → no studies bonus
       expect(
         buildSeeker(
+          photoUrl: 'https://example.com/photo.jpg',
           firstName: 'Jean',
           lastName: 'Dupont',
           age: '22',
@@ -93,8 +113,9 @@ void main() {
       );
     });
 
-    test('returns 80% with identity + studies + city', () {
+    test('returns 80% with photo + identity + studies + city', () {
       final profile = buildSeeker(
+        photoUrl: 'https://example.com/photo.jpg',
         firstName: 'Jean',
         lastName: 'Dupont',
         age: '22',
@@ -105,8 +126,9 @@ void main() {
       expect(profile.completionPercentage, 80);
     });
 
-    test('returns 100% when all 5 categories filled', () {
+    test('returns 100% when all 5 categories filled (with photo)', () {
       final profile = buildSeeker(
+        photoUrl: 'https://example.com/photo.jpg',
         firstName: 'Jean',
         lastName: 'Dupont',
         age: '22',
@@ -118,9 +140,27 @@ void main() {
       expect(profile.completionPercentage, 100);
     });
 
-    test('domain alone adds 20% to inscription', () {
+    test('all fields but no photo gives 80%', () {
+      final profile = buildSeeker(
+        firstName: 'Jean',
+        lastName: 'Dupont',
+        age: '22',
+        school: 'Lycee Victor Hugo',
+        studyLevel: 'bac+2',
+        city: 'Paris',
+        domain: 'commerce_vente',
+      );
+      expect(profile.completionPercentage, 80);
+    });
+
+    test('domain alone adds 20%', () {
       final profile = buildSeeker(domain: 'restauration_hotellerie');
-      expect(profile.completionPercentage, 40);
+      expect(profile.completionPercentage, 20);
+    });
+
+    test('empty photoUrl does not count', () {
+      final profile = buildSeeker(photoUrl: '');
+      expect(profile.completionPercentage, 0);
     });
   });
 

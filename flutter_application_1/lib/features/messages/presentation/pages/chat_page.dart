@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/services/push_notification_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../report/presentation/widgets/report_dialog.dart';
@@ -168,11 +169,14 @@ class _ChatViewState extends State<_ChatView> {
     String title = 'Conversation';
     String? subtitle;
     bool isVerified = false;
+    String? otherUserId;
 
     if (state is MessageLoaded) {
       title = state.conversation.otherUserName ?? 'Utilisateur';
       subtitle = state.conversation.otherUserTitle;
       isVerified = state.conversation.isOtherUserVerified;
+      final currentUserId = context.read<MessageBloc>().currentUserId ?? '';
+      otherUserId = state.conversation.getOtherParticipantId(currentUserId);
     }
 
     return AppBar(
@@ -186,15 +190,15 @@ class _ChatViewState extends State<_ChatView> {
             onSelected: (value) {
               final currentUserId =
                   context.read<MessageBloc>().currentUserId ?? '';
-              final otherUserId = state.conversation
+              final uid = state.conversation
                   .getOtherParticipantId(currentUserId);
               if (value == 'report') {
                 showReportDialog(
                   context,
-                  reportedUserId: otherUserId,
+                  reportedUserId: uid,
                 );
               } else if (value == 'block') {
-                _showBlockConfirmation(context, otherUserId,
+                _showBlockConfirmation(context, uid,
                     state.conversation.otherUserName ?? 'cet utilisateur');
               }
             },
@@ -222,37 +226,42 @@ class _ChatViewState extends State<_ChatView> {
             ],
           ),
       ],
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  title,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (isVerified) ...[
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.check_circle,
-                  size: 14,
-                  color: AppColors.primaryYellow,
-                ),
-              ],
-            ],
-          ),
-          if (subtitle != null)
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.greyWarm,
+      title: GestureDetector(
+        onTap: otherUserId != null
+            ? () => context.push(AppRoutes.publicProfileFor(otherUserId!))
+            : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
                   ),
-              overflow: TextOverflow.ellipsis,
+                ),
+                if (isVerified) ...[
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.check_circle,
+                    size: 14,
+                    color: AppColors.primaryYellow,
+                  ),
+                ],
+              ],
             ),
-        ],
+            if (subtitle != null)
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.greyWarm,
+                    ),
+                overflow: TextOverflow.ellipsis,
+              ),
+          ],
+        ),
       ),
     );
   }

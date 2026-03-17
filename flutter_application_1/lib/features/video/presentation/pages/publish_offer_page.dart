@@ -9,12 +9,12 @@ import 'package:video_player/video_player.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/sector_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/video_upload_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/profile_gate.dart';
-import '../../../feed/data/repositories/feed_repository.dart';
 import '../../data/repositories/video_repository.dart';
 
 /// Page for recruiters to publish a video offer or an image poster.
@@ -53,14 +53,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   int _uploadProgress = 0;
   String? _errorMessage;
 
-  // Categories loaded from DB
-  List<Map<String, dynamic>> _categories = [];
-  bool _categoriesLoading = true;
-
   @override
   void initState() {
     super.initState();
-    _loadCategories();
   }
 
   @override
@@ -69,24 +64,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _descriptionController.dispose();
     _videoController?.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadCategories() async {
-    try {
-      final feedRepo = GetIt.I<FeedRepository>();
-      final response = await feedRepo.getCategories();
-      if (mounted) {
-        setState(() {
-          _categories = response;
-          _categoriesLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('[PublishOffer] Failed to load categories: $e');
-      if (mounted) {
-        setState(() => _categoriesLoading = false);
-      }
-    }
   }
 
   Future<void> _pickPresentation() async {
@@ -225,7 +202,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final video = await videoRepo.createVideo(
           type: 'poster',
           videoKey: imageResult.key,
-          categoryId: _selectedCategory,
+          categoryId: null,
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isNotEmpty
               ? _descriptionController.text.trim()
@@ -264,7 +241,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final video = await videoRepo.createVideo(
           type: _publishType,
           videoKey: videoResult.key,
-          categoryId: _selectedCategory,
+          categoryId: null,
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isNotEmpty
               ? _descriptionController.text.trim()
@@ -382,8 +359,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           descriptionController: _descriptionController,
           selectedCategory: _selectedCategory,
           selectedContractType: _selectedContractType,
-          categories: _categories,
-          categoriesLoading: _categoriesLoading,
           errorMessage: _errorMessage,
           publishType: _publishType,
           onCategoryChanged: (v) => setState(() => _selectedCategory = v),
@@ -668,8 +643,6 @@ class _FormView extends StatelessWidget {
   final TextEditingController descriptionController;
   final String? selectedCategory;
   final String? selectedContractType;
-  final List<Map<String, dynamic>> categories;
-  final bool categoriesLoading;
   final String? errorMessage;
   final String publishType;
   final ValueChanged<String?> onCategoryChanged;
@@ -682,8 +655,6 @@ class _FormView extends StatelessWidget {
     required this.descriptionController,
     required this.selectedCategory,
     this.selectedContractType,
-    required this.categories,
-    required this.categoriesLoading,
     required this.errorMessage,
     this.publishType = 'offer',
     required this.onCategoryChanged,
@@ -769,36 +740,28 @@ class _FormView extends StatelessWidget {
             ),
             const SizedBox(height: AppTheme.spaceMd),
 
-            // Category
-            if (categoriesLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(AppTheme.spaceMd),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else
-              DropdownButtonFormField<String>(
-                initialValue: selectedCategory,
-                decoration: const InputDecoration(
-                  labelText: 'Categorie',
-                  hintText: 'Selectionnez une categorie',
-                  prefixIcon: Icon(Icons.category_outlined),
-                ),
-                items: categories.map((cat) {
-                  return DropdownMenuItem<String>(
-                    value: cat['id'] as String,
-                    child: Text(cat['name'] as String? ?? cat['id'] as String),
-                  );
-                }).toList(),
-                onChanged: onCategoryChanged,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Selectionnez une categorie';
-                  }
-                  return null;
-                },
+            // Sector (beta: 2 sectors from SectorConstants)
+            DropdownButtonFormField<String>(
+              initialValue: selectedCategory,
+              decoration: const InputDecoration(
+                labelText: 'Secteur',
+                hintText: 'Selectionnez un secteur',
+                prefixIcon: Icon(Icons.category_outlined),
               ),
+              items: SectorConstants.sectorOptions.map((code) {
+                return DropdownMenuItem<String>(
+                  value: code,
+                  child: Text(SectorConstants.sectorLabels[code] ?? code),
+                );
+              }).toList(),
+              onChanged: onCategoryChanged,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Selectionnez un secteur';
+                }
+                return null;
+              },
+            ),
 
             // Contract type (only for offers/posters, not presentations)
             if (!_isPresentation) ...[

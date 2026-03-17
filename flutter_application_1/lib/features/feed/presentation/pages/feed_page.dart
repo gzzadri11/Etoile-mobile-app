@@ -77,14 +77,26 @@ class _FeedView extends StatefulWidget {
 
 class _FeedViewState extends State<_FeedView> {
   PageController _pageController = PageController();
-  VideoPreloadManager _preloadManager = VideoPreloadManager(preloadCount: 2);
+  VideoPreloadManager _preloadManager = VideoPreloadManager();
   int _currentPage = 0;
   bool _isRefreshing = false;
   List<String?> _videoUrls = [];
   String _selectedTab = 'offers';
 
   @override
+  void initState() {
+    super.initState();
+    _preloadManager.addListener(_onPreloadChanged);
+  }
+
+  void _onPreloadChanged() {
+    // Rebuild when preload manager notifies (controller became ready)
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _preloadManager.removeListener(_onPreloadChanged);
     _pageController.dispose();
     _preloadManager.dispose();
     super.dispose();
@@ -93,26 +105,33 @@ class _FeedViewState extends State<_FeedView> {
   void _switchTab(String tab) {
     if (tab == _selectedTab) return;
     _pageController.dispose();
+    _preloadManager.removeListener(_onPreloadChanged);
     _preloadManager.dispose();
     setState(() {
       _selectedTab = tab;
       _currentPage = 0;
       _videoUrls = [];
       _pageController = PageController();
-      _preloadManager = VideoPreloadManager(preloadCount: 2);
+      _preloadManager = VideoPreloadManager();
+      _preloadManager.addListener(_onPreloadChanged);
     });
     final authState = context.read<AuthBloc>().state;
     final role = authState is AuthAuthenticated ? authState.role : 'seeker';
     context.read<FeedBloc>().add(FeedLoadRequested(userRole: role, feedTab: tab));
   }
 
-  /// Preload videos around current index
-  void _preloadVideos(int currentIndex) {
+  /// Notify preload manager of page change
+  void _onPageChangedPreload(int currentIndex) {
     if (_videoUrls.isEmpty) return;
-    _preloadManager.preloadAround(
+    _preloadManager.onPageChanged(
       currentIndex: currentIndex,
       videoUrls: _videoUrls,
     );
+  }
+
+  /// Called when the current video starts playing — triggers next preload
+  void _onCurrentVideoPlaying() {
+    _preloadManager.onCurrentVideoPlaying();
   }
 
   void _showFilters(BuildContext context, FeedLoaded state) {
@@ -303,9 +322,9 @@ class _FeedViewState extends State<_FeedView> {
         return item.video.videoUrl;
       }).toList();
 
-      // Preload initial videos
+      // Notify preload manager of initial/current page
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _preloadVideos(_currentPage);
+        _onPageChangedPreload(_currentPage);
       });
 
       return PageView.builder(
@@ -317,8 +336,8 @@ class _FeedViewState extends State<_FeedView> {
             _currentPage = index;
           });
 
-          // Preload videos around new position
-          _preloadVideos(index);
+          // Notify preload manager of new position
+          _onPageChangedPreload(index);
 
           // Record view for previous video
           if (index > 0 && index <= state.items.length) {
@@ -357,6 +376,9 @@ class _FeedViewState extends State<_FeedView> {
             isControllerReady: videoUrl != null
                 ? _preloadManager.isReady(videoUrl)
                 : false,
+            onVideoPlaying: index == _currentPage
+                ? _onCurrentVideoPlaying
+                : null,
           );
         },
       );
@@ -443,6 +465,7 @@ class _VideoCard extends StatelessWidget {
   final String userRole;
   final VideoPlayerController? preloadedController;
   final bool isControllerReady;
+  final VoidCallback? onVideoPlaying;
 
   const _VideoCard({
     required this.feedItem,
@@ -450,6 +473,7 @@ class _VideoCard extends StatelessWidget {
     required this.userRole,
     this.preloadedController,
     this.isControllerReady = false,
+    this.onVideoPlaying,
   });
 
   bool get _isPoster => feedItem.video.type == 'poster';
@@ -479,6 +503,7 @@ class _VideoCard extends StatelessWidget {
             isActive: isActive,
             externalController: preloadedController,
             isExternalReady: isControllerReady,
+            onVideoPlaying: onVideoPlaying,
           )
         else
           Container(

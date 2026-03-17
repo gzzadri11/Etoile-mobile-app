@@ -24,6 +24,8 @@ import '../../features/payment/presentation/bloc/payment_event.dart';
 import '../../features/payment/presentation/pages/recruiter_premium_page.dart';
 import '../../features/payment/presentation/pages/subscription_management_page.dart';
 import '../../features/profile/presentation/pages/public_recruiter_profile_page.dart';
+import '../../features/profile/presentation/pages/public_seeker_profile_page.dart';
+import '../../features/profile/data/repositories/profile_repository.dart';
 import '../../features/admin/data/repositories/admin_repository.dart';
 import '../../features/admin/presentation/bloc/admin_bloc.dart';
 import '../../features/admin/presentation/bloc/admin_event.dart';
@@ -398,12 +400,12 @@ class AppRouter {
         },
       ),
 
-      // Public recruiter profile (read-only, for seekers)
+      // Public profile (role-aware: resolves seeker or recruiter)
       GoRoute(
         path: AppRoutes.publicProfile,
         builder: (context, state) {
           final userId = state.pathParameters['userId']!;
-          return PublicRecruiterProfilePage(userId: userId);
+          return _PublicProfileRouter(userId: userId);
         },
       ),
 
@@ -637,6 +639,64 @@ class _PremiumPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Premium')),
       body: const Center(child: Text('Premium Page - A implementer')),
     );
+  }
+}
+
+class _PublicProfileRouter extends StatefulWidget {
+  final String userId;
+  const _PublicProfileRouter({required this.userId});
+
+  @override
+  State<_PublicProfileRouter> createState() => _PublicProfileRouterState();
+}
+
+class _PublicProfileRouterState extends State<_PublicProfileRouter> {
+  String? _resolvedRole;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveRole();
+  }
+
+  Future<void> _resolveRole() async {
+    try {
+      final profileRepo = GetIt.I<ProfileRepository>();
+      final results = await Future.wait([
+        profileRepo.getSeekerProfileById(widget.userId),
+        profileRepo.getRecruiterProfileById(widget.userId),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          if (results[0] != null) {
+            _resolvedRole = 'seeker';
+          } else if (results[1] != null) {
+            _resolvedRole = 'recruiter';
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_resolvedRole == 'seeker') {
+      return PublicSeekerProfilePage(userId: widget.userId);
+    }
+    return PublicRecruiterProfilePage(userId: widget.userId);
   }
 }
 

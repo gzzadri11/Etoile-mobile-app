@@ -148,6 +148,26 @@ class _SeekerProfileView extends StatelessWidget {
 
               const SizedBox(height: AppTheme.spaceLg),
 
+              // Profile photo
+              if (profile.photoUrl != null && profile.photoUrl!.isNotEmpty)
+                Center(
+                  child: CircleAvatar(
+                    radius: 48,
+                    backgroundColor: AppColors.greyLight,
+                    backgroundImage: NetworkImage(profile.photoUrl!),
+                  ),
+                )
+              else
+                Center(
+                  child: CircleAvatar(
+                    radius: 48,
+                    backgroundColor: AppColors.greyLight,
+                    child: const Icon(Icons.person, size: 48, color: AppColors.greyMedium),
+                  ),
+                ),
+
+              const SizedBox(height: AppTheme.spaceMd),
+
               // Profile info
               _ProfileInfoCard(
                 name: profile.fullName,
