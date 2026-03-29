@@ -241,6 +241,8 @@ class MessageRepository {
     String otherUserId,
   ) async {
     try {
+      Conversation enriched;
+
       // Try seeker profile first
       final seekerProfile = await _supabaseClient
           .from('seeker_profiles')
@@ -252,36 +254,62 @@ class MessageRepository {
         final firstName = seekerProfile['first_name'] as String? ?? '';
         final lastName = seekerProfile['last_name'] as String? ?? '';
         final name = '$firstName $lastName'.trim();
-        return conversation.copyWith(
+        enriched = conversation.copyWith(
           otherUserName: name.isNotEmpty ? name : 'Utilisateur',
           otherUserAvatar: seekerProfile['photo_url'] as String?,
           otherUserTitle: seekerProfile['bio'] as String?,
           isOtherUserVerified: false,
           otherUserRole: 'seeker',
         );
+      } else {
+        // Try recruiter profile
+        final recruiterProfile = await _supabaseClient
+            .from('recruiter_profiles')
+            .select()
+            .eq('user_id', otherUserId)
+            .maybeSingle();
+
+        if (recruiterProfile != null) {
+          enriched = conversation.copyWith(
+            otherUserName: recruiterProfile['company_name'] as String? ?? 'Entreprise',
+            otherUserAvatar: recruiterProfile['logo_url'] as String?,
+            otherUserTitle: recruiterProfile['sector'] as String?,
+            isOtherUserVerified: recruiterProfile['verification_status'] == 'verified',
+            otherUserRole: 'recruiter',
+          );
+        } else {
+          enriched = conversation.copyWith(otherUserName: 'Utilisateur');
+        }
       }
 
-      // Try recruiter profile
-      final recruiterProfile = await _supabaseClient
-          .from('recruiter_profiles')
-          .select()
-          .eq('user_id', otherUserId)
-          .maybeSingle();
-
-      if (recruiterProfile != null) {
-        return conversation.copyWith(
-          otherUserName: recruiterProfile['company_name'] as String? ?? 'Entreprise',
-          otherUserAvatar: recruiterProfile['logo_url'] as String?,
-          otherUserTitle: recruiterProfile['sector'] as String?,
-          isOtherUserVerified: recruiterProfile['verification_status'] == 'verified',
-          otherUserRole: 'recruiter',
-        );
-      }
-
-      return conversation.copyWith(otherUserName: 'Utilisateur');
+      // Enrich with video info if conversation is linked to an offer
+      return _enrichWithVideoInfo(enriched);
     } catch (e) {
       debugPrint('[Messages] Error enriching conversation: $e');
       return conversation.copyWith(otherUserName: 'Utilisateur');
     }
+  }
+
+  /// Enrich conversation with linked video/offer info
+  Future<Conversation> _enrichWithVideoInfo(Conversation conversation) async {
+    if (conversation.videoId == null) return conversation;
+    try {
+      final video = await _supabaseClient
+          .from('videos')
+          .select('title, type, thumbnail_url')
+          .eq('id', conversation.videoId!)
+          .maybeSingle();
+
+      if (video != null) {
+        return conversation.copyWith(
+          videoTitle: video['title'] as String?,
+          videoType: video['type'] as String?,
+          videoThumbnailUrl: video['thumbnail_url'] as String?,
+        );
+      }
+    } catch (e) {
+      debugPrint('[Messages] Error enriching video info: $e');
+    }
+    return conversation;
   }
 }

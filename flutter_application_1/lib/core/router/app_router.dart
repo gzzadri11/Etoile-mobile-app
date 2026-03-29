@@ -26,6 +26,9 @@ import '../../features/payment/presentation/pages/subscription_management_page.d
 import '../../features/profile/presentation/pages/public_recruiter_profile_page.dart';
 import '../../features/profile/presentation/pages/public_seeker_profile_page.dart';
 import '../../features/profile/data/repositories/profile_repository.dart';
+import '../../features/applications/presentation/pages/offer_applications_page.dart';
+import '../../features/applications/presentation/pages/offer_candidates_page.dart';
+import '../../features/applications/presentation/pages/seeker_applications_page.dart';
 import '../../features/admin/data/repositories/admin_repository.dart';
 import '../../features/admin/presentation/bloc/admin_bloc.dart';
 import '../../features/admin/presentation/bloc/admin_event.dart';
@@ -107,6 +110,14 @@ abstract class AppRoutes {
 
   // Helper to build public profile route
   static String publicProfileFor(String userId) => '/profile/$userId';
+
+  // Applications (candidatures par offre)
+  static const String offerApplications = '/offers/applications';
+  static const String offerCandidates = '/offers/:videoId/candidates';
+  static const String seekerApplications = '/my-applications';
+
+  // Helper to build offer candidates route
+  static String offerCandidatesFor(String videoId) => '/offers/$videoId/candidates';
 }
 
 /// Application router configuration using GoRouter
@@ -398,6 +409,26 @@ class AppRouter {
           final tab = state.uri.queryParameters['tab'] ?? 'recruitment';
           return MyPublicationsPage(initialTab: tab);
         },
+      ),
+
+      // Offer applications (candidatures par offre)
+      GoRoute(
+        path: AppRoutes.offerApplications,
+        builder: (context, state) => const OfferApplicationsPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.offerCandidates,
+        builder: (context, state) {
+          final videoId = state.pathParameters['videoId']!;
+          final title = state.uri.queryParameters['title'];
+          return OfferCandidatesPage(videoId: videoId, offerTitle: title);
+        },
+      ),
+
+      // Seeker applications (mes candidatures)
+      GoRoute(
+        path: AppRoutes.seekerApplications,
+        builder: (context, state) => const SeekerApplicationsPage(),
       ),
 
       // Public profile (role-aware: resolves seeker or recruiter)

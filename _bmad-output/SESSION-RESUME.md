@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-03-17
-**Statut** : Sprint 24 TERMINE. Sprint 23 TERMINE. Deploiement infra TERMINE. Sprint 13 camera toujours reportee.
+**Date de mise a jour** : 2026-03-20
+**Statut** : Sprint 26 TERMINE. Sprint 25 TERMINE. Deploiement infra TERMINE. Sprint 13 camera toujours reportee.
 
 ---
 
@@ -16,6 +16,109 @@ flutter run -d edge
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+---
+
+## Ce qui a ete fait — Sprint 26 : Decoupler Candidatures des Conversations (2026-03-20)
+
+### Objectif
+Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recruteur peut initier le contact. Le chercheur voit ses candidatures dans son profil.
+
+### Story 26.1 : Migration SQL table `applications` — DONE
+- **Nouveau** : `supabase/migrations/20260320000000_applications_table.sql`
+  - Table `applications` (id, video_id, seeker_id, recruiter_id, status, applied_at)
+  - UNIQUE(video_id, seeker_id), index sur seeker_id/recruiter_id/video_id
+  - RLS : seeker SELECT/INSERT/UPDATE own, recruiter SELECT/UPDATE own
+  - Status : 'pending', 'contacted', 'withdrawn'
+
+### Story 26.2 : Rewrite ApplicationRepository — DONE
+- `application_repository.dart` : toutes les methodes lisent/ecrivent `applications` (plus `conversations`)
+  - +`applyToOffer(videoId, recruiterId)` — INSERT dans applications
+  - +`getAppliedVideoIds()` — Set<String> des video_id du seeker
+  - +`getSeekerApplications()` — liste enrichie (titre, entreprise, status)
+  - +`withdrawApplication(applicationId)` — UPDATE status = 'withdrawn'
+  - +`markAsContacted(applicationId)` — UPDATE status = 'contacted'
+  - Rewrite `getOffersWithApplicationCount()` — COUNT depuis applications
+  - Rewrite `getCandidatesForOffer()` — SELECT depuis applications + join seeker_profiles
+- `OfferCandidate` : `conversationId` remplace par `applicationId` + `applicationStatus`
+- **Nouveau modele** : `SeekerApplication` (id, videoId, status, offerTitle, companyName, contractType)
+
+### Story 26.3 : Feed bouton Postuler decouple — DONE
+- `feed_event.dart` : +`FeedApplyToOffer(videoId, recruiterId)`
+- `feed_state.dart` : +`appliedVideoIds` dans `FeedLoaded` + copyWith
+- `feed_bloc.dart` : +dependance `ApplicationRepository`, charge `appliedVideoIds` au load seeker, handler `_onApplyToOffer` (optimistic + rollback)
+- `injection_container.dart` : +`applicationRepository: sl()` dans FeedBloc
+- `feed_page.dart` : bouton "Postule" (grise + check) si deja applique, sinon "Postuler" → dispatch + animation succes
+
+### Story 26.4 : Animation de succes "Candidature envoyee" — DONE
+- **Nouveau** : `features/applications/presentation/widgets/apply_success_overlay.dart`
+  - OverlayEntry avec animation pure Flutter (fade in, scale circle + check, texte, hold, fade out)
+  - 1600ms total, IgnorePointer pour ne pas bloquer les interactions
+
+### Story 26.5 : Recruteur "Contacter" cree la conversation — DONE
+- `offer_candidates_page.dart` : `_openChat` reecrit :
+  1. `ConversationRepository.findOrCreateConversation(otherUserId)`
+  2. `ApplicationRepository.markAsContacted(applicationId)`
+  3. Navigation vers chat
+- Badge status sur chaque candidat : "En attente" (orange) / "Contacte" (vert)
+
+### Story 26.6 : Page "Mes candidatures" chercheur — DONE
+- **Nouveau** : `features/applications/presentation/pages/seeker_applications_page.dart`
+  - Liste cartes avec titre offre, nom entreprise, type contrat, status badge, date
+  - Bouton "Retirer" avec dialog confirmation (status pending uniquement)
+  - Pull-to-refresh + EmptyStateWidget
+- `profile_page.dart` : section "Mes candidatures" dans `_SeekerProfileView` → `/my-applications`
+- `app_router.dart` : +route `/my-applications` + import
+
+### Story 26.7 : Tests — DONE
+- `application_repository_test.dart` : adapte pour applicationId/applicationStatus + tests SeekerApplication (4 nouveaux)
+- `feed_bloc_test.dart` : +MockApplicationRepository, +tests FeedApplyToOffer (success + rollback), +test appliedVideoIds charge au load seeker, +test recruiter ne charge pas appliedVideoIds
+
+### Resultats
+- **88/88 tests pass** (8 nouveaux), 0 issues flutter analyze
+- Migration SQL a deployer : `20260320000000_applications_table.sql`
+
+---
+
+## Ce qui a ete fait — Sprint 25 : Dossiers Candidatures par Offre (2026-03-20)
+
+### Changement 1 : Modele Conversation enrichi (Story 25.1) — DONE
+- `message_model.dart` : +3 champs `videoTitle`, `videoType`, `videoThumbnailUrl` (constructor, copyWith, props)
+- `message_repository.dart` : +`_enrichWithVideoInfo()` — fetch video info quand `videoId` non-null
+
+### Changement 2 : Repository candidatures (Story 25.2) — DONE
+- **Nouveau** : `features/applications/data/repositories/application_repository.dart`
+  - `OfferWithApplications` : modele offre + compteur candidats
+  - `OfferCandidate` : modele candidat complet (profil seeker + video presentation)
+  - `getOffersWithApplicationCount()` : offres du recruteur avec count conversations
+  - `getCandidatesForOffer(videoId)` : liste candidats avec profil + video
+- `injection_container.dart` : +`ApplicationRepository` singleton
+
+### Changement 3 : Page "Mes offres — Candidatures" (Story 25.3) — DONE
+- **Nouveau** : `features/applications/presentation/pages/offer_applications_page.dart`
+  - Liste offres du recruteur avec thumbnail, titre, type, badge compteur candidats (jaune/gris)
+  - Pull-to-refresh, empty state mascotte, error state
+
+### Changement 4 : Fiche candidat avec video (Story 25.4) — DONE
+- **Nouveau** : `features/applications/presentation/pages/offer_candidates_page.dart`
+  - Liste candidats par offre avec card : photo + nom + age + ecole + ville + domaine
+  - Video presentation inline (VideoPlayer avec play/pause + progress bar)
+  - Bouton "Contacter" pleine largeur → ouvre chat existant
+
+### Changement 5 : Badge offre dans conversations (Story 25.5) — DONE
+- `conversations_page.dart` : affiche "Offre : {titre}" en orange sous le nom du chercheur
+
+### Changement 6 : Navigation + integration (Story 25.6) — DONE
+- `app_router.dart` : +routes `/offers/applications` et `/offers/:videoId/candidates`
+- `my_publications_page.dart` : +bouton "Candidatures" dans AppBar + "Voir candidats" dans menu de chaque offre
+
+### Changement 7 : Tests (Story 25.7) — DONE
+- `application_repository_test.dart` : 6 tests (OfferWithApplications + OfferCandidate modeles)
+- `conversation_video_enrichment_test.dart` : 5 tests (enrichissement video conversation)
+
+### Resultats
+- **80/80 tests pass** (11 nouveaux), 0 issues flutter analyze
+- Pas de migration SQL requise (video_id existait deja dans conversations)
 
 ---
 
@@ -673,11 +776,13 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 | **22** | **Ameliorations UX + Verification Email + Sous-secteurs (6 changements)** | **DONE** |
 | **23** | **Correction 9 bugs beta + admin RLS + verification auto 100%** | **DONE** |
 | **24** | **Photo profil chercheur + Profil public seeker + Feed optimise + Nav messagerie (6 changements)** | **DONE** |
+| **25** | **Dossiers Candidatures par Offre — page offres + fiche candidat avec video + badge conversations (7 stories, 26 pts)** | **DONE** |
+| **26** | **Decoupler Candidatures des Conversations — table applications, postuler 1-clic, animation, page seeker, contacter (7 stories, 27 pts)** | **DONE** |
 
 ### Prochains sprints
 
 - Story reportee : 13.1 Camera in-app (8 pts, emulateur requis)
-- Deployer migration SQL `20260318000000_seeker_photo_url.sql`
+- Deployer migrations SQL : `20260318000000_seeker_photo_url.sql` + `20260320000000_applications_table.sql`
 - Passage Stripe test → production (juste avant soumission store, KYC 1-3j)
 - **Preparation beta** (store listing, TestFlight/Play Console) ← PROCHAINE ETAPE
 - Tous les pre-requis infra sont deployes (migrations, OTP, admin, bucket, Edge Functions, RLS, VIEW users, audit_logs)
@@ -728,5 +833,5 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 
 ---
 
-*Sauvegarde mise a jour le 2026-03-17*
-*Sprint 24 TERMINE. Photo profil chercheur + profil public seeker + feed optimise + nav messagerie. 69/69 tests pass. Migration seeker_photo_url a deployer. Stripe reste en mode test. Next: Deployer migration + preparation beta.*
+*Sauvegarde mise a jour le 2026-03-20*
+*Sprint 26 TERMINE. Candidatures decouples des conversations : table applications, postuler en 1 clic avec animation, page "Mes candidatures" seeker, recruteur "Contacter" cree la conversation, badges status. 88/88 tests pass. Migration SQL a deployer. Next: Deployer migrations + preparation beta.*

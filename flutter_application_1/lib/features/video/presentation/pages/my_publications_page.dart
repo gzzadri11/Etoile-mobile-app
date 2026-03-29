@@ -164,10 +164,17 @@ class _MyPublicationsPageState extends State<MyPublicationsPage>
         separatorBuilder: (context, index) =>
             const SizedBox(height: AppTheme.spaceMd),
         itemBuilder: (context, index) {
+          final video = items[index];
+          final isOffer = video.type == 'offer' || video.type == 'poster';
           return _PublicationCard(
-            video: items[index],
-            onEdit: () => _editPublication(items[index]),
-            onDelete: () => _deletePublication(items[index]),
+            video: video,
+            onEdit: () => _editPublication(video),
+            onDelete: () => _deletePublication(video),
+            onViewCandidates: isOffer
+                ? () => context.push(
+                      '${AppRoutes.offerCandidatesFor(video.id)}?title=${Uri.encodeComponent(video.title ?? "Candidats")}',
+                    )
+                : null,
           );
         },
       ),
@@ -179,6 +186,13 @@ class _MyPublicationsPageState extends State<MyPublicationsPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes publications'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.people_outline),
+            tooltip: 'Candidatures',
+            onPressed: () => context.push(AppRoutes.offerApplications),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.primaryYellow,
@@ -217,11 +231,13 @@ class _PublicationCard extends StatelessWidget {
   final Video video;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onViewCandidates;
 
   const _PublicationCard({
     required this.video,
     required this.onEdit,
     required this.onDelete,
+    this.onViewCandidates,
   });
 
   bool get _isPoster => video.type == 'poster';
@@ -271,8 +287,20 @@ class _PublicationCard extends StatelessWidget {
                         onSelected: (value) {
                           if (value == 'edit') onEdit();
                           if (value == 'delete') onDelete();
+                          if (value == 'candidates') onViewCandidates?.call();
                         },
                         itemBuilder: (context) => [
+                          if (onViewCandidates != null)
+                            const PopupMenuItem(
+                              value: 'candidates',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.people_outline, size: 18, color: AppColors.primaryOrange),
+                                  SizedBox(width: 8),
+                                  Text('Voir candidats'),
+                                ],
+                              ),
+                            ),
                           const PopupMenuItem(
                             value: 'edit',
                             child: Row(

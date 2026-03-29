@@ -10,6 +10,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/sector_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../applications/presentation/widgets/apply_success_overlay.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../messages/data/repositories/conversation_repository.dart';
 import '../../../report/presentation/widgets/report_dialog.dart';
@@ -365,11 +366,13 @@ class _FeedViewState extends State<_FeedView> {
 
           final item = state.items[index];
           final videoUrl = item.video.videoUrl;
+          final isApplied = state.appliedVideoIds.contains(item.video.id);
 
           return _VideoCard(
             feedItem: item,
             isActive: index == _currentPage,
             userRole: state.userRole,
+            isApplied: isApplied,
             preloadedController: videoUrl != null
                 ? _preloadManager.getController(videoUrl)
                 : null,
@@ -463,6 +466,7 @@ class _VideoCard extends StatelessWidget {
   final FeedItem feedItem;
   final bool isActive;
   final String userRole;
+  final bool isApplied;
   final VideoPlayerController? preloadedController;
   final bool isControllerReady;
   final VoidCallback? onVideoPlaying;
@@ -471,6 +475,7 @@ class _VideoCard extends StatelessWidget {
     required this.feedItem,
     required this.isActive,
     required this.userRole,
+    this.isApplied = false,
     this.preloadedController,
     this.isControllerReady = false,
     this.onVideoPlaying,
@@ -620,11 +625,18 @@ class _VideoCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (userRole == 'seeker')
-                _ActionButton(
-                  icon: Icons.send_outlined,
-                  label: 'Postuler',
-                  onTap: () => _onMessageTap(context),
-                )
+                isApplied
+                    ? _ActionButton(
+                        icon: Icons.check,
+                        label: 'Postulé',
+                        onTap: () {},
+                        disabled: true,
+                      )
+                    : _ActionButton(
+                        icon: Icons.send_outlined,
+                        label: 'Postuler',
+                        onTap: () => _onApplyTap(context),
+                      )
               else
                 _ActionButton(
                   icon: Icons.person_add_outlined,
@@ -674,7 +686,25 @@ class _VideoCard extends StatelessWidget {
     context.push(AppRoutes.publicProfileFor(feedItem.video.userId));
   }
 
-  /// Open message / start conversation
+  /// Apply to offer (seeker only, decoupled from conversations)
+  Future<void> _onApplyTap(BuildContext context) async {
+    // Check profile completion before allowing apply
+    final allowed = await checkProfileGate(context);
+    if (!allowed || !context.mounted) return;
+
+    // Dispatch apply event to BLoC
+    context.read<FeedBloc>().add(FeedApplyToOffer(
+      videoId: feedItem.video.id,
+      recruiterId: feedItem.video.userId,
+    ));
+
+    // Show success overlay
+    if (context.mounted) {
+      showApplySuccessOverlay(context);
+    }
+  }
+
+  /// Open message / start conversation (recruiter only)
   Future<void> _onMessageTap(BuildContext context) async {
     debugPrint('[Feed] _onMessageTap called for user: ${feedItem.video.userId}');
     debugPrint('[Feed] feedItem.userName: ${feedItem.userName}');
@@ -801,44 +831,52 @@ class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool disabled;
 
   const _ActionButton({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.disabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final opacity = disabled ? 0.5 : 1.0;
     return Semantics(
       button: true,
       label: label,
       child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
+        onTap: disabled ? null : onTap,
+        child: Opacity(
+          opacity: opacity,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: disabled
+                      ? AppColors.white.withValues(alpha: 0.08)
+                      : AppColors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: AppColors.white,
+                  size: 24,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: AppColors.white,
-                size: 24,
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.white,
+                    ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.white,
-                  ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

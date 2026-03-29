@@ -197,6 +197,20 @@ class _SeekerProfileView extends StatelessWidget {
 
               const SizedBox(height: AppTheme.spaceLg),
 
+              // Mes candidatures section
+              GestureDetector(
+                onTap: () => context.push(AppRoutes.seekerApplications),
+                child: const _PublicationSectionCard(
+                  icon: Icons.send,
+                  title: 'Mes candidatures',
+                  subtitle: 'Suivez vos candidatures en cours',
+                  count: 0,
+                  hideCount: true,
+                ),
+              ),
+
+              const SizedBox(height: AppTheme.spaceLg),
+
               // Action buttons
               EtoileButton(
                 label: AppStrings.editVideo,
@@ -366,6 +380,20 @@ class _RecruiterProfileView extends StatelessWidget {
                         title: 'Publications de recrutement',
                         subtitle: '${profile.videoCredits} crédits vidéo, ${profile.posterCredits} crédits affiche',
                         count: offerCount + posterCount,
+                      ),
+                    ),
+
+                    const SizedBox(height: AppTheme.spaceMd),
+
+                    // Candidatures section
+                    GestureDetector(
+                      onTap: () => context.push(AppRoutes.offerApplications),
+                      child: const _PublicationSectionCard(
+                        icon: Icons.people,
+                        title: 'Mes candidatures',
+                        subtitle: 'Candidats ayant postulé à vos offres',
+                        count: 0,
+                        hideCount: true,
                       ),
                     ),
 
@@ -828,12 +856,14 @@ class _PublicationSectionCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final int count;
+  final bool hideCount;
 
   const _PublicationSectionCard({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.count,
+    this.hideCount = false,
   });
 
   @override
@@ -878,21 +908,23 @@ class _PublicationSectionCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.tagBackground,
-              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+          if (!hideCount)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.tagBackground,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              ),
+              child: Text(
+                '$count',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryOrange,
+                    ),
+              ),
             ),
-            child: Text(
-              '$count',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryOrange,
-                  ),
-            ),
-          ),
-          const SizedBox(width: AppTheme.spaceSm),
+          if (!hideCount)
+            const SizedBox(width: AppTheme.spaceSm),
           const Icon(
             Icons.arrow_forward_ios,
             size: 14,

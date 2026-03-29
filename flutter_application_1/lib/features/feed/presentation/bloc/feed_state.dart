@@ -27,6 +27,7 @@ class FeedLoaded extends FeedState {
   final FeedFilters filters;
   final String userRole;
   final String feedTab;
+  final Set<String> appliedVideoIds;
 
   const FeedLoaded({
     required this.items,
@@ -36,6 +37,7 @@ class FeedLoaded extends FeedState {
     required this.filters,
     required this.userRole,
     this.feedTab = 'offers',
+    this.appliedVideoIds = const {},
   });
 
   /// Check if feed is empty
@@ -55,6 +57,7 @@ class FeedLoaded extends FeedState {
     FeedFilters? filters,
     String? userRole,
     String? feedTab,
+    Set<String>? appliedVideoIds,
   }) {
     return FeedLoaded(
       items: items ?? this.items,
@@ -64,11 +67,12 @@ class FeedLoaded extends FeedState {
       filters: filters ?? this.filters,
       userRole: userRole ?? this.userRole,
       feedTab: feedTab ?? this.feedTab,
+      appliedVideoIds: appliedVideoIds ?? this.appliedVideoIds,
     );
   }
 
   @override
-  List<Object?> get props => [items, categories, hasMore, isLoadingMore, filters, userRole, feedTab];
+  List<Object?> get props => [items, categories, hasMore, isLoadingMore, filters, userRole, feedTab, appliedVideoIds];
 }
 
 /// Error state

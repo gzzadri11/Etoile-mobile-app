@@ -325,36 +325,53 @@ class _ConversationTile extends StatelessWidget {
       ),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 4),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                conversation.lastMessagePreview ?? 'Nouvelle conversation',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isUnread ? AppColors.black : AppColors.greyWarm,
-                      fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
-                      fontStyle: conversation.lastMessagePreview == null
-                          ? FontStyle.italic
-                          : FontStyle.normal,
+            if (conversation.videoTitle != null) ...[
+              Text(
+                'Offre : ${conversation.videoTitle}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.primaryOrange,
+                      fontWeight: FontWeight.w500,
                     ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-            ),
-            if (isUnread) ...[
-              const SizedBox(width: 8),
-              Semantics(
-                label: 'Message non lu',
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryYellow,
-                    shape: BoxShape.circle,
+              const SizedBox(height: 2),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    conversation.lastMessagePreview ?? 'Nouvelle conversation',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: isUnread ? AppColors.black : AppColors.greyWarm,
+                          fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
+                          fontStyle: conversation.lastMessagePreview == null
+                              ? FontStyle.italic
+                              : FontStyle.normal,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
-            ],
+                if (isUnread) ...[
+                  const SizedBox(width: 8),
+                  Semantics(
+                    label: 'Message non lu',
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryYellow,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),

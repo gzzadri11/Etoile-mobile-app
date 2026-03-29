@@ -59,3 +59,17 @@ class FeedVideoViewed extends FeedEvent {
   @override
   List<Object?> get props => [videoId, watchDuration, completed];
 }
+
+/// Apply to an offer (seeker only)
+class FeedApplyToOffer extends FeedEvent {
+  final String videoId;
+  final String recruiterId;
+
+  const FeedApplyToOffer({
+    required this.videoId,
+    required this.recruiterId,
+  });
+
+  @override
+  List<Object?> get props => [videoId, recruiterId];
+}

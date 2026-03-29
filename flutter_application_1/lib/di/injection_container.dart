@@ -6,6 +6,7 @@ import '../core/services/stripe_service.dart';
 import '../core/services/supabase_service.dart';
 import '../core/services/video_upload_service.dart';
 import '../features/admin/data/repositories/admin_repository.dart';
+import '../features/applications/data/repositories/application_repository.dart';
 import '../features/messages/data/repositories/block_repository.dart';
 import '../features/report/data/repositories/report_repository.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
@@ -113,6 +114,11 @@ Future<void> init() async {
     () => BlockRepository(supabaseClient: sl()),
   );
 
+  // Application repository (candidatures par offre)
+  sl.registerLazySingleton<ApplicationRepository>(
+    () => ApplicationRepository(supabaseClient: sl()),
+  );
+
   // ============================================
   // FEATURES - MESSAGES
   // ============================================
@@ -160,6 +166,10 @@ Future<void> init() async {
 
   // FeedBloc
   sl.registerFactory<FeedBloc>(
-    () => FeedBloc(feedRepository: sl(), blockRepository: sl()),
+    () => FeedBloc(
+      feedRepository: sl(),
+      blockRepository: sl(),
+      applicationRepository: sl(),
+    ),
   );
 }

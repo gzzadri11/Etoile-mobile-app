@@ -84,7 +84,7 @@ class _RegisterPageState extends State<RegisterPage> {
             AuthRegisterRequested(
               email: _emailController.text.trim(),
               password: _passwordController.text,
-              firstName: _firstNameController.text.trim(),
+              firstName: result.companyName ?? 'Entreprise',
               role: _selectedRole,
               siret: _siretController.text.trim(),
               companyName: result.companyName,
@@ -161,21 +161,23 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     const SizedBox(height: AppTheme.spaceLg),
 
-                    // First name field
-                    EtoileTextField(
-                      controller: _firstNameController,
-                      label: AppStrings.firstName,
-                      hintText: 'Votre prenom',
-                      textInputAction: TextInputAction.next,
-                      prefixIcon: Icons.person_outlined,
-                      enabled: !isLoading,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        return null;
-                      },
-                    ),
+                    // First name field (seekers only)
+                    if (_selectedRole == 'seeker') ...[
+                      EtoileTextField(
+                        controller: _firstNameController,
+                        label: AppStrings.firstName,
+                        hintText: 'Votre prenom',
+                        textInputAction: TextInputAction.next,
+                        prefixIcon: Icons.person_outlined,
+                        enabled: !isLoading,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return AppStrings.errorFieldRequired;
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
 
                     // SIRET field (only for recruiters)
                     if (_selectedRole == 'recruiter') ...[
@@ -223,8 +225,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     // Email field
                     EtoileTextField(
                       controller: _emailController,
-                      label: AppStrings.email,
-                      hintText: 'votre@email.com',
+                      label: _selectedRole == 'recruiter'
+                          ? 'Email professionnel'
+                          : AppStrings.email,
+                      hintText: _selectedRole == 'recruiter'
+                          ? 'contact@entreprise.com'
+                          : 'votre@email.com',
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       prefixIcon: Icons.email_outlined,

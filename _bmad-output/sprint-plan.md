@@ -2103,3 +2103,77 @@ SELECT plan_type, COUNT(*) FROM subscriptions WHERE status='active' GROUP BY pla
 - [ ] Documentation a jour
 
 **Pre-requis :** Migration DB a deployer sur Supabase (Story 18.1)
+
+---
+
+## Sprint 25 : Dossiers Candidatures par Offre 📋
+
+**Objectif :** Le recruteur peut voir les candidats qui ont postule a ses offres, groupes par offre. Chaque candidat affiche sa fiche (infos profil + video de presentation) avec un bouton "Contacter".
+
+**Date :** 2026-03-20
+**Statut :** A faire
+**Constat technique :** Le champ `conversations.video_id` est deja rempli quand un chercheur clique "Postuler". Pas de migration SQL requise — travail purement UI + enrichissement donnees.
+
+| ID | Story | Description | Points | Deps | Statut |
+|----|-------|-------------|--------|------|--------|
+| 25.1 | Enrichir modele Conversation | Ajouter `videoTitle`, `videoType`, `videoThumbnailUrl` au modele `Conversation` + enrichir dans `message_repository.dart` via JOIN sur `videos` | 3 | - | A faire |
+| 25.2 | Repository candidatures | `application_repository.dart` : requete offres du recruteur avec compteur candidats + requete liste candidats par offre (profil seeker + video presentation + date candidature) | 3 | - | A faire |
+| 25.3 | Page "Mes offres — Candidatures" | Liste des offres actives avec thumbnail, titre, type (video/affiche), badge compteur candidats. Tap → page candidats | 5 | 25.2 | A faire |
+| 25.4 | Fiche candidat avec video | Page candidats d'une offre : liste seekers ayant postule. Tap → fiche candidat : photo + nom + age + ecole + niveau + ville + domaine/specialite + VIDEO presentation (lecteur inline) + bouton "Contacter" (ouvre chat existant) | 8 | 25.2 | A faire |
+| 25.5 | Badge offre dans conversations | Dans `conversations_page.dart`, afficher le titre de l'offre sous le nom du chercheur pour les conversations liees a une offre | 2 | 25.1 | A faire |
+| 25.6 | Navigation + integration | Routes `/offers/applications` + `/offers/:videoId/candidates`. Lien depuis `my_publications_page.dart` (bouton "Voir candidats" sur chaque offre) | 3 | 25.3, 25.4 | A faire |
+| 25.7 | Tests + documentation | Tests repository + modele enrichi + SESSION-RESUME.md | 2 | Toutes | A faire |
+| **Total** | | | **26** | | **A faire** |
+
+**Architecture :**
+```
+features/
+  applications/                       <- NOUVEAU module
+    data/
+      repositories/
+        application_repository.dart   <- requetes offres + candidats
+    presentation/
+      pages/
+        offer_applications_page.dart  <- liste offres avec compteurs
+        offer_candidates_page.dart    <- liste candidats + fiche avec video
+```
+
+**Flux utilisateur :**
+```
+Mes Publications → [offre] → Voir candidats (N)
+                                    |
+                              Liste candidats
+                                    |
+                              Tap candidat
+                                    |
+                        ┌───────────────────────┐
+                        │  Photo + Nom + Age     │
+                        │  Ecole + Niveau        │
+                        │  Ville                 │
+                        │  Domaine / Specialite  │
+                        │                        │
+                        │  ▶ VIDEO PRESENTATION  │
+                        │    (lecteur inline)     │
+                        │                        │
+                        │  [   Contacter   ]     │
+                        └───────────────────────┘
+```
+
+**Ordre d'implementation :**
+```
+25.1 (Modele Conversation) ──→ 25.5 (Badge offre conversations)
+25.2 (Repository) ──┬──→ 25.3 (Page offres) ──┐
+                    └──→ 25.4 (Fiche candidat) ─┼──→ 25.6 (Navigation) ──→ 25.7 (Tests + docs)
+```
+
+25.1 et 25.2 sont independantes. 25.3 et 25.4 dependent de 25.2. 25.5 depend de 25.1. 25.6 depend de 25.3 + 25.4. 25.7 en dernier.
+
+**Criteres de Done Sprint 25 :**
+- [ ] Le recruteur voit le compteur de candidats sur chaque offre dans Mes Publications
+- [ ] Le recruteur peut lister les candidats par offre
+- [ ] Chaque candidat affiche sa fiche complete (profil + video presentation)
+- [ ] Le bouton "Contacter" ouvre le chat existant
+- [ ] Les conversations affichent le titre de l'offre concernee
+- [ ] 0 erreurs `flutter analyze`
+- [ ] Tous les tests passent
+- [ ] SESSION-RESUME.md a jour

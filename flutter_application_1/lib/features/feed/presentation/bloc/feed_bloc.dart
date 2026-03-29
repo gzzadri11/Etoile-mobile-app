@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../applications/data/repositories/application_repository.dart';
 import '../../../messages/data/repositories/block_repository.dart';
 import '../../data/models/feed_item_model.dart';
 import '../../data/repositories/feed_repository.dart';
@@ -12,12 +14,15 @@ part 'feed_state.dart';
 class FeedBloc extends Bloc<FeedEvent, FeedState> {
   final FeedRepository _feedRepository;
   final BlockRepository _blockRepository;
+  final ApplicationRepository _applicationRepository;
 
   FeedBloc({
     required FeedRepository feedRepository,
     required BlockRepository blockRepository,
+    required ApplicationRepository applicationRepository,
   })  : _feedRepository = feedRepository,
         _blockRepository = blockRepository,
+        _applicationRepository = applicationRepository,
         super(const FeedInitial()) {
     on<FeedLoadRequested>(_onLoadRequested);
     on<FeedLoadMoreRequested>(_onLoadMoreRequested);
@@ -25,6 +30,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     on<FeedFiltersChanged>(_onFiltersChanged);
     on<FeedFiltersClear>(_onFiltersClear);
     on<FeedVideoViewed>(_onVideoViewed);
+    on<FeedApplyToOffer>(_onApplyToOffer);
   }
 
   static const int _pageSize = 20;
@@ -46,6 +52,16 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
 
       final categories = await _feedRepository.getCategories();
 
+      // Load applied video IDs for seekers
+      Set<String> appliedVideoIds = {};
+      if (event.userRole == 'seeker') {
+        try {
+          appliedVideoIds = await _applicationRepository.getAppliedVideoIds();
+        } catch (e) {
+          debugPrint('[FeedBloc] Error loading applied video IDs: $e');
+        }
+      }
+
       emit(FeedLoaded(
         items: items,
         categories: categories,
@@ -53,6 +69,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         filters: const FeedFilters.empty(),
         userRole: event.userRole,
         feedTab: event.feedTab,
+        appliedVideoIds: appliedVideoIds,
       ));
     } catch (e) {
       emit(FeedError(message: 'Erreur de chargement: ${e.toString()}'));
@@ -117,6 +134,16 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
           ? currentState.categories
           : await _feedRepository.getCategories();
 
+      // Reload applied video IDs for seekers
+      Set<String> appliedVideoIds = currentState is FeedLoaded
+          ? currentState.appliedVideoIds
+          : {};
+      if (role == 'seeker') {
+        try {
+          appliedVideoIds = await _applicationRepository.getAppliedVideoIds();
+        } catch (_) {}
+      }
+
       emit(FeedLoaded(
         items: items,
         categories: categories,
@@ -124,6 +151,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         filters: filters,
         userRole: role,
         feedTab: feedTab,
+        appliedVideoIds: appliedVideoIds,
       ));
     } catch (e) {
       if (currentState is FeedLoaded) {
@@ -232,6 +260,33 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
       );
     } catch (e) {
       // Silently fail - view tracking shouldn't block UI
+    }
+  }
+
+  /// Apply to an offer (seeker only)
+  Future<void> _onApplyToOffer(
+    FeedApplyToOffer event,
+    Emitter<FeedState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! FeedLoaded) return;
+
+    // Optimistic update: add videoId to applied set immediately
+    final updatedIds = {...currentState.appliedVideoIds, event.videoId};
+    emit(currentState.copyWith(appliedVideoIds: updatedIds));
+
+    try {
+      await _applicationRepository.applyToOffer(
+        videoId: event.videoId,
+        recruiterId: event.recruiterId,
+      );
+      debugPrint('[FeedBloc] Applied to offer: ${event.videoId}');
+    } catch (e) {
+      debugPrint('[FeedBloc] Error applying to offer: $e');
+      // Rollback optimistic update
+      emit(currentState.copyWith(
+        appliedVideoIds: currentState.appliedVideoIds,
+      ));
     }
   }
 }

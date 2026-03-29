@@ -62,12 +62,17 @@ class Conversation extends Equatable {
   final DateTime? participant2ReadAt;
   final DateTime createdAt;
 
-  // Populated fields
+  // Populated fields — other user
   final String? otherUserName;
   final String? otherUserAvatar;
   final String? otherUserTitle;
   final bool isOtherUserVerified;
   final String? otherUserRole;
+
+  // Populated fields — linked offer/video
+  final String? videoTitle;
+  final String? videoType;
+  final String? videoThumbnailUrl;
 
   const Conversation({
     required this.id,
@@ -84,6 +89,9 @@ class Conversation extends Equatable {
     this.otherUserTitle,
     this.isOtherUserVerified = false,
     this.otherUserRole,
+    this.videoTitle,
+    this.videoType,
+    this.videoThumbnailUrl,
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
@@ -129,6 +137,9 @@ class Conversation extends Equatable {
     String? otherUserTitle,
     bool? isOtherUserVerified,
     String? otherUserRole,
+    String? videoTitle,
+    String? videoType,
+    String? videoThumbnailUrl,
   }) {
     return Conversation(
       id: id,
@@ -145,9 +156,12 @@ class Conversation extends Equatable {
       otherUserTitle: otherUserTitle ?? this.otherUserTitle,
       isOtherUserVerified: isOtherUserVerified ?? this.isOtherUserVerified,
       otherUserRole: otherUserRole ?? this.otherUserRole,
+      videoTitle: videoTitle ?? this.videoTitle,
+      videoType: videoType ?? this.videoType,
+      videoThumbnailUrl: videoThumbnailUrl ?? this.videoThumbnailUrl,
     );
   }
 
   @override
-  List<Object?> get props => [id, participant1, participant2, lastMessageAt, otherUserRole];
+  List<Object?> get props => [id, participant1, participant2, lastMessageAt, otherUserRole, videoTitle];
 }

@@ -167,9 +167,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _isProcessingAuth = true;
 
     try {
+      // For recruiters, use companyName as first_name (displayed in backoffice)
+      final firstName = (event.role == 'recruiter' && event.companyName != null)
+          ? event.companyName!
+          : event.firstName;
+
       final metadata = <String, dynamic>{
         'role': event.role,
-        'first_name': event.firstName,
+        'first_name': firstName,
       };
       if (event.siret != null) metadata['siret'] = event.siret;
       if (event.companyName != null) {
