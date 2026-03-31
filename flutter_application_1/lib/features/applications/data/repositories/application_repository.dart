@@ -1,8 +1,12 @@
+library;
+
+/// Repository des candidatures : postulation, suivi chercheur et dossiers recruteur.
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// An offer with its application (candidate) count
+/// Une offre avec son nombre de candidatures.
 class OfferWithApplications extends Equatable {
   final String videoId;
   final String title;
@@ -28,7 +32,7 @@ class OfferWithApplications extends Equatable {
   List<Object?> get props => [videoId, applicationCount];
 }
 
-/// A candidate who applied to an offer
+/// Un candidat ayant postule a une offre.
 class OfferCandidate extends Equatable {
   final String seekerUserId;
   final String applicationId;
@@ -72,7 +76,7 @@ class OfferCandidate extends Equatable {
   List<Object?> get props => [seekerUserId, applicationId];
 }
 
-/// A seeker's application to an offer
+/// Candidature d'un chercheur a une offre.
 class SeekerApplication extends Equatable {
   final String id;
   final String videoId;
@@ -96,7 +100,7 @@ class SeekerApplication extends Equatable {
   List<Object?> get props => [id, videoId, status];
 }
 
-/// Repository for application (candidature) operations — reads/writes `applications` table
+/// Repository des candidatures — lecture/ecriture de la table `applications`.
 class ApplicationRepository {
   final SupabaseClient _supabaseClient;
 
@@ -113,15 +117,11 @@ class ApplicationRepository {
     final userId = currentUserId;
     if (userId == null) throw Exception('Utilisateur non connecte');
 
-    debugPrint('[Applications] Applying to offer: videoId=$videoId, recruiter=$recruiterId');
-
     await _supabaseClient.from('applications').insert({
       'video_id': videoId,
       'seeker_id': userId,
       'recruiter_id': recruiterId,
     });
-
-    debugPrint('[Applications] Application created');
   }
 
   /// Get set of video IDs the current seeker has applied to
@@ -149,8 +149,6 @@ class ApplicationRepository {
   Future<List<SeekerApplication>> getSeekerApplications() async {
     final userId = currentUserId;
     if (userId == null) throw Exception('Utilisateur non connecte');
-
-    debugPrint('[Applications] Loading seeker applications for: $userId');
 
     try {
       final applications = await _supabaseClient
@@ -192,7 +190,6 @@ class ApplicationRepository {
         ));
       }
 
-      debugPrint('[Applications] Found ${result.length} seeker applications');
       return result;
     } catch (e) {
       debugPrint('[Applications] Error loading seeker applications: $e');
@@ -204,8 +201,6 @@ class ApplicationRepository {
   Future<List<OfferWithApplications>> getOffersWithApplicationCount() async {
     final userId = currentUserId;
     if (userId == null) throw Exception('Utilisateur non connecte');
-
-    debugPrint('[Applications] Loading offers for recruiter: $userId');
 
     try {
       // Get recruiter's active offers/posters
@@ -245,7 +240,6 @@ class ApplicationRepository {
         ));
       }
 
-      debugPrint('[Applications] Found ${offers.length} offers');
       return offers;
     } catch (e) {
       debugPrint('[Applications] Error loading offers: $e');
@@ -257,8 +251,6 @@ class ApplicationRepository {
   Future<List<OfferCandidate>> getCandidatesForOffer(String videoId) async {
     final userId = currentUserId;
     if (userId == null) throw Exception('Utilisateur non connecte');
-
-    debugPrint('[Applications] Loading candidates for offer: $videoId');
 
     try {
       // Get applications for this offer
@@ -318,7 +310,6 @@ class ApplicationRepository {
         ));
       }
 
-      debugPrint('[Applications] Found ${candidates.length} candidates');
       return candidates;
     } catch (e) {
       debugPrint('[Applications] Error loading candidates: $e');
@@ -336,8 +327,6 @@ class ApplicationRepository {
         .update({'status': 'withdrawn'})
         .eq('id', applicationId)
         .eq('seeker_id', userId);
-
-    debugPrint('[Applications] Application $applicationId withdrawn');
   }
 
   /// Mark an application as contacted (recruiter)
@@ -350,7 +339,5 @@ class ApplicationRepository {
         .update({'status': 'contacted'})
         .eq('id', applicationId)
         .eq('recruiter_id', userId);
-
-    debugPrint('[Applications] Application $applicationId marked as contacted');
   }
 }

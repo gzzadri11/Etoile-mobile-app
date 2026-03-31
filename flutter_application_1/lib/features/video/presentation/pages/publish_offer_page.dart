@@ -1,3 +1,7 @@
+library;
+
+/// Page de publication d'une offre d'emploi video (recruteur).
+
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';

@@ -1,11 +1,15 @@
+library;
+
+/// Configuration du theme de l'application Etoile.
+///
+/// Basee sur Material 3 avec la charte graphique Etoile.
+/// Implemente les specifications UX (spacing, radius, typographie).
+
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 
-/// Etoile application theme configuration
-///
-/// Based on Material 3 design with custom Etoile branding.
-/// Implements the design system specifications from UX documentation.
+/// Theme Etoile : tokens d'espacement, rayons, themes clair/sombre.
 abstract class AppTheme {
   // ============================================
   // SPACING TOKENS (Base 4px)
@@ -26,41 +30,6 @@ abstract class AppTheme {
   static const double radiusLg = 16.0;
   static const double radiusXl = 24.0;
   static const double radiusFull = 9999.0;
-
-  // ============================================
-  // SHADOW TOKENS
-  // ============================================
-  static const List<BoxShadow> shadowSm = [
-    BoxShadow(
-      offset: Offset(0, 1),
-      blurRadius: 2,
-      color: Color(0x0D000000), // 5% opacity
-    ),
-  ];
-
-  static const List<BoxShadow> shadowMd = [
-    BoxShadow(
-      offset: Offset(0, 4),
-      blurRadius: 6,
-      color: Color(0x1A000000), // 10% opacity
-    ),
-  ];
-
-  static const List<BoxShadow> shadowLg = [
-    BoxShadow(
-      offset: Offset(0, 10),
-      blurRadius: 15,
-      color: Color(0x1A000000), // 10% opacity
-    ),
-  ];
-
-  static const List<BoxShadow> shadowXl = [
-    BoxShadow(
-      offset: Offset(0, 20),
-      blurRadius: 25,
-      color: Color(0x26000000), // 15% opacity
-    ),
-  ];
 
   // ============================================
   // LIGHT THEME

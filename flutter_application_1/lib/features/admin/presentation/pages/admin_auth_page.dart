@@ -1,3 +1,10 @@
+library;
+
+/// Page d'authentification administrateur (second facteur).
+///
+/// Apres la connexion classique, l'admin doit saisir un code secret
+/// verifie cote serveur via une RPC bcrypt Supabase.
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,8 +13,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 
-/// Admin authentication page — second factor after login.
-/// Requires a single secret code verified server-side via bcrypt RPC.
+/// Page d'authentification admin — second facteur apres login.
+/// Requiert un code secret verifie cote serveur via RPC bcrypt.
 class AdminAuthPage extends StatefulWidget {
   const AdminAuthPage({super.key});
 

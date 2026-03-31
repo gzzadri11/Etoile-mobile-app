@@ -1,3 +1,10 @@
+library;
+
+/// Page de gestion des utilisateurs bloques.
+///
+/// Liste tous les utilisateurs bloques par l'utilisateur courant
+/// avec la possibilite de les debloquer individuellement.
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
@@ -6,7 +13,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../messages/data/repositories/block_repository.dart';
 
-/// Page listing all blocked users with the ability to unblock.
+/// Page listant les utilisateurs bloques avec option de deblocage.
 class BlockedUsersPage extends StatefulWidget {
   const BlockedUsersPage({super.key});
 

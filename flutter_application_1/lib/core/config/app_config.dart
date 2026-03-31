@@ -1,110 +1,93 @@
+library;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// Application configuration loaded from environment variables
+/// Configuration de l'application chargee depuis le fichier .env
 ///
-/// All sensitive values are loaded from .env file.
-/// Use .env.example as a template for required variables.
+/// Toutes les valeurs sensibles viennent du .env (jamais en dur dans le code).
+/// Voir .env.example pour la liste des variables requises.
+///
+/// Securite : les cles secretes (R2, Stripe secret) ne sont PAS exposees ici.
+/// Seules les cles publiques (anon key Supabase, publishable key Stripe)
+/// sont accessibles cote client. Les operations sensibles passent par
+/// le Cloudflare Worker ou les Edge Functions Supabase.
 class AppConfig {
-  /// Private constructor to prevent instantiation
   AppConfig._();
 
-  /// Initialize configuration - must be called before accessing any values
   static Future<void> initialize() async {
     await dotenv.load(fileName: '.env');
     _validateRequiredVariables();
 
     if (enableDebugMode) {
-      debugPrint('[AppConfig] Configuration loaded successfully');
-      debugPrint('[AppConfig] Environment: ${environment.name}');
-      debugPrint('[AppConfig] Supabase URL: $supabaseUrl');
+      debugPrint('[AppConfig] Environnement: ${environment.name}');
     }
   }
 
-  /// Validate that all required environment variables are present
+  /// Verifie que les variables obligatoires sont presentes dans le .env.
+  /// Lance une [ConfigurationException] si une variable manque.
   static void _validateRequiredVariables() {
-    final requiredVars = [
-      'SUPABASE_URL',
-      'SUPABASE_ANON_KEY',
-    ];
+    const requiredVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
 
-    final missingVars = requiredVars
+    final missing = requiredVars
         .where((v) => dotenv.env[v]?.isEmpty ?? true)
         .toList();
 
-    if (missingVars.isNotEmpty) {
+    if (missing.isNotEmpty) {
       throw ConfigurationException(
-        'Missing required environment variables: ${missingVars.join(', ')}\n'
-        'Please check your .env file. See .env.example for reference.',
+        'Variables d\'environnement manquantes : ${missing.join(', ')}\n'
+        'Verifiez votre fichier .env (voir .env.example).',
       );
     }
   }
 
   // ===========================================================================
-  // SUPABASE
+  // Supabase — Backend principal (auth, BDD, realtime, storage)
   // ===========================================================================
 
-  /// Supabase project URL
-  static String get supabaseUrl =>
-      dotenv.env['SUPABASE_URL'] ?? '';
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
 
-  /// Supabase anonymous key (safe for client-side)
-  static String get supabaseAnonKey =>
-      dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+  /// Cle publique Supabase — securisee par les Row Level Security (RLS).
+  /// Cette cle ne donne acces qu'aux donnees autorisees par les policies.
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   // ===========================================================================
-  // CLOUDFLARE R2
+  // Cloudflare R2 — Stockage video via Worker
   // ===========================================================================
+  // IMPORTANT : Les cles secretes R2 ne sont PAS dans l'app Flutter.
+  // Toutes les operations R2 (upload, stream) passent par le Cloudflare Worker
+  // qui detient les credentials. L'app utilise uniquement des presigned URLs.
 
-  /// Cloudflare Account ID
-  static String get r2AccountId =>
-      dotenv.env['R2_ACCOUNT_ID'] ?? '';
+  /// URL du Cloudflare Worker pour les operations video (upload, stream)
+  static String get cloudflareWorkerUrl =>
+      dotenv.env['R2_WORKER_URL'] ?? '';
 
-  /// R2 Access Key ID
-  static String get r2AccessKeyId =>
-      dotenv.env['R2_ACCESS_KEY_ID'] ?? '';
+  /// Alias pour compatibilite — preferer [cloudflareWorkerUrl]
+  static String get r2BaseUrl => cloudflareWorkerUrl;
 
-  /// R2 Secret Access Key
-  static String get r2SecretAccessKey =>
-      dotenv.env['R2_SECRET_ACCESS_KEY'] ?? '';
-
-  /// R2 Endpoint URL (constructed from account ID)
-  static String get r2Endpoint =>
-      'https://$r2AccountId.r2.cloudflarestorage.com';
-
-  /// R2 Worker base URL for video operations
-  static String get r2BaseUrl =>
-      dotenv.env['R2_WORKER_URL'] ?? 'https://etoile-video-worker.gzzadri11.workers.dev';
-
-  /// R2 bucket for videos
+  /// Nom du bucket videos
   static String get r2BucketVideos =>
       dotenv.env['R2_BUCKET_VIDEOS'] ?? 'etoile-videos';
 
-  /// R2 bucket for thumbnails
+  /// Nom du bucket thumbnails
   static String get r2BucketThumbnails =>
       dotenv.env['R2_BUCKET_THUMBNAILS'] ?? 'etoile-thumbnails';
 
-  /// Check if R2 is configured
-  static bool get isR2Configured =>
-      r2AccountId.isNotEmpty && r2AccessKeyId.isNotEmpty && r2SecretAccessKey.isNotEmpty;
-
   // ===========================================================================
-  // STRIPE
+  // Stripe — Paiements (abonnements recruteurs, credits)
   // ===========================================================================
 
-  /// Stripe publishable key
+  /// Cle publique Stripe — safe cote client, identifie le compte marchand
   static String get stripePublishableKey =>
       dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
 
-  /// Stripe merchant ID
   static String get stripeMerchantId =>
       dotenv.env['STRIPE_MERCHANT_ID'] ?? 'merchant.com.etoile.app';
 
   // ===========================================================================
-  // ENVIRONMENT
+  // Environnement
   // ===========================================================================
 
-  /// Current environment
   static Environment get environment {
     final env = dotenv.env['ENVIRONMENT']?.toLowerCase() ?? 'development';
     return Environment.values.firstWhere(
@@ -113,103 +96,60 @@ class AppConfig {
     );
   }
 
-  /// Debug mode flag
   static bool get enableDebugMode =>
       dotenv.env['DEBUG_MODE']?.toLowerCase() == 'true' || kDebugMode;
 
-  /// Is production environment
   static bool get isProduction => environment == Environment.production;
-
-  /// Is development environment
   static bool get isDevelopment => environment == Environment.development;
 
   // ===========================================================================
-  // API CONFIGURATION (static values)
+  // Constantes metier
   // ===========================================================================
 
-  /// API request timeout
+  /// Duree max d'une video en secondes (format Etoile : 40s)
+  static const int videoDurationSeconds = 40;
+
+  /// Taille max d'une video en MB (limite MVP, ffmpeg Phase 2)
+  static const int videoMaxSizeMB = 50;
+
+  /// Phases de la video : intro (10s) + contenu principal (20s) + conclusion (10s)
+  static const List<int> videoPhases = [10, 20, 10];
+
+  /// Nombre de videos a precharger dans le feed
+  static const int feedPreloadCount = 3;
+
+  /// Taille par defaut des listes paginées
+  static const int defaultPageSize = 20;
+
+  /// Timeout des requetes API
   static const Duration apiTimeout = Duration(seconds: 30);
 
-  /// Number of retry attempts for failed requests
+  /// Nombre de tentatives en cas d'echec reseau
   static const int apiRetryCount = 3;
 
   // ===========================================================================
-  // VIDEO CONFIGURATION (static values)
+  // Feature flags
   // ===========================================================================
 
-  /// Video recording duration in seconds
-  static const int videoDurationSeconds = 40;
-
-  /// Maximum video file size in MB
-  static const int videoMaxSizeMB = 50;
-
-  /// Video resolution
-  static const String videoResolution = '1080p';
-
-  /// Video phases duration (intro, main, conclusion)
-  static const List<int> videoPhases = [10, 20, 10];
-
-  // ===========================================================================
-  // CACHE CONFIGURATION (static values)
-  // ===========================================================================
-
-  /// Maximum cache age
-  static const Duration cacheMaxAge = Duration(hours: 24);
-
-  /// Maximum number of cached items
-  static const int cacheMaxItems = 100;
-
-  // ===========================================================================
-  // PAGINATION (static values)
-  // ===========================================================================
-
-  /// Default page size for lists
-  static const int defaultPageSize = 20;
-
-  /// Number of videos to preload in feed
-  static const int feedPreloadCount = 3;
-
-  // ===========================================================================
-  // FEATURE FLAGS
-  // ===========================================================================
-
-  /// Enable analytics tracking
   static bool get enableAnalytics => isProduction;
-
-  /// Enable crash reporting
   static bool get enableCrashReporting => isProduction;
 
   // ===========================================================================
-  // APP INFO (static values)
+  // Informations applicatives
   // ===========================================================================
 
-  /// Application name
   static const String appName = 'Etoile';
-
-  /// Application version
   static const String appVersion = '1.0.0';
-
-  /// Support email
   static const String supportEmail = 'support@etoile-app.fr';
-
-  /// Privacy policy URL
   static const String privacyPolicyUrl = 'https://etoile-app.fr/privacy';
-
-  /// Terms of service URL
   static const String termsOfServiceUrl = 'https://etoile-app.fr/terms';
 }
 
-/// Environment types
-enum Environment {
-  development,
-  staging,
-  production,
-}
+enum Environment { development, staging, production }
 
-/// Exception thrown when configuration is invalid
+/// Exception lancee quand la configuration est invalide ou incomplete.
 class ConfigurationException implements Exception {
   final String message;
-
   const ConfigurationException(this.message);
 
   @override

@@ -1,3 +1,10 @@
+library;
+
+/// Page de verification OTP par email (6 chiffres).
+///
+/// Affichee apres l'inscription pour valider l'adresse email
+/// de l'utilisateur via Supabase Auth verifyOTP.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';

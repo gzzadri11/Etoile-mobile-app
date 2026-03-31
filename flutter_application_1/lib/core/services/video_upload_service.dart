@@ -1,10 +1,17 @@
+library;
+
+/// Service d'upload de fichiers (video/image) vers Cloudflare R2.
+///
+/// Flux : POST /presigned-url pour obtenir l'URL signee,
+/// puis PUT des octets du fichier. URL publique retournee.
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/app_config.dart';
 
-/// Result of a file upload to R2
+/// Resultat d'un upload vers R2.
 class UploadResult {
   final String key;
   final String url;
@@ -17,9 +24,7 @@ class UploadResult {
   });
 }
 
-/// Service for uploading files (video/image) to Cloudflare R2 via Worker.
-///
-/// Flow: POST /presigned-url → PUT file bytes → public URL returned.
+/// Service d'upload vers Cloudflare R2 via Worker.
 class VideoUploadService {
   final SupabaseClient _supabaseClient;
   final Dio _dio;

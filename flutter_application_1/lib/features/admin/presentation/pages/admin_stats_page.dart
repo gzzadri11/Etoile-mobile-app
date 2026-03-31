@@ -1,3 +1,10 @@
+library;
+
+/// Page des statistiques de la plateforme (vue admin).
+///
+/// Affiche les metriques globales : utilisateurs, videos,
+/// abonnements, verifications recruteurs et messages.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,7 +14,7 @@ import '../bloc/admin_bloc.dart';
 import '../bloc/admin_event.dart';
 import '../bloc/admin_state.dart';
 
-/// Admin statistics page showing platform metrics.
+/// Page des statistiques admin affichant les metriques de la plateforme.
 ///
 /// Displays counters for users, recruiters, videos, messages,
 /// and subscriptions. No charts for MVP — just clear numbers.

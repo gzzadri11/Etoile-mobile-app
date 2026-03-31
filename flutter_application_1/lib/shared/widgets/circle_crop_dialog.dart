@@ -1,3 +1,7 @@
+library;
+
+/// Boite de dialogue de recadrage circulaire pour les photos de profil.
+
 import 'dart:typed_data';
 
 import 'package:crop_your_image/crop_your_image.dart';

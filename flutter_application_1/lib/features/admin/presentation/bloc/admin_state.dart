@@ -1,8 +1,17 @@
+library;
+
+/// Etats du BLoC d'administration.
+///
+/// Represente les differents etats des pages admin :
+/// chargement, succes, erreur pour chaque sous-domaine
+/// (tableau de bord, verifications, signalements, statistiques).
+
 import 'package:equatable/equatable.dart';
 
 import '../../data/models/report_model.dart';
 import '../../../profile/data/models/recruiter_profile_model.dart';
 
+/// Classe de base des etats admin.
 abstract class AdminState extends Equatable {
   const AdminState();
 

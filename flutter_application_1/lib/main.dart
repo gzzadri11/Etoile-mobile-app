@@ -1,3 +1,10 @@
+/// Point d'entree de l'application Etoile.
+///
+/// Initialise les services externes (Firebase, Supabase, Stripe)
+/// puis lance l'interface graphique. Si un service echoue,
+/// un ecran d'erreur de secours est affiche.
+library;
+
 import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -6,9 +13,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
@@ -19,13 +25,13 @@ import 'di/injection_container.dart' as di;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set preferred orientations (portrait only - skip on web)
+  // Verrouiller l'orientation portrait — le feed video TikTok-style
+  // n'est pas concu pour le paysage.
   if (!kIsWeb) {
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -37,195 +43,171 @@ Future<void> main() async {
   }
 
   try {
-    // Load environment configuration
     await AppConfig.initialize();
-    debugPrint('[Main] Configuration loaded');
-    debugPrint('[Main] Supabase URL: ${AppConfig.supabaseUrl}');
+    debugPrint('[Main] Configuration chargee');
 
-    // Initialize Firebase (skip on web — Crashlytics not supported on web)
+    // Firebase : Crashlytics + Push — non supporte sur web
     if (!kIsWeb) {
       await Firebase.initializeApp();
-      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-      // Initialize Crashlytics
-      if (AppConfig.enableCrashReporting) {
-        FlutterError.onError =
-            FirebaseCrashlytics.instance.recordFlutterFatalError;
-        PlatformDispatcher.instance.onError = (error, stack) {
-          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-          return true;
-        };
-        debugPrint('[Main] Crashlytics enabled (production mode)');
-      } else {
-        // In debug mode, disable Crashlytics collection
-        await FirebaseCrashlytics.instance
-            .setCrashlyticsCollectionEnabled(false);
-        debugPrint('[Main] Crashlytics disabled (debug mode)');
-      }
+      // Handler pour les notifications recues quand l'app est fermee.
+      // Doit etre une fonction top-level (exigence Firebase).
+      FirebaseMessaging.onBackgroundMessage(
+        firebaseMessagingBackgroundHandler,
+      );
 
-      debugPrint('[Main] Firebase initialized');
+      _setupCrashlytics();
+      debugPrint('[Main] Firebase initialise');
     }
 
-    // Initialize Supabase with auth persistence
+    // Supabase : auth + BDD + realtime + storage
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
       anonKey: AppConfig.supabaseAnonKey,
       debug: kDebugMode,
       authOptions: const FlutterAuthClientOptions(
+        // PKCE : flow OAuth securise (code + verifier) recommande pour mobile
         authFlowType: AuthFlowType.pkce,
       ),
     );
-    debugPrint('[Main] Supabase initialized successfully');
+    debugPrint('[Main] Supabase initialise');
 
-    // Check if user is already logged in
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session != null) {
-      debugPrint('[Main] User already logged in: ${session.user.email}');
-    } else {
-      debugPrint('[Main] No existing session');
-    }
-
-    // Initialize dependency injection
+    // Injection de dependances : repositories, BLoCs, services
     await di.init();
-    debugPrint('[Main] Dependencies initialized');
+    debugPrint('[Main] Dependances enregistrees');
 
-    // Initialize Stripe SDK (not supported on web)
+    // Stripe : paiements — SDK Flutter non disponible sur web
     if (!kIsWeb) {
       await GetIt.I<StripeService>().initialize();
-      debugPrint('[Main] Stripe initialized');
+      debugPrint('[Main] Stripe initialise');
     }
 
-    // Run the app
     runApp(const EtoileApp());
   } on ConfigurationException catch (e) {
-    debugPrint('[Main] Configuration error: $e');
-    runApp(ConfigurationErrorApp(message: e.message));
+    debugPrint('[Main] Erreur de configuration : $e');
+    runApp(_BootErrorApp(
+      icon: Icons.error_outline,
+      title: 'Erreur de configuration',
+      detail: e.message,
+      hint: 'Verifiez votre fichier .env et relancez l\'app.',
+    ));
   } catch (e, stackTrace) {
-    debugPrint('[Main] Initialization error: $e');
-    debugPrint('[Main] Stack trace: $stackTrace');
-    runApp(InitializationErrorApp(error: e.toString()));
+    debugPrint('[Main] Erreur d\'initialisation : $e');
+    debugPrint('[Main] Stack trace : $stackTrace');
+    runApp(_BootErrorApp(
+      icon: Icons.warning_amber_rounded,
+      title: 'Erreur d\'initialisation',
+      detail: e.toString(),
+      hint: 'Relancez l\'app. Si le probleme persiste, verifiez la configuration.',
+      isScrollable: true,
+    ));
   }
 }
 
-/// Error app shown when configuration is invalid
-class ConfigurationErrorApp extends StatelessWidget {
-  final String message;
+/// Configure Crashlytics : actif en production, desactive en debug
+/// pour ne pas polluer le dashboard avec les erreurs de dev.
+void _setupCrashlytics() {
+  if (AppConfig.enableCrashReporting) {
+    // Intercepte les erreurs Flutter (widgets, rendering, layout)
+    FlutterError.onError =
+        FirebaseCrashlytics.instance.recordFlutterFatalError;
 
-  const ConfigurationErrorApp({super.key, required this.message});
+    // Intercepte les erreurs Dart non-attrapees (Futures sans try/catch)
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+    debugPrint('[Main] Crashlytics actif');
+  } else {
+    FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
+    debugPrint('[Main] Crashlytics desactive (debug)');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Ecran de secours generique en cas d'echec au demarrage.
+//
+// N'utilise PAS AppColors/AppTheme car ces classes pourraient ne pas
+// etre disponibles si l'initialisation a echoue.
+// ---------------------------------------------------------------------------
+class _BootErrorApp extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String detail;
+  final String hint;
+  final bool isScrollable;
+
+  const _BootErrorApp({
+    required this.icon,
+    required this.title,
+    required this.detail,
+    required this.hint,
+    this.isScrollable = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        backgroundColor: const Color(0xFF1A1A1A),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: Color(0xFFFF8C00),
-                  size: 64,
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Configuration Error',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                const Text(
-                  'Verifiez votre fichier .env et relancez l\'app.',
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 12,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+    final content = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (isScrollable) const SizedBox(height: 100),
+        Icon(icon, color: const Color(0xFFFF8C00), size: 64),
+        const SizedBox(height: 24),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
           ),
         ),
-      ),
+        const SizedBox(height: 16),
+        if (isScrollable)
+          // Affiche l'erreur technique en monospace (style terminal)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red.withAlpha(30),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              detail,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontFamily: 'monospace',
+              ),
+              textAlign: TextAlign.left,
+            ),
+          )
+        else
+          Text(
+            detail,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        const SizedBox(height: 32),
+        Text(
+          hint,
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
-  }
-}
 
-/// Error app shown when initialization fails unexpectedly
-class InitializationErrorApp extends StatelessWidget {
-  final String error;
-
-  const InitializationErrorApp({super.key, required this.error});
-
-  @override
-  Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
         backgroundColor: const Color(0xFF1A1A1A),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 100),
-                const Icon(
-                  Icons.warning_amber_rounded,
-                  color: Color(0xFFFFB800),
-                  size: 64,
+          child: isScrollable
+              ? SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: content,
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: content,
                 ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Initialization Failed',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withAlpha(30),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    error,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 12,
-                      fontFamily: 'monospace',
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                const Text(
-                  'Relancez l\'app. Si le probleme persiste, verifiez la configuration.',
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 12,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

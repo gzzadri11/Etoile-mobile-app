@@ -1,3 +1,7 @@
+library;
+
+/// Boite de dialogue de signalement reutilisable (bottom sheet).
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
@@ -5,10 +9,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/repositories/report_repository.dart';
 
-/// Reusable report bottom sheet.
+/// Bottom sheet de signalement reutilisable.
 ///
-/// Shows a list of reasons and optional description field.
-/// Call [showReportDialog] to display it.
+/// Affiche une liste de motifs et un champ de description optionnel.
+/// Appeler [showReportDialog] pour l'afficher.
 Future<void> showReportDialog(
   BuildContext context, {
   required String reportedUserId,

@@ -1,3 +1,4 @@
+/// Etats du BLoC de messagerie (chargement, liste, envoi, erreur).
 part of 'message_bloc.dart';
 
 abstract class MessageState extends Equatable {

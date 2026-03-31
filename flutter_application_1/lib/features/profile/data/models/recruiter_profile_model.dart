@@ -1,6 +1,13 @@
+library;
+
+/// Modele de profil recruteur et marqueur cartographique.
+///
+/// Contient les informations de l'entreprise (nom, SIRET, secteur),
+/// la localisation et le statut de verification.
+
 import 'package:equatable/equatable.dart';
 
-/// A named marker on the map
+/// Marqueur nomme sur la carte (siege de l'entreprise).
 class MapMarker extends Equatable {
   final String name;
   final double latitude;

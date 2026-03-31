@@ -1,6 +1,11 @@
+library;
+
+/// Repository pour le blocage d'utilisateurs via Supabase.
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Acces aux operations de blocage/deblocage d'utilisateurs.
 class BlockRepository {
   final SupabaseClient _supabaseClient;
 

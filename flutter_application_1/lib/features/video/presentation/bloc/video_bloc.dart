@@ -1,3 +1,7 @@
+library;
+
+/// BLoC de gestion des videos (upload, publication, suppression).
+
 import 'dart:io';
 
 import 'package:equatable/equatable.dart';

@@ -1,10 +1,16 @@
+library;
+
+/// Repository d'acces aux profils chercheur et recruteur via Supabase.
+///
+/// Gere le chargement, la mise a jour et la completude des profils.
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/seeker_profile_model.dart';
 import '../models/recruiter_profile_model.dart';
 
-/// Repository for profile operations with Supabase
+/// Operations CRUD sur les profils (seeker + recruiter) via Supabase.
 class ProfileRepository {
   final SupabaseClient _supabaseClient;
 

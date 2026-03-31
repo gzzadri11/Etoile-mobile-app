@@ -1,10 +1,14 @@
+library;
+
+/// Palette de couleurs de l'application Etoile.
+///
+/// Basee sur les specifications UX :
+/// - Primaire : Jaune Etoile (#FFB800) et Orange Etoile (#FF8C00)
+/// - Symbolise l'optimisme et la chaleur.
+
 import 'package:flutter/material.dart';
 
-/// Etoile application color palette
-///
-/// Based on the UX Design specifications:
-/// - Primary: Jaune Etoile (#FFB800) and Orange Etoile (#FF8C00)
-/// - The color scheme represents optimism and warmth
+/// Palette de couleurs Etoile (primaires, neutres, semantiques).
 abstract class AppColors {
   // ============================================
   // PRIMARY COLORS

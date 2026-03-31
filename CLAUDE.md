@@ -82,7 +82,22 @@ features/<feature>/
 - **Formulaires** : `DropdownButtonFormField` avec `initialValue` (pas `value`, deprecie Flutter 3.33+)
 - **Images** : `MemoryImage` pour preview apres pick, `Image.network` pour URLs
 - **Imports** : relatifs dans le meme feature, absolus sinon
-- **Debug** : `debugPrint()` (pas `print()`) avec prefixe `[Feature]`
+- **Debug** : `debugPrint()` uniquement dans les blocs `catch` (pas de logs de routine)
+
+### Standards de documentation (Sprint 27)
+
+Tous les fichiers `.dart` dans `lib/` suivent ces conventions :
+
+- **Fichiers standalone** : `library;` en premiere ligne + `/// Description francaise du fichier.` en deuxieme ligne
+- **Fichiers `part of`** : `/// Description francaise.` AVANT la directive `part of` (pas de `library;`)
+- **Classes/methodes publiques** : `///` commentaires en francais
+- **debugPrint** : uniquement dans les blocs `catch` pour les erreurs — aucun log de routine
+- **Code mort** : supprime (pas de `// removed` ou `_unused`)
+
+### Fichiers supprimes (code mort)
+
+- `lib/core/services/r2_service.dart` — jamais importe, dupliquait `video_upload_service.dart`
+- `lib/core/network/api_client.dart` + dossier `network/` — jamais importe
 
 ## BMAD Workflow
 

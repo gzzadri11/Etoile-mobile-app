@@ -1,8 +1,12 @@
+library;
+
+/// Modele de donnees representant un signalement utilisateur.
+///
+/// Mappe la table `reports` dans Supabase.
+
 import 'package:equatable/equatable.dart';
 
-/// Model representing a user report (signalement).
-///
-/// Maps to the `reports` table in Supabase.
+/// Modele de signalement (report) avec les champs de la table `reports`.
 class ReportModel extends Equatable {
   final String id;
   final String reporterId;

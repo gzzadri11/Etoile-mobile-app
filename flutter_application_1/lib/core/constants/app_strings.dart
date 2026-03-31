@@ -1,7 +1,11 @@
-/// Application string constants
+library;
+
+/// Constantes textuelles de l'application Etoile.
 ///
-/// Contains all user-facing strings for localization.
-/// Organized by feature/screen for easy maintenance.
+/// Regroupe toutes les chaines affichees a l'utilisateur,
+/// organisees par fonctionnalite pour faciliter la maintenance.
+
+/// Constantes textuelles (UI francais).
 abstract class AppStrings {
   // ============================================
   // APP GENERAL

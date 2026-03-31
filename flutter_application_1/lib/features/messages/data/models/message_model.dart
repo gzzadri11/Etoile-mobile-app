@@ -1,6 +1,10 @@
+library;
+
+/// Modeles de donnees pour les messages et conversations.
+
 import 'package:equatable/equatable.dart';
 
-/// Model representing a message
+/// Modele representant un message dans une conversation.
 class Message extends Equatable {
   final String id;
   final String conversationId;

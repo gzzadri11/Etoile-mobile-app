@@ -1,3 +1,7 @@
+library;
+
+/// BLoC du feed video TikTok-style avec pagination et filtres.
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

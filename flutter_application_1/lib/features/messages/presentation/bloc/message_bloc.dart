@@ -1,3 +1,7 @@
+library;
+
+/// BLoC de messagerie : gestion des messages, envoi et abonnement temps reel.
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

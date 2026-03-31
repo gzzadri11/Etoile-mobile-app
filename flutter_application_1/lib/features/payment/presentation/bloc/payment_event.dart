@@ -1,5 +1,13 @@
+library;
+
+/// Evenements du BLoC de paiement.
+///
+/// Couvre le chargement du statut d'abonnement, la souscription
+/// a un plan premium et l'annulation d'abonnement.
+
 import 'package:equatable/equatable.dart';
 
+/// Classe de base des evenements de paiement.
 abstract class PaymentEvent extends Equatable {
   const PaymentEvent();
 

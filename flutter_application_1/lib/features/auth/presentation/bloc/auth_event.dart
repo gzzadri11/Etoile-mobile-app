@@ -1,6 +1,8 @@
+/// Evenements du BLoC d'authentification (connexion, inscription, deconnexion).
+
 part of 'auth_bloc.dart';
 
-/// Base class for all auth events
+/// Classe mere des events d'authentification.
 sealed class AuthEvent extends Equatable {
   const AuthEvent();
 
@@ -8,12 +10,12 @@ sealed class AuthEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Check if user is authenticated (on app startup)
+/// Verification de session au demarrage de l'app.
 class AuthCheckRequested extends AuthEvent {
   const AuthCheckRequested();
 }
 
-/// Login with email and password
+/// Connexion par email/mot de passe.
 class AuthLoginRequested extends AuthEvent {
   final String email;
   final String password;
@@ -27,12 +29,15 @@ class AuthLoginRequested extends AuthEvent {
   List<Object> get props => [email, password];
 }
 
-/// Register new user
+/// Inscription d'un nouvel utilisateur.
+///
+/// Pour un recruteur, les champs SIRET/SIREN/legalForm sont renseignes
+/// apres verification via l'API Sirene (entreprises.gouv.fr).
 class AuthRegisterRequested extends AuthEvent {
   final String email;
   final String password;
   final String firstName;
-  final String role; // 'seeker' or 'recruiter'
+  final String role; // 'seeker' ou 'recruiter'
   final String? siret;
   final String? companyName;
   final String? siren;
@@ -50,16 +55,18 @@ class AuthRegisterRequested extends AuthEvent {
   });
 
   @override
-  List<Object?> get props =>
-      [email, password, firstName, role, siret, companyName];
+  List<Object?> get props => [
+    email, password, firstName, role,
+    siret, companyName, siren, legalForm,
+  ];
 }
 
-/// Logout current user
+/// Deconnexion.
 class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }
 
-/// Request password reset email
+/// Demande de reinitialisation du mot de passe par email.
 class AuthPasswordResetRequested extends AuthEvent {
   final String email;
 
@@ -69,7 +76,8 @@ class AuthPasswordResetRequested extends AuthEvent {
   List<Object> get props => [email];
 }
 
-/// Delete account (RGPD - soft delete)
+/// Suppression de compte (RGPD soft delete).
+/// Necessite le mot de passe pour verification.
 class AuthDeleteAccountRequested extends AuthEvent {
   final String password;
 
@@ -79,12 +87,8 @@ class AuthDeleteAccountRequested extends AuthEvent {
   List<Object> get props => [password];
 }
 
-/// Email verification completed
-class AuthEmailVerified extends AuthEvent {
-  const AuthEmailVerified();
-}
-
-/// Verify OTP code entered by user
+/// Verification du code OTP 6 chiffres (email confirmation).
+/// Desactive en beta, pret pour reactivation.
 class AuthVerifyOtpRequested extends AuthEvent {
   final String email;
   final String otpCode;
@@ -98,7 +102,7 @@ class AuthVerifyOtpRequested extends AuthEvent {
   List<Object> get props => [email, otpCode];
 }
 
-/// Resend OTP code
+/// Renvoi du code OTP.
 class AuthResendOtpRequested extends AuthEvent {
   final String email;
   final String role;

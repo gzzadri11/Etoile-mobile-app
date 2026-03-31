@@ -1,6 +1,10 @@
+library;
+
+/// Statistiques de visionnage des videos d'un utilisateur.
+
 import 'package:equatable/equatable.dart';
 
-/// Statistics for a user's videos
+/// Stats video : vues totales, spectateurs uniques, tendance hebdo.
 class VideoStats extends Equatable {
   final int totalViews;
   final int uniqueViewers;

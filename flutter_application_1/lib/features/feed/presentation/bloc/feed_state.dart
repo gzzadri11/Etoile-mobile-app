@@ -1,6 +1,8 @@
+/// Etats du BLoC feed (initial, charge, pagination, erreur).
+
 part of 'feed_bloc.dart';
 
-/// Base class for feed states
+/// Classe de base des etats feed.
 sealed class FeedState extends Equatable {
   const FeedState();
 

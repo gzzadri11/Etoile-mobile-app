@@ -1,3 +1,11 @@
+library;
+
+/// Service de paiement Stripe pour l'application Etoile.
+///
+/// Gere l'initialisation du SDK Stripe, la presentation des
+/// feuilles de paiement (abonnements et achats ponctuels),
+/// et la gestion des abonnements recruteur.
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show ThemeMode, Color;
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -6,13 +14,7 @@ import '../config/app_config.dart';
 import '../errors/failures.dart';
 import 'supabase_service.dart';
 
-/// Service for handling Stripe payments
-///
-/// Provides:
-/// - Stripe SDK initialization
-/// - Payment sheet for subscriptions and one-time payments
-/// - Customer management
-/// - Payment method handling
+/// Service Stripe : initialisation, paiements, abonnements.
 class StripeService {
   final SupabaseService _supabaseService;
   bool _isInitialized = false;

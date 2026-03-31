@@ -1,9 +1,13 @@
+library;
+
+/// Hierarchie de classes d'erreurs typees de l'application Etoile.
+///
+/// Chaque [Failure] represente une erreur attendue avec un message
+/// utilisateur en francais et un code technique.
+
 import 'package:equatable/equatable.dart';
 
-/// Base class for all failures in the application
-///
-/// Failures represent expected errors that can be handled gracefully.
-/// They are used with the Either type from dartz package.
+/// Classe de base pour toutes les erreurs de l'application.
 abstract class Failure extends Equatable {
   final String message;
   final String? code;

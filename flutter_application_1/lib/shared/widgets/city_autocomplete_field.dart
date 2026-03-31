@@ -1,11 +1,15 @@
+library;
+
+/// Champ d'autocompletion de ville filtre sur l'Ile-de-France.
+///
+/// Utilise l'API Photon (OpenStreetMap) avec bbox IdF.
+
 import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
-/// Autocomplete city field filtered to Île-de-France.
-///
-/// Uses Photon API (OpenStreetMap) with a bounding box limited to IdF.
+/// Autocompletion ville IdF via Photon API (debounce 400ms).
 /// Returns the selected city name via [onCitySelected].
 class CityAutocompleteField extends StatefulWidget {
   final String? initialValue;

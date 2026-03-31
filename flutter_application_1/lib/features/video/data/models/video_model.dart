@@ -1,6 +1,10 @@
+library;
+
+/// Modele de video (presentation chercheur ou offre recruteur).
+
 import 'package:equatable/equatable.dart';
 
-/// Model representing a video
+/// Video : presentation (40s) ou offre d'emploi.
 class Video extends Equatable {
   final String id;
   final String userId;

@@ -1,5 +1,13 @@
+library;
+
+/// Evenements du BLoC d'administration.
+///
+/// Chaque evenement correspond a une action declenchee depuis
+/// les pages admin (tableau de bord, verifications, signalements, stats).
+
 import 'package:equatable/equatable.dart';
 
+/// Classe de base des evenements admin.
 abstract class AdminEvent extends Equatable {
   const AdminEvent();
 

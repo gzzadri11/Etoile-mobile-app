@@ -1,10 +1,14 @@
+library;
+
+/// Bottom sheet affichant le profil utilisateur depuis le feed.
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/feed_item_model.dart';
 
-/// Bottom sheet displaying user profile from feed
+/// Fiche profil en bottom sheet depuis le feed.
 class ProfileBottomSheet extends StatelessWidget {
   final FeedItem feedItem;
   final VoidCallback? onMessageTap;

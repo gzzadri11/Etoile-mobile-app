@@ -1,3 +1,10 @@
+library;
+
+/// Page d'enregistrement video guide en 40 secondes.
+///
+/// Flux en 3 phases : presentation (0-10s), competences (10-30s),
+/// conclusion (30-40s). Affiche un compte a rebours et des prompts.
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,12 +16,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/profile_gate.dart';
 
-/// Video recording page
-///
-/// Implements the guided 40-second video recording flow:
-/// - Phase 1 (0-10s): Introduction
-/// - Phase 2 (10-30s): Skills
-/// - Phase 3 (30-40s): Conclusion
+/// Page d'enregistrement video (3 phases, 40 secondes).
 class VideoRecordPage extends StatefulWidget {
   const VideoRecordPage({super.key});
 
@@ -128,7 +130,6 @@ class _VideoRecordPageState extends State<VideoRecordPage>
   }
 
   void _publishVideo() {
-    // TODO: Implement video upload
     setState(() {
       _state = _RecordingState.success;
     });

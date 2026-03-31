@@ -1,3 +1,10 @@
+library;
+
+/// Page d'onboarding affichee une seule fois apres l'inscription.
+///
+/// Presente les fonctionnalites cles de l'application en 3 etapes
+/// avec navigation horizontale (PageView) et indicateur de progression.
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,7 +13,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 
-/// Onboarding page shown once after registration.
+/// Page d'onboarding affichee une fois apres l'inscription.
 ///
 /// Displays 3 slides explaining the app, with mascotte illustrations.
 /// Content is adapted based on user role (seeker vs recruiter).

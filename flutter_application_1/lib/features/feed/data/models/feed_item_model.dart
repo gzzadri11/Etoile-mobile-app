@@ -1,8 +1,12 @@
+library;
+
+/// Modele d'element du feed (video + infos utilisateur).
+
 import 'package:equatable/equatable.dart';
 
 import '../../../video/data/models/video_model.dart';
 
-/// Model representing a feed item (video + user info for display)
+/// Element du feed : video, nom, secteur, photo, ville.
 class FeedItem extends Equatable {
   final Video video;
   final String userName;

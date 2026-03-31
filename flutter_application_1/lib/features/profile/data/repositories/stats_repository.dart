@@ -1,12 +1,16 @@
+library;
+
+/// Repository de statistiques video depuis la table video_views.
+///
+/// Les policies RLS garantissent que seul le proprietaire
+/// de la video peut lire ses statistiques.
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/video_stats.dart';
 
-/// Repository for loading video statistics from video_views table
-///
-/// RLS policy on video_views ensures only video owners can read views,
-/// so all queries automatically filter to the current user's videos.
+/// Chargement des statistiques de visionnage video.
 class StatsRepository {
   final SupabaseClient _supabaseClient;
 

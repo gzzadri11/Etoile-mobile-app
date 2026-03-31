@@ -1,6 +1,11 @@
+library;
+
+/// Repository pour les signalements d'utilisateurs et de videos via Supabase.
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Acces aux operations de signalement (insertion dans la table reports).
 class ReportRepository {
   final SupabaseClient _supabaseClient;
 

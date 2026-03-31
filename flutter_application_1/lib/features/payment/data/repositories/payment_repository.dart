@@ -1,9 +1,16 @@
+library;
+
+/// Repository des paiements et abonnements.
+///
+/// Gere les interactions avec Stripe (creation de session checkout,
+/// portail client) et Supabase (statut abonnement, historique factures).
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/services/stripe_service.dart';
 
-/// Repository for payment and subscription data
+/// Repository pour les donnees de paiement et d'abonnement.
 class PaymentRepository {
   final SupabaseClient _supabaseClient;
   final StripeService _stripeService;

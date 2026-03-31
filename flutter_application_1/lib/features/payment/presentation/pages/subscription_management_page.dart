@@ -1,3 +1,10 @@
+library;
+
+/// Page de gestion de l'abonnement recruteur.
+///
+/// Affiche le statut de l'abonnement actif, l'historique des factures
+/// et permet d'acceder au portail Stripe pour modifier ou annuler.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';

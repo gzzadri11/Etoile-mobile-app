@@ -1,3 +1,7 @@
+library;
+
+/// Page listant les offres du recruteur avec le nombre de candidatures par offre.
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';

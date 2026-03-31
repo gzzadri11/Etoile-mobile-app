@@ -1,3 +1,10 @@
+library;
+
+/// Page premium recruteur presentant les offres d'abonnement.
+///
+/// Affiche les avantages du plan premium, le prix et permet
+/// de souscrire via Stripe Checkout.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';

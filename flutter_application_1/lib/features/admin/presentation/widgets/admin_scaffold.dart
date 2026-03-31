@@ -1,13 +1,18 @@
+library;
+
+/// Scaffold principal de l'interface administrateur.
+///
+/// Fournit une barre de navigation basse avec 4 onglets :
+/// Tableau de bord, Verifications, Signalements, Statistiques.
+/// Meme pattern que MainScaffold mais pour l'experience admin.
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_router.dart';
 
-/// Admin scaffold with bottom navigation bar.
-///
-/// Provides 4 tabs: Dashboard, Verifications, Signalements, Statistiques.
-/// Same pattern as MainScaffold but for admin experience.
+/// Scaffold admin avec barre de navigation inferieure a 4 onglets.
 class AdminScaffold extends StatelessWidget {
   final Widget child;
 

@@ -1,9 +1,13 @@
+library;
+
+/// Repository du feed video avec pagination et filtres.
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/feed_item_model.dart';
 import '../../../video/data/models/video_model.dart';
 
-/// Repository for feed operations with Supabase
+/// Acces au feed video via Supabase (pagination, filtres secteur/ville).
 class FeedRepository {
   final SupabaseClient _supabaseClient;
 

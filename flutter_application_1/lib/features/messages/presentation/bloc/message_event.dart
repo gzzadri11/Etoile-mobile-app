@@ -1,3 +1,4 @@
+/// Evenements du BLoC de messagerie (chargement, envoi, temps reel).
 part of 'message_bloc.dart';
 
 abstract class MessageEvent extends Equatable {

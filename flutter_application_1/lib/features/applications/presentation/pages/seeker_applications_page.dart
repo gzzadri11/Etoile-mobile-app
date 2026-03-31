@@ -1,3 +1,7 @@
+library;
+
+/// Page listant les candidatures envoyees par le chercheur avec leur statut.
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 

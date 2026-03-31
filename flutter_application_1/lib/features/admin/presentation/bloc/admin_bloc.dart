@@ -1,3 +1,11 @@
+library;
+
+/// BLoC d'administration de la plateforme Etoile.
+///
+/// Gere les evenements du tableau de bord admin : chargement des compteurs,
+/// verification des recruteurs (approuver/rejeter), moderation des
+/// signalements et consultation des statistiques globales.
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,6 +14,7 @@ import '../../../profile/data/models/recruiter_profile_model.dart';
 import 'admin_event.dart';
 import 'admin_state.dart';
 
+/// BLoC gerant les operations d'administration de la plateforme.
 class AdminBloc extends Bloc<AdminEvent, AdminState> {
   final AdminRepository _adminRepository;
 
@@ -74,18 +83,13 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
 
       // Generate signed URL for document if available
       String? documentSignedUrl;
-      debugPrint('[AdminBloc] profile.documentUrl = ${profile.documentUrl}');
       if (profile.documentUrl != null && profile.documentUrl!.isNotEmpty) {
         try {
           documentSignedUrl = await _adminRepository
               .getDocumentSignedUrl(profile.documentUrl!);
-          debugPrint('[AdminBloc] Signed URL generated successfully');
         } catch (e) {
           debugPrint('[AdminBloc] Error getting document signed URL: $e');
-          debugPrint('[AdminBloc] documentUrl was: ${profile.documentUrl}');
         }
-      } else {
-        debugPrint('[AdminBloc] No documentUrl in profile');
       }
 
       emit(AdminRecruiterDetailLoaded(

@@ -1,9 +1,13 @@
+library;
+
+/// Widget bulle de message avec mascotte Etoile.
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Variant for the mascotte message bubble color.
+/// Variante de couleur pour la bulle mascotte.
 enum MascotteVariant { info, success, encouragement }
 
 /// A mascotte speech-bubble widget used for profile completion milestones.

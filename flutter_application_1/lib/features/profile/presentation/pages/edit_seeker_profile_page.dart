@@ -1,3 +1,10 @@
+library;
+
+/// Page d'edition du profil chercheur.
+///
+/// Formulaire complet : identite, date de naissance, photo,
+/// ecole, niveau d'etudes, ville (autocompletion IdF), domaine/specialite.
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';

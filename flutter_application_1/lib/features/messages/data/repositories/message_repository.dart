@@ -1,9 +1,13 @@
+library;
+
+/// Repository des operations sur les messages et conversations via Supabase.
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/message_model.dart';
 
-/// Repository for message operations with Supabase
+/// Acces aux messages : chargement, envoi, temps reel et enrichissement des conversations.
 class MessageRepository {
   final SupabaseClient _supabaseClient;
 
@@ -16,7 +20,6 @@ class MessageRepository {
   /// Get messages for a conversation
   Future<List<Message>> getMessages(String conversationId) async {
     try {
-      debugPrint('[Messages] Loading messages for: $conversationId');
       final response = await _supabaseClient
           .from('messages')
           .select()
@@ -27,7 +30,6 @@ class MessageRepository {
           .map((json) => Message.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      debugPrint('[Messages] Loaded ${messages.length} messages');
       return messages;
     } catch (e) {
       debugPrint('[Messages] Error loading messages: $e');
@@ -45,8 +47,6 @@ class MessageRepository {
       throw Exception('Utilisateur non connecte');
     }
 
-    debugPrint('[Messages] Sending message to $conversationId');
-
     final response = await _supabaseClient
         .from('messages')
         .insert({
@@ -57,8 +57,6 @@ class MessageRepository {
         })
         .select()
         .single();
-
-    debugPrint('[Messages] Message inserted successfully');
 
     // Update conversation last message (non-critical, don't block message display)
     try {
@@ -71,7 +69,6 @@ class MessageRepository {
       debugPrint('[Messages] Error updating conversation preview: $e');
     }
 
-    debugPrint('[Messages] Message sent successfully');
     return Message.fromJson(response);
   }
 
@@ -106,7 +103,6 @@ class MessageRepository {
     String conversationId,
     void Function(Message) onMessage,
   ) {
-    debugPrint('[Messages] Subscribing to realtime for: $conversationId');
     return _supabaseClient
         .channel('messages:$conversationId')
         .onPostgresChanges(
@@ -119,7 +115,6 @@ class MessageRepository {
             value: conversationId,
           ),
           callback: (payload) {
-            debugPrint('[Messages] Realtime message received');
             final message = Message.fromJson(payload.newRecord);
             onMessage(message);
           },
@@ -136,38 +131,28 @@ class MessageRepository {
   Future<List<Conversation>> getConversations() async {
     final userId = currentUserId;
     if (userId == null) {
-      debugPrint('[Messages] No user ID, returning empty list');
       throw Exception('Utilisateur non connecté');
     }
 
-    debugPrint('[Messages] Loading conversations for user: $userId');
-
     try {
       // Get conversations where user is participant_1
-      debugPrint('[Messages] Fetching conversations as participant_1...');
       final conv1 = await _supabaseClient
           .from('conversations')
           .select()
           .eq('participant_1', userId);
-      debugPrint('[Messages] Found ${(conv1 as List).length} as participant_1');
 
       // Get conversations where user is participant_2
-      debugPrint('[Messages] Fetching conversations as participant_2...');
       final conv2 = await _supabaseClient
           .from('conversations')
           .select()
           .eq('participant_2', userId);
-      debugPrint('[Messages] Found ${(conv2 as List).length} as participant_2');
 
       final allConvData = <Map<String, dynamic>>[
         ...List<Map<String, dynamic>>.from(conv1),
         ...List<Map<String, dynamic>>.from(conv2),
       ];
 
-      debugPrint('[Messages] Total conversations: ${allConvData.length}');
-
       if (allConvData.isEmpty) {
-        debugPrint('[Messages] No conversations found for user');
         return [];
       }
 
@@ -175,10 +160,8 @@ class MessageRepository {
       final conversations = <Conversation>[];
       for (final data in allConvData) {
         try {
-          debugPrint('[Messages] Processing conversation: ${data['id']}');
           final conv = Conversation.fromJson(data);
           final otherUserId = conv.getOtherParticipantId(userId);
-          debugPrint('[Messages] Other user: $otherUserId');
           final enriched = await _enrichConversation(conv, otherUserId);
           conversations.add(enriched);
         } catch (e) {
@@ -194,12 +177,9 @@ class MessageRepository {
         return bTime.compareTo(aTime);
       });
 
-      debugPrint('[Messages] Returning ${conversations.length} enriched conversations');
       return conversations;
     } on PostgrestException catch (e) {
-      debugPrint('[Messages] Supabase error: ${e.message}');
-      debugPrint('[Messages] Error code: ${e.code}');
-      debugPrint('[Messages] Error details: ${e.details}');
+      debugPrint('[Messages] Supabase error: ${e.message} (code: ${e.code})');
       throw Exception('Erreur de base de données: ${e.message}');
     } catch (e) {
       debugPrint('[Messages] Error loading conversations: $e');
@@ -213,7 +193,6 @@ class MessageRepository {
     if (userId == null) return null;
 
     try {
-      debugPrint('[Messages] Loading conversation: $conversationId');
       final response = await _supabaseClient
           .from('conversations')
           .select()
@@ -221,7 +200,6 @@ class MessageRepository {
           .maybeSingle();
 
       if (response == null) {
-        debugPrint('[Messages] Conversation not found');
         return null;
       }
 

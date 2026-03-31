@@ -1,6 +1,8 @@
+/// Etats du BLoC profil (initial, charge, erreur).
+
 part of 'profile_bloc.dart';
 
-/// Base class for profile states
+/// Classe de base des etats profil.
 sealed class ProfileState extends Equatable {
   const ProfileState();
 

@@ -1,3 +1,10 @@
+library;
+
+/// Page de la file d'attente de verification des recruteurs.
+///
+/// Liste les recruteurs en attente de validation SIRET/document
+/// avec navigation vers la fiche de detail pour approuver ou rejeter.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';

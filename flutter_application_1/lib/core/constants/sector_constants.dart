@@ -1,6 +1,10 @@
-/// Centralized constants for sectors, specialties, and study levels.
+library;
+
+/// Constantes de secteurs, specialites et niveaux d'etudes.
 ///
-/// Used across search, edit profile, feed, and filter UI.
+/// Utilisees dans la recherche, l'edition de profil, le feed et les filtres.
+
+/// Secteurs, specialites par secteur et niveaux d'etudes.
 class SectorConstants {
   SectorConstants._();
 

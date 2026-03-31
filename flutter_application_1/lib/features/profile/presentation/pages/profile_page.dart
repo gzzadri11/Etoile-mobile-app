@@ -1,3 +1,10 @@
+library;
+
+/// Page de profil utilisateur (chercheur ou recruteur).
+///
+/// Affiche les informations du profil, la photo, les stats video,
+/// et les actions d'edition selon le role.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';

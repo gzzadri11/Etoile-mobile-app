@@ -1,3 +1,10 @@
+library;
+
+/// Page de gestion des signalements (moderation admin).
+///
+/// Liste les signalements en attente avec les actions possibles :
+/// ignorer, suspendre l'utilisateur ou suspendre la video.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

@@ -1,3 +1,10 @@
+library;
+
+/// BLoC de gestion du profil utilisateur (chercheur ou recruteur).
+///
+/// Charge le profil depuis Supabase, gere les mises a jour,
+/// la completude et le chargement des statistiques video.
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

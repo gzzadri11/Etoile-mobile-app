@@ -1,5 +1,13 @@
+library;
+
+/// Etats du BLoC de paiement.
+///
+/// Represente les differents etats du cycle de paiement :
+/// initial, chargement, statut charge, succes/erreur de souscription.
+
 import 'package:equatable/equatable.dart';
 
+/// Classe de base des etats de paiement.
 abstract class PaymentState extends Equatable {
   const PaymentState();
 

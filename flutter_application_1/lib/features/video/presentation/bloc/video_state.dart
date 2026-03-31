@@ -1,6 +1,8 @@
+/// Etats du BLoC video (initial, upload en cours, succes, erreur).
+
 part of 'video_bloc.dart';
 
-/// Base class for video states
+/// Classe de base des etats video.
 sealed class VideoState extends Equatable {
   const VideoState();
 

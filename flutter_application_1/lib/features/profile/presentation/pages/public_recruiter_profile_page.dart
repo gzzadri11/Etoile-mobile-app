@@ -1,3 +1,10 @@
+library;
+
+/// Page de profil public d'un recruteur (vue chercheur).
+///
+/// Affiche le logo, le nom de l'entreprise, le secteur, la description,
+/// la localisation sur carte, et les actions (contacter, signaler, bloquer).
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';

@@ -1,3 +1,7 @@
+library;
+
+/// Page de connexion (email + mot de passe).
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,11 +10,12 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/validators.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
 import '../bloc/auth_bloc.dart';
 
-/// Login page for existing users
+/// Page de connexion par email/mot de passe.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -33,12 +38,10 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onLoginPressed() {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<AuthBloc>().add(
-            AuthLoginRequested(
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-            ),
-          );
+      context.read<AuthBloc>().add(AuthLoginRequested(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      ));
     }
   }
 
@@ -54,11 +57,10 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            // Explicit navigation based on role — bypasses unreliable
-            // GoRouter redirect which races with auth state transitions.
+            // Navigation explicite : contourne une race condition GoRouter
+            // ou l'etat auth transitoire cause un redirect vers /welcome.
             final destination =
                 state.isAdmin ? AppRoutes.adminAuth : AppRoutes.search;
-            debugPrint('[LoginPage] Authenticated, navigating to $destination');
             context.go(destination);
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -81,8 +83,6 @@ class _LoginPageState extends State<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: AppTheme.spaceXl),
-
-                    // Title
                     Text(
                       AppStrings.login,
                       style: Theme.of(context).textTheme.displayLarge,
@@ -91,13 +91,11 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       'Content de vous revoir !',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: AppColors.greyWarm,
-                          ),
+                        color: AppColors.greyWarm,
+                      ),
                     ),
-
                     const SizedBox(height: AppTheme.space2Xl),
 
-                    // Email field
                     EtoileTextField(
                       controller: _emailController,
                       label: AppStrings.email,
@@ -106,21 +104,10 @@ class _LoginPageState extends State<LoginPage> {
                       textInputAction: TextInputAction.next,
                       prefixIcon: Icons.email_outlined,
                       enabled: !isLoading,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
-                          return AppStrings.errorInvalidEmail;
-                        }
-                        return null;
-                      },
+                      validator: validateEmail,
                     ),
-
                     const SizedBox(height: AppTheme.spaceMd),
 
-                    // Password field
                     EtoileTextField(
                       controller: _passwordController,
                       label: AppStrings.password,
@@ -135,24 +122,14 @@ class _LoginPageState extends State<LoginPage> {
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        onPressed: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
                       ),
                       onSubmitted: (_) => _onLoginPressed(),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        return null;
-                      },
+                      validator: validateRequired,
                     ),
-
                     const SizedBox(height: AppTheme.spaceSm),
 
-                    // Forgot password link
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -162,31 +139,28 @@ class _LoginPageState extends State<LoginPage> {
                         child: const Text(AppStrings.forgotPassword),
                       ),
                     ),
-
                     const SizedBox(height: AppTheme.spaceLg),
 
-                    // Login button
                     EtoileButton(
                       onPressed: isLoading ? null : _onLoginPressed,
                       isLoading: isLoading,
                       label: AppStrings.login,
                     ),
-
                     const SizedBox(height: AppTheme.spaceLg),
 
-                    // Register link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           AppStrings.noAccount,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.greyWarm,
-                              ),
+                            color: AppColors.greyWarm,
+                          ),
                         ),
                         TextButton(
-                          onPressed:
-                              isLoading ? null : () => context.push(AppRoutes.register),
+                          onPressed: isLoading
+                              ? null
+                              : () => context.push(AppRoutes.register),
                           child: Text(
                             AppStrings.register,
                             style: TextStyle(

@@ -1,7 +1,11 @@
+library;
+
+/// Repository des operations sur les conversations via Supabase.
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Repository for conversation operations with Supabase
+/// Recherche ou creation de conversations entre deux utilisateurs.
 class ConversationRepository {
   final SupabaseClient _supabaseClient;
 
@@ -25,8 +29,6 @@ class ConversationRepository {
       throw Exception('Vous ne pouvez pas vous envoyer un message');
     }
 
-    debugPrint('[Conversation] Finding conversation: $myUserId <-> $otherUserId');
-
     try {
       // Check if conversation already exists - try both directions
       final existing1 = await _supabaseClient
@@ -37,7 +39,6 @@ class ConversationRepository {
           .maybeSingle();
 
       if (existing1 != null) {
-        debugPrint('[Conversation] Found existing (direction 1): ${existing1['id']}');
         return existing1['id'] as String;
       }
 
@@ -49,12 +50,10 @@ class ConversationRepository {
           .maybeSingle();
 
       if (existing2 != null) {
-        debugPrint('[Conversation] Found existing (direction 2): ${existing2['id']}');
         return existing2['id'] as String;
       }
 
       // Create new conversation
-      debugPrint('[Conversation] Creating new conversation...');
       final newConversation = await _supabaseClient
           .from('conversations')
           .insert({
@@ -65,7 +64,6 @@ class ConversationRepository {
           .select('id')
           .single();
 
-      debugPrint('[Conversation] Created: ${newConversation['id']}');
       return newConversation['id'] as String;
     } catch (e) {
       debugPrint('[Conversation] Error: $e');

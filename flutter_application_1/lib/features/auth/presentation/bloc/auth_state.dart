@@ -1,6 +1,8 @@
+/// Etats du BLoC d'authentification (initial, charge, authentifie, erreur).
+
 part of 'auth_bloc.dart';
 
-/// Base class for all auth states
+/// Classe mere des etats d'authentification.
 sealed class AuthState extends Equatable {
   const AuthState();
 
@@ -8,17 +10,17 @@ sealed class AuthState extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Initial state before checking authentication
+/// Etat initial avant toute verification.
 class AuthInitial extends AuthState {
   const AuthInitial();
 }
 
-/// Loading state during authentication operations
+/// Operation d'authentification en cours.
 class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
-/// User is authenticated
+/// Utilisateur connecte. Contient le role pour les guards de navigation.
 class AuthAuthenticated extends AuthState {
   final String userId;
   final String email;
@@ -38,12 +40,13 @@ class AuthAuthenticated extends AuthState {
   List<Object> get props => [userId, email, role];
 }
 
-/// User is not authenticated
+/// Utilisateur non connecte.
 class AuthUnauthenticated extends AuthState {
   const AuthUnauthenticated();
 }
 
-/// Email verification required after registration
+/// Verification email requise apres inscription (OTP).
+/// Desactive en beta — pret pour reactivation.
 class AuthEmailVerificationRequired extends AuthState {
   final String email;
   final String role;
@@ -57,17 +60,17 @@ class AuthEmailVerificationRequired extends AuthState {
   List<Object> get props => [email, role];
 }
 
-/// Password reset email sent successfully
+/// Email de reset mot de passe envoye avec succes.
 class AuthPasswordResetSent extends AuthState {
   const AuthPasswordResetSent();
 }
 
-/// Account deleted (RGPD soft delete)
+/// Compte supprime (RGPD soft delete).
 class AuthAccountDeleted extends AuthState {
   const AuthAccountDeleted();
 }
 
-/// Authentication error occurred
+/// Erreur d'authentification.
 class AuthError extends AuthState {
   final String message;
 

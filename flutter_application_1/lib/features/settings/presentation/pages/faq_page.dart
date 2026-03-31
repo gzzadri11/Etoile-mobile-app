@@ -1,3 +1,10 @@
+library;
+
+/// Page de la Foire Aux Questions (FAQ).
+///
+/// Affiche les questions/reponses organisees par theme
+/// dans des sections extensibles (ExpansionTile).
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,7 +14,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 
-/// FAQ page with expandable sections organized by theme.
+/// Page FAQ avec sections extensibles organisees par theme.
 ///
 /// Features:
 /// - Search bar to filter questions by keyword

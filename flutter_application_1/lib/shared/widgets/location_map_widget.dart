@@ -1,3 +1,7 @@
+library;
+
+/// Widget carte en lecture seule avec marqueurs nommes.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -5,7 +9,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/constants/app_colors.dart';
 import '../../features/profile/data/models/recruiter_profile_model.dart';
 
-/// Read-only map widget displaying multiple named markers.
+/// Carte OpenStreetMap avec marqueurs (siege entreprise).
 class LocationMapWidget extends StatelessWidget {
   final List<MapMarker> markers;
   final double height;

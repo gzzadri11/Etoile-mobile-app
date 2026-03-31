@@ -1,11 +1,13 @@
+library;
+
+/// Widget d'etat vide reutilisable dans toute l'application.
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Shared empty state widget used across the app.
-///
-/// Displays an icon or mascotte image, a title, optional subtitle,
+/// Etat vide : icone/mascotte, titre, sous-titre et bouton d'action.
 /// and optional action button in a consistent layout.
 class EmptyStateWidget extends StatelessWidget {
   final IconData? icon;

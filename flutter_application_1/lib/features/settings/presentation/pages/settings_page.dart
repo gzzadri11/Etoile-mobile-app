@@ -1,3 +1,11 @@
+library;
+
+/// Page des parametres de l'application.
+///
+/// Regroupe les options utilisateur : compte, notifications,
+/// donnees personnelles (RGPD), mentions legales, FAQ,
+/// contact support et deconnexion.
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';

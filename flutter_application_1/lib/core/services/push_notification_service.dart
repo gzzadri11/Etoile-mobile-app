@@ -1,3 +1,11 @@
+library;
+
+/// Service de notifications push (FCM + notifications locales).
+///
+/// Gere la demande de permission, l'enregistrement du token FCM
+/// dans Supabase, l'affichage des notifications in-app (foreground)
+/// et le deep linking au tap sur une notification.
+
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -10,7 +18,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../router/app_router.dart';
 
-/// Service for managing push notifications (FCM + local notifications)
+/// Service FCM + notifications locales + deep linking.
 class PushNotificationService {
   final SupabaseClient _supabaseClient;
 
@@ -65,8 +73,6 @@ class PushNotificationService {
         sound: true,
         provisional: false,
       );
-      debugPrint('[PushNotif] Permission: ${settings.authorizationStatus}');
-
       if (settings.authorizationStatus == AuthorizationStatus.denied) {
         debugPrint('[PushNotif] Notifications denied by user');
         return;
@@ -84,14 +90,11 @@ class PushNotificationService {
       // Check if app was opened from a terminated state notification
       final initialMessage = await _messaging.getInitialMessage();
       if (initialMessage != null) {
-        debugPrint('[PushNotif] App opened from terminated notification');
         _handleNotificationTap(initialMessage);
       }
 
       // Listen to token refresh
       _messaging.onTokenRefresh.listen(_onTokenRefresh);
-
-      debugPrint('[PushNotif] Initialized successfully');
     } catch (e) {
       debugPrint('[PushNotif] Initialization error: $e');
     }
@@ -114,8 +117,6 @@ class PushNotificationService {
     await _localNotifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (response) {
-        debugPrint('[PushNotif] Local notification tapped: ${response.payload}');
-        // Deep link handled via payload
         if (response.payload != null) {
           _handlePayloadTap(response.payload!);
         }
@@ -159,8 +160,6 @@ class PushNotificationService {
 
       final platform = Platform.isAndroid ? 'android' : 'ios';
 
-      debugPrint('[PushNotif] Registering token for $platform...');
-
       // Upsert: insert or update if token already exists
       await _supabaseClient.from('device_tokens').upsert(
         {
@@ -171,8 +170,6 @@ class PushNotificationService {
         },
         onConflict: 'user_id,token',
       );
-
-      debugPrint('[PushNotif] Token registered successfully');
     } catch (e) {
       debugPrint('[PushNotif] Error registering token: $e');
     }
@@ -189,23 +186,18 @@ class PushNotificationService {
       final userId = _supabaseClient.auth.currentUser?.id;
       if (userId == null) return;
 
-      debugPrint('[PushNotif] Removing token...');
-
       await _supabaseClient
           .from('device_tokens')
           .delete()
           .eq('user_id', userId)
           .eq('token', token);
-
-      debugPrint('[PushNotif] Token removed');
     } catch (e) {
       debugPrint('[PushNotif] Error removing token: $e');
     }
   }
 
-  /// Handle token refresh (FCM may rotate tokens)
+  /// Reagit au renouvellement du token FCM.
   Future<void> _onTokenRefresh(String newToken) async {
-    debugPrint('[PushNotif] Token refreshed, updating...');
     await registerToken();
   }
 
@@ -213,16 +205,13 @@ class PushNotificationService {
   // FOREGROUND HANDLER
   // ==========================================================================
 
-  /// Handle incoming message when app is in foreground
+  /// Gere un message recu quand l'app est au premier plan.
   void _onForegroundMessage(RemoteMessage message) {
-    debugPrint('[PushNotif] Foreground message: ${message.data}');
-
     final type = message.data['type'];
     final conversationId = message.data['conversation_id'];
 
-    // Don't show notification if user is already on this chat
+    // Ne pas afficher si l'utilisateur est deja sur cette conversation
     if (type == 'new_message' && conversationId == activeConversationId) {
-      debugPrint('[PushNotif] Already on this chat, skipping notification');
       return;
     }
 
@@ -285,9 +274,8 @@ class PushNotificationService {
   // NOTIFICATION TAP (DEEP LINKING)
   // ==========================================================================
 
-  /// Handle notification tap (from background or terminated)
+  /// Gere le tap sur une notification (app en arriere-plan).
   void _onMessageOpenedApp(RemoteMessage message) {
-    debugPrint('[PushNotif] Notification tapped: ${message.data}');
     _handleNotificationTap(message);
   }
 
@@ -346,11 +334,8 @@ class PushNotificationService {
   }
 }
 
-/// Top-level background message handler (must be top-level function)
+/// Handler de messages en arriere-plan (doit etre top-level).
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  debugPrint('[PushNotif] Background message: ${message.messageId}');
-  // Android/iOS will automatically show the notification from the
-  // "notification" key in the FCM payload. No extra handling needed.
 }

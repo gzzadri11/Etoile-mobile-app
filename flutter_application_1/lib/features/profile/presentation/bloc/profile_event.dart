@@ -1,6 +1,8 @@
+/// Evenements du BLoC profil (chargement, mise a jour, stats).
+
 part of 'profile_bloc.dart';
 
-/// Base class for profile events
+/// Classe de base des evenements profil.
 sealed class ProfileEvent extends Equatable {
   const ProfileEvent();
 

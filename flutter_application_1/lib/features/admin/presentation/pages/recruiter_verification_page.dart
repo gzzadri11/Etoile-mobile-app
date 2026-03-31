@@ -1,3 +1,10 @@
+library;
+
+/// Page de verification detaillee d'un recruteur.
+///
+/// Affiche les informations du profil recruteur (SIRET, document,
+/// entreprise) et permet a l'admin d'approuver ou rejeter la demande.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';

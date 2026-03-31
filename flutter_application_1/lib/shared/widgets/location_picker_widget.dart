@@ -1,3 +1,7 @@
+library;
+
+/// Widget de selection de localisation sur carte interactive.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';

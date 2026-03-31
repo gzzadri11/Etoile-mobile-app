@@ -1,3 +1,7 @@
+library;
+
+/// Carte de statistiques video affichee sur la page profil.
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,7 +11,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/video_stats.dart';
 
-/// Statistics card displayed on the profile page.
+/// Carte stats : vues, tendance, CTA premium.
 ///
 /// - Premium users see real stats (total views, unique viewers, trend).
 /// - Non-premium users see a teaser message + CTA to upgrade.

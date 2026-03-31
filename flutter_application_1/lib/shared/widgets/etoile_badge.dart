@@ -1,11 +1,12 @@
+library;
+
+/// Composant badge reutilisable (verifie, statut, indicateur).
+
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// Reusable badge component for the Etoile app.
-///
-/// Used for verified badges, recruiter badges, and other status indicators.
-/// Supports an optional icon, configurable colors, and compact mode.
+/// Badge Etoile : icone optionnelle, couleurs configurables, mode compact.
 class EtoileBadge extends StatelessWidget {
   final String label;
   final IconData? icon;

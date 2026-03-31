@@ -1,59 +1,76 @@
+/// Routeur principal de l'application Etoile (GoRouter).
+///
+/// Architecture de navigation :
+/// - **ShellRoute** (MainScaffold) : ecrans avec bottom nav (search, feed, messages, profil)
+/// - **ShellRoute** (AdminScaffold) : ecrans admin avec nav dediee
+/// - **Routes plein ecran** : chat, edition profil, parametres, etc.
+///
+/// Redirections :
+/// - Non authentifie → /welcome
+/// - Authentifie + profil incomplet → edit profil (sauf routes autorisees)
+/// - Admin non verifie → /verify-admin (double authentification)
+/// - Seeker sur /publish → /record (et inversement pour recruiter)
+library;
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/admin/data/repositories/admin_repository.dart';
+import '../../features/admin/presentation/bloc/admin_bloc.dart';
+import '../../features/admin/presentation/bloc/admin_event.dart';
+import '../../features/admin/presentation/pages/admin_auth_page.dart';
+import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
+import '../../features/admin/presentation/pages/admin_stats_page.dart';
+import '../../features/admin/presentation/pages/recruiter_verification_page.dart';
+import '../../features/admin/presentation/pages/reports_page.dart';
+import '../../features/admin/presentation/pages/verification_queue_page.dart';
+import '../../features/admin/presentation/widgets/admin_scaffold.dart';
+import '../../features/applications/presentation/pages/offer_applications_page.dart';
+import '../../features/applications/presentation/pages/offer_candidates_page.dart';
+import '../../features/applications/presentation/pages/seeker_applications_page.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
-import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/auth/presentation/pages/welcome_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
 import '../../features/feed/presentation/pages/search_page.dart';
-import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
-import '../../features/profile/presentation/bloc/profile_bloc.dart';
-import '../../features/profile/presentation/pages/profile_page.dart';
-import '../../features/profile/presentation/pages/edit_seeker_profile_page.dart';
-import '../../features/profile/presentation/pages/edit_recruiter_profile_page.dart';
-import '../../features/video/presentation/pages/my_publications_page.dart';
-import '../../features/video/presentation/pages/publish_offer_page.dart';
-import '../../features/video/presentation/pages/video_record_page.dart';
+import '../../features/messages/presentation/pages/conversations_page.dart';
+import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/payment/data/repositories/payment_repository.dart';
 import '../../features/payment/presentation/bloc/payment_bloc.dart';
 import '../../features/payment/presentation/bloc/payment_event.dart';
 import '../../features/payment/presentation/pages/recruiter_premium_page.dart';
 import '../../features/payment/presentation/pages/subscription_management_page.dart';
+import '../../features/profile/data/repositories/profile_repository.dart';
+import '../../features/profile/presentation/bloc/profile_bloc.dart';
+import '../../features/profile/presentation/pages/edit_recruiter_profile_page.dart';
+import '../../features/profile/presentation/pages/edit_seeker_profile_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/public_recruiter_profile_page.dart';
 import '../../features/profile/presentation/pages/public_seeker_profile_page.dart';
-import '../../features/profile/data/repositories/profile_repository.dart';
-import '../../features/applications/presentation/pages/offer_applications_page.dart';
-import '../../features/applications/presentation/pages/offer_candidates_page.dart';
-import '../../features/applications/presentation/pages/seeker_applications_page.dart';
-import '../../features/admin/data/repositories/admin_repository.dart';
-import '../../features/admin/presentation/bloc/admin_bloc.dart';
-import '../../features/admin/presentation/bloc/admin_event.dart';
-import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
-import '../../features/admin/presentation/pages/verification_queue_page.dart';
-import '../../features/admin/presentation/pages/recruiter_verification_page.dart';
-import '../../features/admin/presentation/pages/reports_page.dart';
-import '../../features/admin/presentation/pages/admin_auth_page.dart';
-import '../../features/admin/presentation/pages/admin_stats_page.dart';
-import '../../features/admin/presentation/widgets/admin_scaffold.dart';
+import '../../features/settings/presentation/pages/blocked_users_page.dart';
 import '../../features/settings/presentation/pages/contact_support_page.dart';
 import '../../features/settings/presentation/pages/faq_page.dart';
 import '../../features/settings/presentation/pages/legal_page.dart';
-import '../../features/settings/presentation/pages/blocked_users_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
-// OTP disabled for beta — kept for reactivation
-// import '../../features/auth/presentation/pages/otp_verification_page.dart';
-import '../../features/auth/presentation/pages/welcome_page.dart';
-import '../../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../../features/video/presentation/pages/my_publications_page.dart';
+import '../../features/video/presentation/pages/publish_offer_page.dart';
+import '../../features/video/presentation/pages/video_record_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
 import '../../shared/widgets/splash_screen.dart';
 
-/// Application route names
+// =============================================================================
+// Routes — Constantes de nommage centralisees
+// =============================================================================
+
 abstract class AppRoutes {
-  // Auth routes
+  // Auth
   static const String splash = '/';
   static const String welcome = '/welcome';
   static const String login = '/login';
@@ -61,11 +78,11 @@ abstract class AppRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String otpVerification = '/verify-email';
 
-  // Onboarding routes
+  // Onboarding
   static const String onboardingSeeker = '/onboarding/seeker';
   static const String onboardingRecruiter = '/onboarding/recruiter';
 
-  // Main routes (with bottom navigation)
+  // Navigation principale (bottom nav)
   static const String search = '/search';
   static const String feed = '/feed';
   static const String messages = '/messages';
@@ -73,17 +90,17 @@ abstract class AppRoutes {
   static const String record = '/record';
   static const String publish = '/publish';
 
-  // Detail routes
+  // Detail
   static const String chat = '/messages/:conversationId';
   static const String videoDetail = '/video/:videoId';
   static const String publicProfile = '/profile/:userId';
 
-  // Profile edit routes
+  // Profil
   static const String editProfile = '/profile/edit';
   static const String editRecruiterProfile = '/profile/edit-recruiter';
   static const String myPublications = '/my-publications';
 
-  // Settings routes
+  // Parametres
   static const String settings = '/settings';
   static const String help = '/settings/help';
   static const String faq = '/settings/faq';
@@ -91,36 +108,35 @@ abstract class AppRoutes {
   static const String blockedUsers = '/settings/blocked';
   static const String termsOfService = '/settings/terms';
   static const String privacyPolicy = '/settings/privacy';
+
+  // Paiement
   static const String premium = '/premium';
   static const String premiumRecruiter = '/premium/recruiter';
   static const String premiumManage = '/premium/manage';
 
-  // Admin routes
+  // Admin
   static const String admin = '/admin';
   static const String adminAuth = '/verify-admin';
   static const String adminVerifications = '/admin/verifications';
   static const String adminReports = '/admin/reports';
   static const String adminStats = '/admin/stats';
 
-  // Helper to build chat route
-  static String chatWith(String conversationId) => '/messages/$conversationId';
-
-  // Helper to build video detail route
-  static String videoDetailFor(String videoId) => '/video/$videoId';
-
-  // Helper to build public profile route
-  static String publicProfileFor(String userId) => '/profile/$userId';
-
-  // Applications (candidatures par offre)
+  // Candidatures
   static const String offerApplications = '/offers/applications';
   static const String offerCandidates = '/offers/:videoId/candidates';
   static const String seekerApplications = '/my-applications';
 
-  // Helper to build offer candidates route
-  static String offerCandidatesFor(String videoId) => '/offers/$videoId/candidates';
+  // Helpers pour les routes parametrees
+  static String chatWith(String id) => '/messages/$id';
+  static String videoDetailFor(String id) => '/video/$id';
+  static String publicProfileFor(String id) => '/profile/$id';
+  static String offerCandidatesFor(String id) => '/offers/$id/candidates';
 }
 
-/// Application router configuration using GoRouter
+// =============================================================================
+// Router
+// =============================================================================
+
 class AppRouter {
   AppRouter._();
 
@@ -130,338 +146,329 @@ class AppRouter {
 
   static GoRouter? _router;
 
-  // Admin double auth session tracking
+  // --- Etat admin : double authentification ---
+  // Vigilance : etat statique mutable. Acceptable ici car lie au cycle de vie
+  // de l'app (reset au logout). A migrer vers un service injectable si le
+  // projet grandit significativement.
   static bool _adminSessionVerified = false;
   static void verifyAdminSession() => _adminSessionVerified = true;
   static void resetAdminSession() => _adminSessionVerified = false;
 
-  // Profile completion gate
+  // --- Etat profil : gate de completude ---
   static bool _profileComplete = true;
   static bool _profileChecked = false;
 
-  /// Called by ProfileBloc / AuthBloc after loading profile to update gate state.
   static void updateProfileComplete(bool complete) {
     _profileComplete = complete;
     _profileChecked = true;
   }
 
-  /// Whether profile is currently marked as complete.
   static bool get isProfileComplete => _profileComplete;
 
-  /// Reset profile check on logout.
   static void resetProfileCheck() {
     _profileChecked = false;
     _profileComplete = true;
   }
 
-  /// Create the router with AuthBloc for refresh
+  /// Cree le router GoRouter. Appele une seule fois depuis [EtoileApp].
   static GoRouter createRouter(AuthBloc authBloc) {
     _router ??= GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: AppRoutes.splash,
       debugLogDiagnostics: true,
+      refreshListenable: _GoRouterRefreshStream(authBloc.stream),
+      redirect: (context, state) =>
+          _handleRedirect(authBloc, state),
+      routes: [
+        _splashRoute(),
+        ..._authRoutes(),
+        ..._onboardingRoutes(),
+        _mainShellRoute(authBloc),
+        ..._detailRoutes(),
+        ..._profileRoutes(),
+        ..._applicationRoutes(),
+        ..._premiumRoutes(authBloc),
+        _settingsRoute(),
+        _adminAuthRoute(),
+        _adminShellRoute(authBloc),
+        _adminVerificationDetailRoute(authBloc),
+      ],
+      errorBuilder: (context, state) => _ErrorPage(error: state.error),
+    );
+    return _router!;
+  }
 
-      // Redirect based on authentication state
-      redirect: (context, state) {
-        final authState = authBloc.state;
-        final isAuthenticated = authState is AuthAuthenticated;
-        final isLoading = authState is AuthLoading || authState is AuthInitial;
-        final isAuthRoute = state.matchedLocation == AppRoutes.login ||
-            state.matchedLocation == AppRoutes.register ||
-            state.matchedLocation == AppRoutes.forgotPassword ||
-            state.matchedLocation == AppRoutes.welcome;
-        final isOnboarding =
-            state.matchedLocation == AppRoutes.onboardingSeeker ||
-                state.matchedLocation == AppRoutes.onboardingRecruiter;
-        final isSplash = state.matchedLocation == AppRoutes.splash;
+  // ===========================================================================
+  // Logique de redirection centralisee
+  // ===========================================================================
 
-        debugPrint('[Router] redirect: location=${state.matchedLocation}, '
-            'authState=${authState.runtimeType}, isAuthenticated=$isAuthenticated');
+  /// Gere toutes les redirections auth, role et profil.
+  ///
+  /// Ordre de priorite :
+  /// 1. Splash : attend la resolution auth
+  /// 2. Loading hors splash : ne pas rediriger (evite les race conditions)
+  /// 3. Non authentifie hors auth → welcome
+  /// 4. Authentifie sur auth route → search/admin
+  /// 5. Admin non verifie → /verify-admin
+  /// 6. Profil incomplet → edit profil
+  static String? _handleRedirect(AuthBloc authBloc, GoRouterState state) {
+    final authState = authBloc.state;
+    final isAuthenticated = authState is AuthAuthenticated;
+    final isLoading = authState is AuthLoading || authState is AuthInitial;
+    final location = state.matchedLocation;
 
-        // If on splash, wait for auth check
-        if (isSplash) {
-          if (isLoading) {
-            return null; // Stay on splash while checking
-          }
-          if (isAuthenticated) {
-            final auth = authBloc.state as AuthAuthenticated;
-            debugPrint('[Router] Splash redirect: role=${auth.role}, isAdmin=${auth.isAdmin}');
-            return auth.isAdmin ? AppRoutes.adminAuth : AppRoutes.search;
-          }
-          return AppRoutes.welcome;
-        }
+    // Routes qui ne necessitent pas d'etre authentifie
+    final isAuthRoute = _authLocations.contains(location);
+    final isOnboarding = location == AppRoutes.onboardingSeeker ||
+        location == AppRoutes.onboardingRecruiter;
 
-        // CRITICAL: If auth state is Loading/Initial and we are NOT on splash,
-        // stay on the current page. This prevents the race condition where a
-        // transient AuthLoading (from onAuthStateChange re-check) causes
-        // GoRouter to redirect an admin user away from /verify-admin to /welcome.
-        if (isLoading && !isSplash) {
-          debugPrint('[Router] Auth is loading, staying on ${state.matchedLocation}');
-          return null;
-        }
+    // 1. Splash : attend la resolution auth
+    if (location == AppRoutes.splash) {
+      if (isLoading) return null;
+      if (authState is AuthAuthenticated) {
+        return authState.isAdmin ? AppRoutes.adminAuth : AppRoutes.search;
+      }
+      return AppRoutes.welcome;
+    }
 
-        // If not authenticated and not on auth route, redirect to welcome
-        if (!isAuthenticated && !isAuthRoute && !isOnboarding) {
-          _adminSessionVerified = false;
-          return AppRoutes.welcome;
-        }
+    // 2. Auth en cours hors splash : ne pas rediriger
+    // Evite qu'un AuthLoading transitoire (re-check onAuthStateChange)
+    // redirige un admin loin de /verify-admin vers /welcome.
+    if (isLoading) return null;
 
-        // If authenticated and on auth route, redirect based on role
-        if (isAuthenticated && isAuthRoute) {
-          final auth = authBloc.state as AuthAuthenticated;
-          debugPrint('[Router] Auth redirect: role=${auth.role}, isAdmin=${auth.isAdmin}');
-          return auth.isAdmin ? AppRoutes.adminAuth : AppRoutes.search;
-        }
+    // 3. Non authentifie → welcome
+    if (!isAuthenticated && !isAuthRoute && !isOnboarding) {
+      _adminSessionVerified = false;
+      return AppRoutes.welcome;
+    }
 
-        // Double auth admin: redirect to /verify-admin if not yet verified
-        final isAdminRoute = state.matchedLocation.startsWith('/admin');
-        final isAdminAuthRoute = state.matchedLocation == AppRoutes.adminAuth;
+    // 4. Authentifie sur page auth → redirection selon role
+    if (authState is AuthAuthenticated && isAuthRoute) {
+      return authState.isAdmin ? AppRoutes.adminAuth : AppRoutes.search;
+    }
 
-        if (isAuthenticated && isAdminRoute && !isAdminAuthRoute) {
-          final auth = authBloc.state as AuthAuthenticated;
-          if (auth.isAdmin && !_adminSessionVerified) {
-            return AppRoutes.adminAuth;
-          }
-        }
+    // 5. Double auth admin
+    if (authState is AuthAuthenticated && location.startsWith('/admin') &&
+        location != AppRoutes.adminAuth) {
+      if (authState.isAdmin && !_adminSessionVerified) {
+        return AppRoutes.adminAuth;
+      }
+    }
 
-        // Profile completion gate: redirect to edit profile if incomplete
-        if (isAuthenticated && _profileChecked && !_profileComplete) {
-          final auth = authBloc.state as AuthAuthenticated;
-          if (!auth.isAdmin) {
-            // Allow these routes even when profile is incomplete
-            final loc = state.matchedLocation;
-            final allowedIncomplete = loc == AppRoutes.editProfile ||
-                loc == AppRoutes.editRecruiterProfile ||
-                loc == AppRoutes.profile ||
-                loc == AppRoutes.onboardingSeeker ||
-                loc == AppRoutes.onboardingRecruiter ||
-                loc == AppRoutes.settings ||
-                loc.startsWith('/settings/');
-            if (!allowedIncomplete) {
-              return auth.isRecruiter
-                  ? AppRoutes.editRecruiterProfile
-                  : AppRoutes.editProfile;
-            }
-          }
-        }
+    // 6. Profil incomplet → formulaire d'edition
+    if (authState is AuthAuthenticated && _profileChecked && !_profileComplete) {
+      if (!authState.isAdmin && !_isAllowedWhenIncomplete(location)) {
+        return authState.isRecruiter
+            ? AppRoutes.editRecruiterProfile
+            : AppRoutes.editProfile;
+      }
+    }
 
-        return null;
+    return null;
+  }
+
+  static const _authLocations = {
+    AppRoutes.login,
+    AppRoutes.register,
+    AppRoutes.forgotPassword,
+    AppRoutes.welcome,
+  };
+
+  /// Routes accessibles meme avec un profil incomplet
+  static bool _isAllowedWhenIncomplete(String location) {
+    return location == AppRoutes.editProfile ||
+        location == AppRoutes.editRecruiterProfile ||
+        location == AppRoutes.profile ||
+        location == AppRoutes.onboardingSeeker ||
+        location == AppRoutes.onboardingRecruiter ||
+        location == AppRoutes.settings ||
+        location.startsWith('/settings/');
+  }
+
+  // ===========================================================================
+  // Definition des routes — regroupees par domaine
+  // ===========================================================================
+
+  static GoRoute _splashRoute() => GoRoute(
+    path: AppRoutes.splash,
+    builder: (_, _) => const SplashScreen(),
+  );
+
+  static List<GoRoute> _authRoutes() => [
+    GoRoute(
+      path: AppRoutes.welcome,
+      builder: (_, _) => const WelcomePage(),
+    ),
+    GoRoute(
+      path: AppRoutes.login,
+      builder: (_, _) => const LoginPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.register,
+      builder: (_, state) {
+        final role = state.uri.queryParameters['role'] ?? 'seeker';
+        return RegisterPage(initialRole: role);
       },
+    ),
+    GoRoute(
+      path: AppRoutes.forgotPassword,
+      builder: (_, _) => const ForgotPasswordPage(),
+    ),
+  ];
 
-      // Listen to auth state changes
-      refreshListenable: GoRouterRefreshStream(authBloc.stream),
+  static List<GoRoute> _onboardingRoutes() => [
+    GoRoute(
+      path: AppRoutes.onboardingSeeker,
+      builder: (_, _) => const OnboardingPage(role: 'seeker'),
+    ),
+    GoRoute(
+      path: AppRoutes.onboardingRecruiter,
+      builder: (_, _) => const OnboardingPage(role: 'recruiter'),
+    ),
+  ];
 
+  /// Navigation principale avec bottom nav bar (ShellRoute)
+  static ShellRoute _mainShellRoute(AuthBloc authBloc) => ShellRoute(
+    navigatorKey: _shellNavigatorKey,
+    builder: (_, _, child) => MainScaffold(child: child),
     routes: [
-      // Splash screen
       GoRoute(
-        path: AppRoutes.splash,
-        builder: (context, state) => const _SplashRedirect(),
-      ),
-
-      // Welcome/Onboarding
-      GoRoute(
-        path: AppRoutes.welcome,
-        builder: (context, state) => const WelcomePage(),
+        path: AppRoutes.search,
+        pageBuilder: (_, _) => const NoTransitionPage(child: SearchPage()),
       ),
       GoRoute(
-        path: AppRoutes.onboardingSeeker,
-        builder: (context, state) => const OnboardingPage(role: 'seeker'),
-      ),
-      GoRoute(
-        path: AppRoutes.onboardingRecruiter,
-        builder: (context, state) => const OnboardingPage(role: 'recruiter'),
-      ),
-
-      // Auth routes
-      GoRoute(
-        path: AppRoutes.login,
-        builder: (context, state) => const LoginPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.register,
-        builder: (context, state) {
-          final role = state.uri.queryParameters['role'] ?? 'seeker';
-          return RegisterPage(initialRole: role);
+        path: AppRoutes.feed,
+        pageBuilder: (_, state) {
+          final qp = state.uri.queryParameters;
+          return NoTransitionPage(
+            child: FeedPage(
+              initialSector: qp['sector'],
+              initialSpecialty: qp['specialty'],
+              initialCity: qp['city'],
+              initialStudyLevel: qp['studyLevel'],
+            ),
+          );
         },
       ),
       GoRoute(
-        path: AppRoutes.forgotPassword,
-        builder: (context, state) => const ForgotPasswordPage(),
+        path: AppRoutes.messages,
+        pageBuilder: (_, _) =>
+            const NoTransitionPage(child: ConversationsPage()),
       ),
-
-      // OTP email verification — disabled for beta (page kept for reactivation)
-      // GoRoute(
-      //   path: AppRoutes.otpVerification,
-      //   builder: (context, state) {
-      //     final email = state.uri.queryParameters['email'] ?? '';
-      //     final role = state.uri.queryParameters['role'] ?? 'seeker';
-      //     return OtpVerificationPage(email: email, role: role);
-      //   },
-      // ),
-
-      // Main app with bottom navigation
-      ShellRoute(
-        navigatorKey: _shellNavigatorKey,
-        builder: (context, state, child) => MainScaffold(child: child),
-        routes: [
-          GoRoute(
-            path: AppRoutes.search,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: SearchPage(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.feed,
-            pageBuilder: (context, state) {
-              final sector = state.uri.queryParameters['sector'];
-              final specialty = state.uri.queryParameters['specialty'];
-              final city = state.uri.queryParameters['city'];
-              final studyLevel = state.uri.queryParameters['studyLevel'];
-              return NoTransitionPage(
-                child: FeedPage(
-                  initialSector: sector,
-                  initialSpecialty: specialty,
-                  initialCity: city,
-                  initialStudyLevel: studyLevel,
-                ),
-              );
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.messages,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ConversationsPage(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.profile,
-            redirect: (context, state) {
-              final authState = authBloc.state;
-              if (authState is AuthAuthenticated && authState.isAdmin) {
-                return AppRoutes.admin;
-              }
-              return null;
-            },
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ProfilePage(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.record,
-            redirect: (context, state) {
-              final authState = authBloc.state;
-              if (authState is AuthAuthenticated && authState.isRecruiter) {
-                return AppRoutes.publish;
-              }
-              return null;
-            },
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: VideoRecordPage(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.publish,
-            redirect: (context, state) {
-              final authState = authBloc.state;
-              if (authState is AuthAuthenticated && authState.isSeeker) {
-                return AppRoutes.record;
-              }
-              return null;
-            },
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: PublishOfferPage(),
-            ),
-          ),
-        ],
-      ),
-
-      // Chat detail (outside shell for full screen)
       GoRoute(
-        path: AppRoutes.chat,
-        builder: (context, state) {
-          final conversationId = state.pathParameters['conversationId']!;
-          return ChatPage(conversationId: conversationId);
+        path: AppRoutes.profile,
+        redirect: (_, _) {
+          final s = authBloc.state;
+          return (s is AuthAuthenticated && s.isAdmin) ? AppRoutes.admin : null;
         },
+        pageBuilder: (_, _) =>
+            const NoTransitionPage(child: ProfilePage()),
       ),
-
-      // Edit profile page
+      // Seeker → /record (enregistrer video), Recruiter → /publish (publier offre)
       GoRoute(
-        path: AppRoutes.editProfile,
-        builder: (context, state) => BlocProvider(
-          create: (_) => GetIt.I<ProfileBloc>()..add(const ProfileLoadRequested()),
-          child: const EditSeekerProfilePage(),
-        ),
-      ),
-
-      // Edit recruiter profile page
-      GoRoute(
-        path: AppRoutes.editRecruiterProfile,
-        builder: (context, state) => BlocProvider(
-          create: (_) => GetIt.I<ProfileBloc>()..add(const ProfileLoadRequested()),
-          child: const EditRecruiterProfilePage(),
-        ),
-      ),
-
-      // My publications page
-      GoRoute(
-        path: AppRoutes.myPublications,
-        builder: (context, state) {
-          final tab = state.uri.queryParameters['tab'] ?? 'recruitment';
-          return MyPublicationsPage(initialTab: tab);
+        path: AppRoutes.record,
+        redirect: (_, _) {
+          final s = authBloc.state;
+          return (s is AuthAuthenticated && s.isRecruiter)
+              ? AppRoutes.publish
+              : null;
         },
-      ),
-
-      // Offer applications (candidatures par offre)
-      GoRoute(
-        path: AppRoutes.offerApplications,
-        builder: (context, state) => const OfferApplicationsPage(),
+        pageBuilder: (_, _) =>
+            const NoTransitionPage(child: VideoRecordPage()),
       ),
       GoRoute(
-        path: AppRoutes.offerCandidates,
-        builder: (context, state) {
-          final videoId = state.pathParameters['videoId']!;
-          final title = state.uri.queryParameters['title'];
-          return OfferCandidatesPage(videoId: videoId, offerTitle: title);
+        path: AppRoutes.publish,
+        redirect: (_, _) {
+          final s = authBloc.state;
+          return (s is AuthAuthenticated && s.isSeeker)
+              ? AppRoutes.record
+              : null;
         },
+        pageBuilder: (_, _) =>
+            const NoTransitionPage(child: PublishOfferPage()),
       ),
+    ],
+  );
 
-      // Seeker applications (mes candidatures)
-      GoRoute(
-        path: AppRoutes.seekerApplications,
-        builder: (context, state) => const SeekerApplicationsPage(),
+  static List<GoRoute> _detailRoutes() => [
+    GoRoute(
+      path: AppRoutes.chat,
+      builder: (_, state) => ChatPage(
+        conversationId: state.pathParameters['conversationId']!,
       ),
-
-      // Public profile (role-aware: resolves seeker or recruiter)
-      GoRoute(
-        path: AppRoutes.publicProfile,
-        builder: (context, state) {
-          final userId = state.pathParameters['userId']!;
-          return _PublicProfileRouter(userId: userId);
-        },
+    ),
+    // Profil public : detecte automatiquement seeker ou recruiter
+    GoRoute(
+      path: AppRoutes.publicProfile,
+      builder: (_, state) => _PublicProfileRouter(
+        userId: state.pathParameters['userId']!,
       ),
+    ),
+  ];
 
-      // Premium pages (recruiter only — seekers redirected to search)
+  static List<GoRoute> _profileRoutes() => [
+    GoRoute(
+      path: AppRoutes.editProfile,
+      builder: (_, _) => BlocProvider(
+        create: (_) => GetIt.I<ProfileBloc>()
+          ..add(const ProfileLoadRequested()),
+        child: const EditSeekerProfilePage(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.editRecruiterProfile,
+      builder: (_, _) => BlocProvider(
+        create: (_) => GetIt.I<ProfileBloc>()
+          ..add(const ProfileLoadRequested()),
+        child: const EditRecruiterProfilePage(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.myPublications,
+      builder: (_, state) {
+        final tab = state.uri.queryParameters['tab'] ?? 'recruitment';
+        return MyPublicationsPage(initialTab: tab);
+      },
+    ),
+  ];
+
+  static List<GoRoute> _applicationRoutes() => [
+    GoRoute(
+      path: AppRoutes.offerApplications,
+      builder: (_, _) => const OfferApplicationsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.offerCandidates,
+      builder: (_, state) => OfferCandidatesPage(
+        videoId: state.pathParameters['videoId']!,
+        offerTitle: state.uri.queryParameters['title'],
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.seekerApplications,
+      builder: (_, _) => const SeekerApplicationsPage(),
+    ),
+  ];
+
+  static List<GoRoute> _premiumRoutes(AuthBloc authBloc) {
+    // Guard commun : seeker n'a pas acces aux pages premium
+    String? seekerGuard(_, _) {
+      final s = authBloc.state;
+      return (s is AuthAuthenticated && s.isSeeker)
+          ? AppRoutes.search
+          : null;
+    }
+
+    return [
       GoRoute(
         path: AppRoutes.premium,
-        redirect: (context, state) {
-          final authState = authBloc.state;
-          if (authState is AuthAuthenticated && authState.isSeeker) {
-            return AppRoutes.search;
-          }
-          return null;
-        },
-        builder: (context, state) => const _PremiumPage(),
+        redirect: seekerGuard,
+        builder: (_, _) => const _PremiumPlaceholder(),
       ),
       GoRoute(
         path: AppRoutes.premiumRecruiter,
-        redirect: (context, state) {
-          final authState = authBloc.state;
-          if (authState is AuthAuthenticated && authState.isSeeker) {
-            return AppRoutes.search;
-          }
-          return null;
-        },
-        builder: (context, state) => BlocProvider(
+        redirect: seekerGuard,
+        builder: (_, _) => BlocProvider(
           create: (_) => PaymentBloc(
             paymentRepository: GetIt.I<PaymentRepository>(),
           )..add(const PaymentLoadStatus()),
@@ -470,176 +477,145 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.premiumManage,
-        redirect: (context, state) {
-          final authState = authBloc.state;
-          if (authState is AuthAuthenticated && authState.isSeeker) {
-            return AppRoutes.search;
-          }
-          return null;
-        },
-        builder: (context, state) => BlocProvider(
+        redirect: seekerGuard,
+        builder: (_, _) => BlocProvider(
           create: (_) => PaymentBloc(
             paymentRepository: GetIt.I<PaymentRepository>(),
           )..add(const PaymentLoadHistory()),
           child: const SubscriptionManagementPage(),
         ),
       ),
+    ];
+  }
 
-      // Settings
+  static GoRoute _settingsRoute() => GoRoute(
+    path: AppRoutes.settings,
+    builder: (_, _) => const SettingsPage(),
+    routes: [
       GoRoute(
-        path: AppRoutes.settings,
-        builder: (context, state) => const SettingsPage(),
-        routes: [
-          GoRoute(
-            path: 'help',
-            builder: (context, state) => LegalPage.legalNotice(),
-          ),
-          GoRoute(
-            path: 'faq',
-            builder: (context, state) => const FaqPage(),
-          ),
-          GoRoute(
-            path: 'contact',
-            builder: (context, state) => const ContactSupportPage(),
-          ),
-          GoRoute(
-            path: 'blocked',
-            builder: (context, state) => const BlockedUsersPage(),
-          ),
-          GoRoute(
-            path: 'terms',
-            builder: (context, state) => LegalPage.termsOfService(),
-          ),
-          GoRoute(
-            path: 'privacy',
-            builder: (context, state) => LegalPage.privacyPolicy(),
-          ),
-        ],
+        path: 'help',
+        builder: (_, _) => LegalPage.legalNotice(),
       ),
-
-      // Admin double auth page (full screen, outside both shells — /verify-admin)
       GoRoute(
-        path: AppRoutes.adminAuth,
-        builder: (context, state) => const AdminAuthPage(),
+        path: 'faq',
+        builder: (_, _) => const FaqPage(),
       ),
-
-      // Admin shell with bottom nav (guard: redirect non-admin to search)
-      ShellRoute(
-        navigatorKey: _adminShellNavigatorKey,
-        builder: (context, state, child) => AdminScaffold(child: child),
-        routes: [
-          GoRoute(
-            path: AppRoutes.admin,
-            redirect: (context, state) {
-              final authState = authBloc.state;
-              if (authState is! AuthAuthenticated || !authState.isAdmin) {
-                return AppRoutes.search;
-              }
-              return null;
-            },
-            pageBuilder: (context, state) => NoTransitionPage(
-              child: BlocProvider(
-                create: (_) => AdminBloc(
-                  adminRepository: GetIt.I<AdminRepository>(),
-                )..add(const AdminDashboardLoadRequested()),
-                child: const AdminDashboardPage(),
-              ),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.adminVerifications,
-            redirect: (context, state) {
-              final authState = authBloc.state;
-              if (authState is! AuthAuthenticated || !authState.isAdmin) {
-                return AppRoutes.search;
-              }
-              return null;
-            },
-            pageBuilder: (context, state) => NoTransitionPage(
-              child: BlocProvider(
-                create: (_) => AdminBloc(
-                  adminRepository: GetIt.I<AdminRepository>(),
-                )..add(const AdminVerificationListLoadRequested()),
-                child: const VerificationQueuePage(),
-              ),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.adminReports,
-            redirect: (context, state) {
-              final authState = authBloc.state;
-              if (authState is! AuthAuthenticated || !authState.isAdmin) {
-                return AppRoutes.search;
-              }
-              return null;
-            },
-            pageBuilder: (context, state) => NoTransitionPage(
-              child: BlocProvider(
-                create: (_) => AdminBloc(
-                  adminRepository: GetIt.I<AdminRepository>(),
-                )..add(const AdminReportsListLoadRequested()),
-                child: const ReportsPage(),
-              ),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.adminStats,
-            redirect: (context, state) {
-              final authState = authBloc.state;
-              if (authState is! AuthAuthenticated || !authState.isAdmin) {
-                return AppRoutes.search;
-              }
-              return null;
-            },
-            pageBuilder: (context, state) => NoTransitionPage(
-              child: BlocProvider(
-                create: (_) => AdminBloc(
-                  adminRepository: GetIt.I<AdminRepository>(),
-                )..add(const AdminStatsLoadRequested()),
-                child: const AdminStatsPage(),
-              ),
-            ),
-          ),
-        ],
-      ),
-
-      // Recruiter verification detail (full screen, outside shell)
       GoRoute(
-        path: '${AppRoutes.adminVerifications}/:userId',
-        redirect: (context, state) {
-          final authState = authBloc.state;
-          if (authState is! AuthAuthenticated || !authState.isAdmin) {
-            return AppRoutes.search;
-          }
-          return null;
-        },
-        builder: (context, state) {
-          final userId = state.pathParameters['userId']!;
-          return BlocProvider(
-            create: (_) => AdminBloc(
-              adminRepository: GetIt.I<AdminRepository>(),
-            )..add(AdminRecruiterDetailLoadRequested(userId: userId)),
-            child: RecruiterVerificationPage(userId: userId),
-          );
-        },
+        path: 'contact',
+        builder: (_, _) => const ContactSupportPage(),
+      ),
+      GoRoute(
+        path: 'blocked',
+        builder: (_, _) => const BlockedUsersPage(),
+      ),
+      GoRoute(
+        path: 'terms',
+        builder: (_, _) => LegalPage.termsOfService(),
+      ),
+      GoRoute(
+        path: 'privacy',
+        builder: (_, _) => LegalPage.privacyPolicy(),
       ),
     ],
+  );
 
-      errorBuilder: (context, state) => _ErrorPage(error: state.error),
-    );
-    return _router!;
+  // --- Admin ---
+
+  static GoRoute _adminAuthRoute() => GoRoute(
+    path: AppRoutes.adminAuth,
+    builder: (_, _) => const AdminAuthPage(),
+  );
+
+  /// Guard commun pour les routes admin
+  static String? _adminGuard(AuthBloc authBloc) {
+    final s = authBloc.state;
+    return (s is! AuthAuthenticated || !s.isAdmin)
+        ? AppRoutes.search
+        : null;
   }
+
+  static ShellRoute _adminShellRoute(AuthBloc authBloc) => ShellRoute(
+    navigatorKey: _adminShellNavigatorKey,
+    builder: (_, _, child) => AdminScaffold(child: child),
+    routes: [
+      GoRoute(
+        path: AppRoutes.admin,
+        redirect: (_, _) => _adminGuard(authBloc),
+        pageBuilder: (_, _) => NoTransitionPage(
+          child: BlocProvider(
+            create: (_) => AdminBloc(
+              adminRepository: GetIt.I<AdminRepository>(),
+            )..add(const AdminDashboardLoadRequested()),
+            child: const AdminDashboardPage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.adminVerifications,
+        redirect: (_, _) => _adminGuard(authBloc),
+        pageBuilder: (_, _) => NoTransitionPage(
+          child: BlocProvider(
+            create: (_) => AdminBloc(
+              adminRepository: GetIt.I<AdminRepository>(),
+            )..add(const AdminVerificationListLoadRequested()),
+            child: const VerificationQueuePage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.adminReports,
+        redirect: (_, _) => _adminGuard(authBloc),
+        pageBuilder: (_, _) => NoTransitionPage(
+          child: BlocProvider(
+            create: (_) => AdminBloc(
+              adminRepository: GetIt.I<AdminRepository>(),
+            )..add(const AdminReportsListLoadRequested()),
+            child: const ReportsPage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.adminStats,
+        redirect: (_, _) => _adminGuard(authBloc),
+        pageBuilder: (_, _) => NoTransitionPage(
+          child: BlocProvider(
+            create: (_) => AdminBloc(
+              adminRepository: GetIt.I<AdminRepository>(),
+            )..add(const AdminStatsLoadRequested()),
+            child: const AdminStatsPage(),
+          ),
+        ),
+      ),
+    ],
+  );
+
+  static GoRoute _adminVerificationDetailRoute(AuthBloc authBloc) => GoRoute(
+    path: '${AppRoutes.adminVerifications}/:userId',
+    redirect: (_, _) => _adminGuard(authBloc),
+    builder: (_, state) {
+      final userId = state.pathParameters['userId']!;
+      return BlocProvider(
+        create: (_) => AdminBloc(
+          adminRepository: GetIt.I<AdminRepository>(),
+        )..add(AdminRecruiterDetailLoadRequested(userId: userId)),
+        child: RecruiterVerificationPage(userId: userId),
+      );
+    },
+  );
 }
 
-/// GoRouter refresh stream helper that listens to a Stream
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    _subscription = stream.listen((_) {
-      notifyListeners();
-    });
+// =============================================================================
+// Widgets internes au routeur
+// =============================================================================
+
+/// Ecoute un Stream et notifie GoRouter pour declencher un re-check
+/// des redirections (utilise pour reagir aux changements d'etat auth).
+class _GoRouterRefreshStream extends ChangeNotifier {
+  _GoRouterRefreshStream(Stream<dynamic> stream) {
+    _subscription = stream.listen((_) => notifyListeners());
   }
 
-  late final dynamic _subscription;
+  late final StreamSubscription<dynamic> _subscription;
 
   @override
   void dispose() {
@@ -648,31 +624,8 @@ class GoRouterRefreshStream extends ChangeNotifier {
   }
 }
 
-// ============================================
-// PLACEHOLDER PAGES (to be implemented in features)
-// ============================================
-
-class _SplashRedirect extends StatelessWidget {
-  const _SplashRedirect();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SplashScreen();
-  }
-}
-
-class _PremiumPage extends StatelessWidget {
-  const _PremiumPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Premium')),
-      body: const Center(child: Text('Premium Page - A implementer')),
-    );
-  }
-}
-
+/// Resout automatiquement si un userId correspond a un seeker ou recruiter
+/// puis affiche la bonne page de profil public.
 class _PublicProfileRouter extends StatefulWidget {
   final String userId;
   const _PublicProfileRouter({required this.userId});
@@ -693,10 +646,11 @@ class _PublicProfileRouterState extends State<_PublicProfileRouter> {
 
   Future<void> _resolveRole() async {
     try {
-      final profileRepo = GetIt.I<ProfileRepository>();
+      final repo = GetIt.I<ProfileRepository>();
+      // Charge les deux profils en parallele pour determiner le role
       final results = await Future.wait([
-        profileRepo.getSeekerProfileById(widget.userId),
-        profileRepo.getRecruiterProfileById(widget.userId),
+        repo.getSeekerProfileById(widget.userId),
+        repo.getRecruiterProfileById(widget.userId),
       ]);
 
       if (mounted) {
@@ -709,10 +663,8 @@ class _PublicProfileRouterState extends State<_PublicProfileRouter> {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -731,9 +683,20 @@ class _PublicProfileRouterState extends State<_PublicProfileRouter> {
   }
 }
 
+class _PremiumPlaceholder extends StatelessWidget {
+  const _PremiumPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Premium')),
+      body: const Center(child: Text('Page Premium — a implementer')),
+    );
+  }
+}
+
 class _ErrorPage extends StatelessWidget {
   final Exception? error;
-
   const _ErrorPage({this.error});
 
   @override
@@ -743,18 +706,11 @@ class _ErrorPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             const Text(
               'Oups ! Page introuvable',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -765,7 +721,7 @@ class _ErrorPage extends StatelessWidget {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => context.go(AppRoutes.search),
-              child: const Text('Retour à l\'accueil'),
+              child: const Text('Retour a l\'accueil'),
             ),
           ],
         ),

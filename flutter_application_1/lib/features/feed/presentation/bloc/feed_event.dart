@@ -1,6 +1,8 @@
+/// Evenements du BLoC feed (chargement, pagination, filtres).
+
 part of 'feed_bloc.dart';
 
-/// Base class for feed events
+/// Classe de base des evenements feed.
 sealed class FeedEvent extends Equatable {
   const FeedEvent();
 

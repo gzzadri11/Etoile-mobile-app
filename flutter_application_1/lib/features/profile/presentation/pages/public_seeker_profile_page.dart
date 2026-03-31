@@ -1,3 +1,10 @@
+library;
+
+/// Page de profil public d'un chercheur (vue recruteur).
+///
+/// Affiche la photo, le prenom, le domaine, la ville, la video
+/// et les actions (contacter, signaler, bloquer).
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';

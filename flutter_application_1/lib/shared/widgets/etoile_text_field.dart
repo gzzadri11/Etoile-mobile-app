@@ -1,11 +1,14 @@
+library;
+
+/// Champs de texte personnalises Etoile (3 variantes).
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Custom text field widget for Etoile app
-///
+/// Champ texte Etoile : standard, zone de texte, recherche.
 /// Features:
 /// - Consistent styling
 /// - Label and hint text

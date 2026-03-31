@@ -1,3 +1,10 @@
+library;
+
+/// Page de contact du support utilisateur.
+///
+/// Contient un formulaire (sujet + message) qui ouvre le client
+/// mail avec un email pre-rempli vers le support Etoile.
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -5,9 +12,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme.dart';
 
-/// Contact support page with a form that opens the mail client.
+/// Page de contact support avec formulaire ouvrant le client mail.
 ///
-/// Fields:
+/// Champs :
 /// - Subject (dropdown): Probleme technique, Question Premium, Signaler un bug, Autre
 /// - Description (textarea): min 20 characters
 /// - Send button: opens mailto: with pre-filled subject & body

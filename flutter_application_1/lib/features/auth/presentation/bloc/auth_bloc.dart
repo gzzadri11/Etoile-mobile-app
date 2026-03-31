@@ -1,3 +1,20 @@
+/// BLoC d'authentification — singleton global.
+///
+/// Gere tout le cycle d'authentification : login, inscription, logout,
+/// suppression de compte (RGPD), verification OTP, reset password.
+///
+/// Points de vigilance pour la maintenance :
+/// - Ce BLoC est un **singleton** (enregistre via LazySingleton dans GetIt).
+///   Tous les ecrans observent la meme instance.
+/// - Le flag `_isProcessingAuth` empeche les race conditions entre les events
+///   Supabase `onAuthStateChange` et nos propres handlers login/register.
+///   Sans ce flag, GoRouter detecte un etat transitoire Loading et redirige
+///   l'utilisateur vers /welcome en plein milieu d'un login.
+/// - Le profil completion gate est mis a jour ici (via AppRouter.updateProfileComplete)
+///   pour que le router puisse rediriger vers l'edition de profil si necessaire.
+///   C'est un couplage accepte pour eviter un flash de page non autorisee.
+library;
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,13 +28,12 @@ import '../../../profile/data/repositories/profile_repository.dart';
 part 'auth_event.dart';
 part 'auth_state.dart';
 
-/// Authentication BLoC
-///
-/// Manages authentication state across the application.
-/// Handles login, registration, logout, and session management.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SupabaseClient _supabaseClient;
   final ProfileRepository _profileRepository;
+
+  /// Empeche le listener `onAuthStateChange` de dispatcher AuthCheckRequested
+  /// pendant qu'un login/register est en cours. Voir doc en haut du fichier.
   bool _isProcessingAuth = false;
 
   AuthBloc({
@@ -35,28 +51,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthVerifyOtpRequested>(_onVerifyOtpRequested);
     on<AuthResendOtpRequested>(_onResendOtpRequested);
 
-    // Listen to auth state changes (skip during login/register to avoid race condition)
+    // Ecoute les changements d'etat auth Supabase (ex: token expire).
+    // On ignore les events pendant un login/register en cours et
+    // les simples refreshes de token pour eviter des redirections parasites.
     _supabaseClient.auth.onAuthStateChange.listen((data) {
-      final event = data.event;
-      final session = data.session;
-      // Only re-check on sign-in when we are NOT already handling auth
-      // and NOT already authenticated. Ignore token refreshes entirely.
-      if (session != null &&
+      if (data.session != null &&
           !_isProcessingAuth &&
           state is! AuthAuthenticated &&
-          event != AuthChangeEvent.tokenRefreshed) {
-        debugPrint('[AuthBloc] onAuthStateChange: event=$event, re-checking');
+          data.event != AuthChangeEvent.tokenRefreshed) {
         add(const AuthCheckRequested());
       }
     });
   }
 
-  /// Check if user is already authenticated
+  // ===========================================================================
+  // Verification de session
+  // ===========================================================================
+
+  /// Verifie si l'utilisateur a une session active.
   ///
-  /// If we are already in [AuthAuthenticated] state, we skip emitting
-  /// [AuthLoading] to avoid triggering a GoRouter redirect cycle (race
-  /// condition where the transient Loading state makes the router think
-  /// the user is unauthenticated and redirect to /welcome or /search).
+  /// Si deja authentifie, n'emet PAS AuthLoading pour eviter que GoRouter
+  /// ne detecte un etat transitoire et redirige vers /welcome.
   Future<void> _onCheckRequested(
     AuthCheckRequested event,
     Emitter<AuthState> emit,
@@ -64,60 +79,45 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final previousState = state;
     final wasAuthenticated = previousState is AuthAuthenticated;
 
-    debugPrint('[AuthBloc] Checking authentication... (wasAuthenticated=$wasAuthenticated)');
-
-    // Only emit AuthLoading when NOT already authenticated.
-    // This prevents the transient "unauthenticated" flash that confuses
-    // GoRouter redirect logic during onAuthStateChange re-checks.
-    if (!wasAuthenticated) {
-      emit(const AuthLoading());
-    }
+    if (!wasAuthenticated) emit(const AuthLoading());
 
     try {
       final session = _supabaseClient.auth.currentSession;
-      debugPrint('[AuthBloc] Session: ${session != null ? 'exists' : 'null'}');
-
-      if (session != null) {
-        final user = _supabaseClient.auth.currentUser;
-        debugPrint('[AuthBloc] User: ${user?.email ?? 'null'}');
-        if (user != null) {
-          final role = await _getUserRole(user);
-          final newState = AuthAuthenticated(
-            userId: user.id,
-            email: user.email ?? '',
-            role: role,
-          );
-          // Pre-load profile completion for gate
-          try {
-            if (role != 'admin') {
-              final pct = await _profileRepository.getProfileCompletionPercentage();
-              AppRouter.updateProfileComplete(pct >= 100);
-            }
-          } catch (_) {
-            // Ignore errors — gate will be updated later by ProfileBloc
-          }
-
-          // Only emit if something actually changed (avoids unnecessary
-          // GoRouter refresh that triggers redirect cycle)
-          if (previousState != newState) {
-            debugPrint('[AuthBloc] Authenticated as ${user.email} (role=$role)');
-            emit(newState);
-          } else {
-            debugPrint('[AuthBloc] Already authenticated as ${user.email}, no state change');
-          }
-          return;
-        }
+      if (session == null) {
+        emit(const AuthUnauthenticated());
+        return;
       }
 
-      debugPrint('[AuthBloc] Not authenticated');
-      emit(const AuthUnauthenticated());
+      final user = _supabaseClient.auth.currentUser;
+      if (user == null) {
+        emit(const AuthUnauthenticated());
+        return;
+      }
+
+      final role = await _getUserRole(user);
+      final newState = AuthAuthenticated(
+        userId: user.id,
+        email: user.email ?? '',
+        role: role,
+      );
+
+      // Pre-charge la completude du profil pour le gate du router
+      await _preloadProfileCompletion(role);
+
+      // N'emet que si l'etat change (evite les refreshs GoRouter inutiles)
+      if (previousState != newState) {
+        emit(newState);
+      }
     } catch (e) {
-      debugPrint('[AuthBloc] Error: $e');
+      debugPrint('[AuthBloc] Erreur check: $e');
       emit(AuthError(message: e.toString()));
     }
   }
 
-  /// Handle login request
+  // ===========================================================================
+  // Login
+  // ===========================================================================
+
   Future<void> _onLoginRequested(
     AuthLoginRequested event,
     Emitter<AuthState> emit,
@@ -131,34 +131,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         password: event.password,
       );
 
-      if (response.user != null) {
-        // Register FCM token for push notifications
-        _registerPushToken();
-
-        emit(AuthAuthenticated(
-          userId: response.user!.id,
-          email: response.user!.email ?? '',
-          role: await _getUserRole(response.user!),
-        ));
-      } else {
+      if (response.user == null) {
         emit(const AuthError(message: 'Email ou mot de passe incorrect'));
+        return;
       }
+
+      _registerPushToken();
+      emit(AuthAuthenticated(
+        userId: response.user!.id,
+        email: response.user!.email ?? '',
+        role: await _getUserRole(response.user!),
+      ));
     } on AuthException catch (e) {
       emit(AuthError(message: _mapAuthError(e)));
     } catch (e) {
-      emit(AuthError(message: 'Une erreur est survenue: ${e.toString()}'));
+      emit(AuthError(message: 'Une erreur est survenue: $e'));
     } finally {
-      // Delay clearing the flag so that onAuthStateChange events fired
-      // by Supabase during signIn are still suppressed. Without this,
-      // the listener fires AuthCheckRequested which emits AuthLoading
-      // and triggers a GoRouter redirect race condition.
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _isProcessingAuth = false;
-      });
+      _clearProcessingFlagWithDelay();
     }
   }
 
-  /// Handle registration request
+  // ===========================================================================
+  // Inscription
+  // ===========================================================================
+
   Future<void> _onRegisterRequested(
     AuthRegisterRequested event,
     Emitter<AuthState> emit,
@@ -167,7 +163,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _isProcessingAuth = true;
 
     try {
-      // For recruiters, use companyName as first_name (displayed in backoffice)
+      // Pour les recruteurs, le nom d'entreprise sert de first_name
+      // (affiche dans le backoffice Supabase et les triggers de profil)
       final firstName = (event.role == 'recruiter' && event.companyName != null)
           ? event.companyName!
           : event.firstName;
@@ -175,13 +172,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final metadata = <String, dynamic>{
         'role': event.role,
         'first_name': firstName,
+        if (event.siret != null) 'siret': event.siret,
+        if (event.companyName != null) 'company_name': event.companyName,
+        if (event.siren != null) 'siren': event.siren,
+        if (event.legalForm != null) 'legal_form': event.legalForm,
       };
-      if (event.siret != null) metadata['siret'] = event.siret;
-      if (event.companyName != null) {
-        metadata['company_name'] = event.companyName;
-      }
-      if (event.siren != null) metadata['siren'] = event.siren;
-      if (event.legalForm != null) metadata['legal_form'] = event.legalForm;
 
       final response = await _supabaseClient.auth.signUp(
         email: event.email,
@@ -189,41 +184,38 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         data: metadata,
       );
 
-      if (response.user != null) {
-        // Email confirmation disabled for beta — user is authenticated immediately
-        _registerPushToken();
-
-        emit(AuthAuthenticated(
-          userId: response.user!.id,
-          email: response.user!.email ?? '',
-          role: event.role,
-        ));
-      } else {
+      if (response.user == null) {
         emit(const AuthError(message: 'Erreur lors de l\'inscription'));
+        return;
       }
+
+      // Verification email desactivee pour la beta — authentification immediate
+      _registerPushToken();
+      emit(AuthAuthenticated(
+        userId: response.user!.id,
+        email: response.user!.email ?? '',
+        role: event.role,
+      ));
     } on AuthException catch (e) {
       emit(AuthError(message: _mapAuthError(e)));
     } catch (e) {
-      emit(AuthError(message: 'Une erreur est survenue: ${e.toString()}'));
+      emit(AuthError(message: 'Une erreur est survenue: $e'));
     } finally {
-      // Same delayed clear as login — see _onLoginRequested for rationale
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _isProcessingAuth = false;
-      });
+      _clearProcessingFlagWithDelay();
     }
   }
 
-  /// Handle logout request
+  // ===========================================================================
+  // Deconnexion
+  // ===========================================================================
+
   Future<void> _onLogoutRequested(
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
-
     try {
-      // Remove FCM token before logout
       await _removePushToken();
-
       await _supabaseClient.auth.signOut();
       AppRouter.resetProfileCheck();
       emit(const AuthUnauthenticated());
@@ -232,13 +224,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Handle password reset request
+  // ===========================================================================
+  // Reset mot de passe
+  // ===========================================================================
+
   Future<void> _onPasswordResetRequested(
     AuthPasswordResetRequested event,
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
-
     try {
       await _supabaseClient.auth.resetPasswordForEmail(event.email);
       emit(const AuthPasswordResetSent());
@@ -249,21 +243,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Handle delete account request (RGPD soft delete)
+  // ===========================================================================
+  // Suppression de compte (RGPD — soft delete 30 jours)
+  // ===========================================================================
+
+  /// Flux :
+  /// 1. Verifie le mot de passe (re-sign-in)
+  /// 2. Appelle l'Edge Function `delete-account` (soft delete en BDD)
+  /// 3. Supprime le token FCM + sign out
   Future<void> _onDeleteAccountRequested(
     AuthDeleteAccountRequested event,
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
+    _isProcessingAuth = true;
 
     try {
       final user = _supabaseClient.auth.currentUser;
       if (user == null) {
-        emit(const AuthError(message: 'Session expirée'));
+        emit(const AuthError(message: 'Session expiree'));
         return;
       }
 
-      // Verify password first
+      // Verification du mot de passe avant suppression
       try {
         await _supabaseClient.auth.signInWithPassword(
           email: user.email!,
@@ -274,34 +276,35 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
-      // Call Edge Function for soft delete
+      // Soft delete via Edge Function Supabase
       final response = await _supabaseClient.functions.invoke(
         'delete-account',
         body: {'userId': user.id},
       );
 
       if (response.status != 200) {
-        debugPrint('[AuthBloc] delete-account error: ${response.data}');
+        debugPrint('[AuthBloc] delete-account erreur: ${response.data}');
         emit(const AuthError(
-          message: 'Erreur lors de la suppression. Réessayez.',
+          message: 'Erreur lors de la suppression. Reessayez.',
         ));
         return;
       }
 
-      debugPrint('[AuthBloc] Account soft-deleted for ${user.email}');
-
-      // Remove push token and sign out
       await _removePushToken();
       await _supabaseClient.auth.signOut();
-
       emit(const AuthAccountDeleted());
     } catch (e) {
-      debugPrint('[AuthBloc] Delete account error: $e');
-      emit(AuthError(message: 'Une erreur est survenue: ${e.toString()}'));
+      debugPrint('[AuthBloc] Erreur suppression compte: $e');
+      emit(AuthError(message: 'Une erreur est survenue: $e'));
+    } finally {
+      _clearProcessingFlagWithDelay();
     }
   }
 
-  /// Handle OTP verification
+  // ===========================================================================
+  // Verification OTP (desactivee en beta, prete pour reactivation)
+  // ===========================================================================
+
   Future<void> _onVerifyOtpRequested(
     AuthVerifyOtpRequested event,
     Emitter<AuthState> emit,
@@ -318,12 +321,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (response.session != null && response.user != null) {
         _registerPushToken();
-
-        final role = await _getUserRole(response.user!);
         emit(AuthAuthenticated(
           userId: response.user!.id,
           email: response.user!.email ?? '',
-          role: role,
+          role: await _getUserRole(response.user!),
         ));
       } else {
         emit(const AuthError(message: 'Code invalide ou expire'));
@@ -331,15 +332,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on AuthException catch (e) {
       emit(AuthError(message: _mapAuthError(e)));
     } catch (e) {
-      emit(AuthError(message: 'Erreur de verification: ${e.toString()}'));
+      emit(AuthError(message: 'Erreur de verification: $e'));
     } finally {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _isProcessingAuth = false;
-      });
+      _clearProcessingFlagWithDelay();
     }
   }
 
-  /// Handle OTP resend
   Future<void> _onResendOtpRequested(
     AuthResendOtpRequested event,
     Emitter<AuthState> emit,
@@ -349,7 +347,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         type: OtpType.signup,
         email: event.email,
       );
-      // Re-emit verification required state (keeps user on OTP page)
       emit(AuthEmailVerificationRequired(
         email: event.email,
         role: event.role,
@@ -357,11 +354,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on AuthException catch (e) {
       emit(AuthError(message: _mapAuthError(e)));
     } catch (e) {
-      emit(AuthError(message: 'Erreur lors du renvoi: ${e.toString()}'));
+      emit(AuthError(message: 'Erreur lors du renvoi: $e'));
     }
   }
 
-  /// Extract user role from DB (user_roles table), fallback to metadata
+  // ===========================================================================
+  // Helpers
+  // ===========================================================================
+
+  /// Recupere le role utilisateur. Priorite : table user_roles > metadata auth.
+  /// Fallback 'seeker' si aucune info trouvee.
   Future<String> _getUserRole(User user) async {
     try {
       final dbRole = await _profileRepository.getUserRole();
@@ -374,60 +376,74 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     return 'seeker';
   }
 
-  /// Map Supabase auth errors to user-friendly messages
-  String _mapAuthError(AuthException e) {
-    final message = e.message.toLowerCase();
+  /// Pre-charge la completude du profil pour le gate du router.
+  /// En cas d'erreur, le ProfileBloc mettra a jour plus tard.
+  Future<void> _preloadProfileCompletion(String role) async {
+    if (role == 'admin') return;
+    try {
+      final pct = await _profileRepository.getProfileCompletionPercentage();
+      AppRouter.updateProfileComplete(pct >= 100);
+    } catch (_) {}
+  }
 
-    if (message.contains('invalid login credentials') ||
-        message.contains('invalid password') ||
-        message.contains('user not found')) {
+  /// Traduit les erreurs Supabase Auth en messages utilisateur francais.
+  String _mapAuthError(AuthException e) {
+    final msg = e.message.toLowerCase();
+
+    if (msg.contains('invalid login credentials') ||
+        msg.contains('invalid password') ||
+        msg.contains('user not found')) {
       return 'Email ou mot de passe incorrect';
     }
-
-    if (message.contains('email not confirmed')) {
+    if (msg.contains('email not confirmed')) {
       return 'Veuillez confirmer votre email';
     }
-
-    if (message.contains('user already registered') ||
-        message.contains('email already exists')) {
+    if (msg.contains('user already registered') ||
+        msg.contains('email already exists')) {
       return 'Cet email est deja utilise';
     }
-
-    if (message.contains('password') &&
-        (message.contains('weak') || message.contains('short'))) {
+    if (msg.contains('password') &&
+        (msg.contains('weak') || msg.contains('short'))) {
       return 'Le mot de passe doit contenir au moins 8 caracteres';
     }
-
-    if (message.contains('invalid email')) {
+    if (msg.contains('invalid email')) {
       return 'Veuillez entrer un email valide';
     }
-
-    if (message.contains('rate limit') || message.contains('too many')) {
+    if (msg.contains('rate limit') || msg.contains('too many')) {
       return 'Trop de tentatives. Veuillez patienter.';
     }
-
     return e.message;
   }
 
-  /// Register FCM push token (fire and forget, skip on web)
+  /// Remet `_isProcessingAuth` a false apres un delai de 500ms.
+  ///
+  /// Ce delai est necessaire car Supabase emet des events auth (signedIn,
+  /// tokenRefreshed) de maniere asynchrone apres un signIn/signUp.
+  /// Sans ce delai, le listener `onAuthStateChange` declenche un
+  /// AuthCheckRequested qui emet AuthLoading et cause un flash de redirect.
+  void _clearProcessingFlagWithDelay() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _isProcessingAuth = false;
+    });
+  }
+
+  /// Enregistre le token FCM pour les push notifications (fire and forget).
   void _registerPushToken() {
     if (kIsWeb) return;
     try {
-      final pushService = GetIt.I<PushNotificationService>();
-      pushService.registerToken();
+      GetIt.I<PushNotificationService>().registerToken();
     } catch (e) {
-      debugPrint('[AuthBloc] Error registering push token: $e');
+      debugPrint('[AuthBloc] Erreur enregistrement push token: $e');
     }
   }
 
-  /// Remove FCM push token before logout (skip on web)
+  /// Supprime le token FCM avant deconnexion.
   Future<void> _removePushToken() async {
     if (kIsWeb) return;
     try {
-      final pushService = GetIt.I<PushNotificationService>();
-      await pushService.removeToken();
+      await GetIt.I<PushNotificationService>().removeToken();
     } catch (e) {
-      debugPrint('[AuthBloc] Error removing push token: $e');
+      debugPrint('[AuthBloc] Erreur suppression push token: $e');
     }
   }
 }

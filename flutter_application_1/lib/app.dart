@@ -1,3 +1,14 @@
+/// Widget racine de l'application Etoile.
+///
+/// Gere le cycle d'initialisation de l'authentification :
+/// 1. Restauration eventuelle de la session Supabase
+/// 2. Resolution de l'etat auth (connecte / deconnecte)
+/// 3. Creation du router GoRouter (depend de l'etat auth)
+/// 4. Initialisation des push notifications (mobile uniquement)
+///
+/// Affiche un SplashScreen pendant ce processus.
+library;
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -13,7 +24,6 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'shared/widgets/splash_screen.dart';
 
-/// Main application widget
 class EtoileApp extends StatefulWidget {
   const EtoileApp({super.key});
 
@@ -32,95 +42,106 @@ class _EtoileAppState extends State<EtoileApp> {
     _initializeAuth();
   }
 
+  @override
+  void dispose() {
+    _router?.dispose();
+    super.dispose();
+  }
+
+  /// Initialise l'authentification et le routeur.
+  ///
+  /// Flux :
+  /// - Supabase restaure automatiquement la session depuis le stockage local.
+  ///   On ecoute `onAuthStateChange` avec un timeout de 2s pour capter cet event.
+  /// - On dispatch `AuthCheckRequested` dans le BLoC pour resoudre le role
+  ///   (seeker / recruiter / admin) et la completude du profil.
+  /// - Le router est cree APRES que l'etat auth soit determine, car la
+  ///   fonction redirect de GoRouter depend du role utilisateur.
   Future<void> _initializeAuth() async {
-    debugPrint('[App] ========== INITIALIZING AUTH ==========');
+    debugPrint('[App] Initialisation auth...');
 
-    // Get the singleton AuthBloc instance
     _authBloc = GetIt.I<AuthBloc>();
-    debugPrint('[App] AuthBloc instance obtained');
 
-    // Check if session already exists (Supabase restores from storage automatically)
-    final client = supabase.Supabase.instance.client;
-    var session = client.auth.currentSession;
-    debugPrint('[App] Initial session check: ${session?.user.email ?? 'NO SESSION'}');
+    final session = await _restoreSession();
+    debugPrint('[App] Session: ${session?.user.email ?? 'aucune'}');
 
-    // If no session yet, wait for Supabase to potentially restore it
-    if (session == null) {
-      debugPrint('[App] No session found, waiting for potential restore...');
-
-      // Listen for auth state change with timeout
-      final completer = Completer<supabase.Session?>();
-      late final StreamSubscription<supabase.AuthState> subscription;
-
-      subscription = client.auth.onAuthStateChange.listen((data) {
-        debugPrint('[App] Auth event: ${data.event}');
-        if (data.event == supabase.AuthChangeEvent.initialSession ||
-            data.event == supabase.AuthChangeEvent.signedIn ||
-            data.event == supabase.AuthChangeEvent.tokenRefreshed) {
-          if (!completer.isCompleted) {
-            completer.complete(data.session);
-          }
-        }
-      });
-
-      // Wait for session or timeout after 2 seconds
-      try {
-        session = await completer.future.timeout(
-          const Duration(seconds: 2),
-          onTimeout: () {
-            debugPrint('[App] Session restore timeout - no session');
-            return null;
-          },
-        );
-      } finally {
-        await subscription.cancel();
-      }
-    }
-
-    debugPrint('[App] Final session: ${session?.user.email ?? 'NO SESSION'}');
-
-    // Trigger auth check in bloc
+    // Demande au BLoC de verifier le role et la completude profil
     _authBloc!.add(const AuthCheckRequested());
+    await _waitForAuthResolution();
 
-    // Wait for bloc to resolve auth state
-    try {
-      final state = await _authBloc!.stream.firstWhere(
-        (state) => state is AuthAuthenticated || state is AuthUnauthenticated || state is AuthError,
-      ).timeout(const Duration(seconds: 3));
-      debugPrint('[App] Auth state resolved: $state');
-    } catch (e) {
-      debugPrint('[App] Auth check error/timeout: $e');
-    }
-
-    debugPrint('[App] Current AuthBloc state: ${_authBloc!.state}');
-
-    // Create router AFTER auth state is determined
+    // Le router est cree apres resolution de l'auth car les redirections
+    // (admin → /verify-admin, profil incomplet → /profile/edit) en dependent.
     _router = AppRouter.createRouter(_authBloc!);
-    debugPrint('[App] Router created');
 
-    // Initialize push notifications (skip on web - Firebase Messaging not supported)
     if (!kIsWeb) {
-      try {
-        final pushService = GetIt.I<PushNotificationService>();
-        await pushService.initialize(router: _router);
-        debugPrint('[App] Push notifications initialized');
-
-        // If user is already authenticated, register FCM token
-        if (_authBloc!.state is AuthAuthenticated) {
-          pushService.registerToken();
-        }
-      } catch (e) {
-        debugPrint('[App] Push notifications init failed (non-blocking): $e');
-      }
-    } else {
-      debugPrint('[App] Skipping push notifications on web');
+      await _initPushNotifications();
     }
 
     if (mounted) {
-      setState(() {
-        _isInitialized = true;
-      });
-      debugPrint('[App] ========== AUTH INITIALIZED ==========');
+      setState(() => _isInitialized = true);
+      debugPrint('[App] Initialisation terminee');
+    }
+  }
+
+  /// Attend que Supabase restaure une session existante (timeout 2s).
+  ///
+  /// Supabase stocke le token JWT dans le stockage local. Au demarrage,
+  /// il emet un event `initialSession` si une session valide est trouvee.
+  /// Si aucun event n'arrive en 2s, on considere qu'il n'y a pas de session.
+  Future<supabase.Session?> _restoreSession() async {
+    final client = supabase.Supabase.instance.client;
+    final existingSession = client.auth.currentSession;
+    if (existingSession != null) return existingSession;
+
+    final completer = Completer<supabase.Session?>();
+    final subscription = client.auth.onAuthStateChange.listen((data) {
+      final isSessionEvent =
+          data.event == supabase.AuthChangeEvent.initialSession ||
+          data.event == supabase.AuthChangeEvent.signedIn ||
+          data.event == supabase.AuthChangeEvent.tokenRefreshed;
+      if (isSessionEvent && !completer.isCompleted) {
+        completer.complete(data.session);
+      }
+    });
+
+    try {
+      return await completer.future.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => null,
+      );
+    } finally {
+      await subscription.cancel();
+    }
+  }
+
+  /// Attend que le BLoC auth emette un etat final (timeout 3s).
+  Future<void> _waitForAuthResolution() async {
+    try {
+      await _authBloc!.stream.firstWhere(
+        (state) =>
+            state is AuthAuthenticated ||
+            state is AuthUnauthenticated ||
+            state is AuthError,
+      ).timeout(const Duration(seconds: 3));
+    } catch (e) {
+      debugPrint('[App] Timeout resolution auth: $e');
+    }
+  }
+
+  /// Initialise les push notifications (non-bloquant).
+  /// Si l'utilisateur est deja connecte, enregistre le token FCM.
+  Future<void> _initPushNotifications() async {
+    try {
+      final pushService = GetIt.I<PushNotificationService>();
+      await pushService.initialize(router: _router);
+
+      if (_authBloc!.state is AuthAuthenticated) {
+        pushService.registerToken();
+      }
+      debugPrint('[App] Push notifications initialisees');
+    } catch (e) {
+      // Non-bloquant : l'app fonctionne sans push
+      debugPrint('[App] Push init echouee (non-bloquant): $e');
     }
   }
 

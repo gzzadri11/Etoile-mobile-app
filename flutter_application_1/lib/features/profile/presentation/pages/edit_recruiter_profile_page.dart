@@ -1,3 +1,10 @@
+library;
+
+/// Page d'edition du profil recruteur.
+///
+/// Formulaire : entreprise, secteur, description, SIRET, document
+/// justificatif, localisation (carte + autocompletion).
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';

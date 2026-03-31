@@ -1,9 +1,16 @@
+library;
+
+/// Service de verification SIRET via l'API gouvernementale.
+///
+/// Utilise https://recherche-entreprises.api.gouv.fr (gratuit, sans cle).
+/// Verifie la validite du SIRET et retourne le nom de l'entreprise.
+
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-/// Result of a SIRET verification via API Sirene.
+/// Resultat de la verification d'un SIRET.
 class SiretVerificationResult {
   final bool isValid;
   final String? companyName;
@@ -37,9 +44,7 @@ class SiretVerificationResult {
   }
 }
 
-/// Service for verifying SIRET numbers via the French government API.
-///
-/// Uses https://recherche-entreprises.api.gouv.fr (free, no auth key).
+/// Service de verification SIRET via l'API Sirene (gouv.fr).
 class SireneService {
   static const _baseUrl = 'https://recherche-entreprises.api.gouv.fr';
 
@@ -66,17 +71,12 @@ class SireneService {
     }
 
     try {
-      debugPrint('[SireneService] Verifying SIRET: $cleaned');
-
       final response = await _dio.get(
         '$_baseUrl/search',
         queryParameters: {'q': cleaned, 'page': 1, 'per_page': 1},
       );
 
       if (response.statusCode != 200) {
-        debugPrint(
-          '[SireneService] API error: ${response.statusCode}',
-        );
         return SiretVerificationResult.invalid(
           'Vérification impossible, réessayez plus tard',
         );
@@ -86,7 +86,6 @@ class SireneService {
       final results = data['results'] as List?;
 
       if (results == null || results.isEmpty) {
-        debugPrint('[SireneService] SIRET not found: $cleaned');
         return SiretVerificationResult.invalid(
           'Ce SIRET n\'est pas valide, vérifiez et réessayez',
         );
@@ -104,7 +103,6 @@ class SireneService {
         final isClosed = etab['est_siege'] == false &&
             etab['etat_administratif'] == 'F';
         if (isClosed) {
-          debugPrint('[SireneService] Etablissement closed: $cleaned');
           return SiretVerificationResult.invalid(
             'Cet établissement est fermé',
           );
@@ -117,7 +115,6 @@ class SireneService {
           '';
 
       if (companyName.isEmpty) {
-        debugPrint('[SireneService] No company name found for: $cleaned');
         return SiretVerificationResult.invalid(
           'Ce SIRET n\'est pas valide, vérifiez et réessayez',
         );
@@ -129,10 +126,6 @@ class SireneService {
       // Extract legal form
       final legalForm = company['nature_juridique'] as String?;
 
-      debugPrint(
-        '[SireneService] SIRET valid: $cleaned -> $companyName',
-      );
-
       return SiretVerificationResult.valid(
         companyName: companyName,
         siren: siren,
@@ -141,14 +134,12 @@ class SireneService {
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
           e.error is SocketException) {
-        debugPrint('[SireneService] Network error');
         return SiretVerificationResult.invalid(
           'Vérification impossible, vérifiez votre connexion',
         );
       }
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        debugPrint('[SireneService] Timeout');
         return SiretVerificationResult.invalid(
           'Vérification trop longue, réessayez plus tard',
         );

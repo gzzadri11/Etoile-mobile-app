@@ -1,16 +1,16 @@
+library;
+
+/// Service centralise d'acces a Supabase.
+///
+/// Fournit un acces type a l'authentification, la base de donnees,
+/// le stockage, le realtime et les Edge Functions.
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/app_config.dart';
 
-/// Centralized Supabase service for easy access to all Supabase features
-///
-/// Provides typed access to:
-/// - Authentication (auth)
-/// - Database queries (from)
-/// - Storage (storage)
-/// - Realtime subscriptions (realtime)
-/// - Edge Functions (functions)
+/// Facade Supabase : auth, DB, storage, realtime, Edge Functions.
 class SupabaseService {
   final SupabaseClient _client;
 

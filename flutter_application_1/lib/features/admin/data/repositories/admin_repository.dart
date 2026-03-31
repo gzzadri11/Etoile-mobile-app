@@ -1,13 +1,18 @@
+library;
+
+/// Repository des operations d'administration.
+///
+/// Fournit l'acces aux donnees reservees a l'admin : compteurs du tableau
+/// de bord, verifications recruteurs, moderation des signalements et
+/// statistiques de la plateforme.
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../profile/data/models/recruiter_profile_model.dart';
 import '../models/report_model.dart';
 
-/// Repository for admin operations.
-///
-/// Provides access to admin-only data: dashboard counts,
-/// recruiter verifications, reports moderation, and platform stats.
+/// Repository pour les operations d'administration Supabase.
 class AdminRepository {
   final SupabaseClient _supabaseClient;
 
@@ -32,12 +37,6 @@ class AdminRepository {
           .select('id')
           .eq('status', 'pending');
       final pendingReports = (reportsResponse as List).length;
-
-      debugPrint(
-        '[AdminRepository] Dashboard counts: '
-        'pendingRecruiters=$pendingRecruiters, '
-        'pendingReports=$pendingReports',
-      );
 
       return {
         'pendingRecruiters': pendingRecruiters,
@@ -100,8 +99,6 @@ class AdminRepository {
       final subs = subsResponse as List;
       final recruiterSubsCount =
           subs.where((s) => s['plan_type'] == 'recruiter_premium').length;
-
-      debugPrint('[AdminRepository] Stats loaded successfully');
 
       return {
         'totalUsers': users.length,
@@ -174,7 +171,6 @@ class AdminRepository {
         .from('verification-docs')
         .createSignedUrl(path, 3600); // 1 hour
 
-    debugPrint('[AdminRepository] Signed URL created for document: $path');
     return signedUrl;
   }
 
@@ -196,8 +192,6 @@ class AdminRepository {
               RecruiterProfile.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      debugPrint(
-          '[AdminRepository] Loaded ${list.length} pending recruiters');
       return list;
     } catch (e) {
       debugPrint('[AdminRepository] Error loading pending recruiters: $e');
@@ -222,7 +216,6 @@ class AdminRepository {
 
       final profile = RecruiterProfile.fromJson(profileResponse);
 
-      debugPrint('[AdminRepository] Loaded detail for recruiter $userId');
       return {
         'profile': profile,
         'registeredAt': DateTime.parse(userResponse['created_at'] as String),
@@ -250,7 +243,6 @@ class AdminRepository {
         entityId: userId,
       );
 
-      debugPrint('[AdminRepository] Recruiter $userId approved');
     } catch (e) {
       debugPrint('[AdminRepository] Error approving recruiter: $e');
       rethrow;
@@ -272,7 +264,6 @@ class AdminRepository {
         newValues: {'rejection_reason': reason},
       );
 
-      debugPrint('[AdminRepository] Recruiter $userId rejected: $reason');
     } catch (e) {
       debugPrint('[AdminRepository] Error rejecting recruiter: $e');
       rethrow;
@@ -296,7 +287,6 @@ class AdminRepository {
           .map((json) => ReportModel.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      debugPrint('[AdminRepository] Loaded ${list.length} pending reports');
       return list;
     } catch (e) {
       debugPrint('[AdminRepository] Error loading pending reports: $e');
@@ -321,7 +311,6 @@ class AdminRepository {
         entityId: reportId,
       );
 
-      debugPrint('[AdminRepository] Report $reportId dismissed');
     } catch (e) {
       debugPrint('[AdminRepository] Error dismissing report: $e');
       rethrow;
@@ -352,7 +341,6 @@ class AdminRepository {
         newValues: {'action_taken': action, 'admin_notes': notes},
       );
 
-      debugPrint('[AdminRepository] Report $reportId actioned: $action');
     } catch (e) {
       debugPrint('[AdminRepository] Error actioning report: $e');
       rethrow;
@@ -372,7 +360,6 @@ class AdminRepository {
         entityId: userId,
       );
 
-      debugPrint('[AdminRepository] User $userId suspended');
     } catch (e) {
       debugPrint('[AdminRepository] Error suspending user: $e');
       rethrow;
@@ -392,7 +379,6 @@ class AdminRepository {
         entityId: videoId,
       );
 
-      debugPrint('[AdminRepository] Video $videoId suspended');
     } catch (e) {
       debugPrint('[AdminRepository] Error suspending video: $e');
       rethrow;

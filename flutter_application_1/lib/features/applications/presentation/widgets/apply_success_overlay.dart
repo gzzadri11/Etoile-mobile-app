@@ -1,15 +1,19 @@
+library;
+
+/// Overlay anime de succes apres une candidature.
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 
-/// Shows a success overlay animation when a seeker applies to an offer.
+/// Affiche un overlay anime de succes quand un chercheur postule a une offre.
 ///
-/// Uses [OverlayEntry] to display above the feed PageView.
-/// Animation sequence:
-/// 1. Fade in semi-transparent background (200ms)
-/// 2. Scale up white circle + animated check icon (400ms)
-/// 3. Fade in "Candidature envoyee !" text (200ms)
-/// 4. Hold 500ms then fade out (300ms)
+/// Utilise [OverlayEntry] pour s'afficher au-dessus du feed PageView.
+/// Sequence d'animation :
+/// 1. Fondu du fond semi-transparent (200ms)
+/// 2. Agrandissement du cercle blanc + icone check animee (400ms)
+/// 3. Fondu du texte "Candidature envoyee !" (200ms)
+/// 4. Pause 500ms puis fondu de sortie (300ms)
 void showApplySuccessOverlay(BuildContext context) {
   final overlay = Overlay.of(context);
   late OverlayEntry entry;

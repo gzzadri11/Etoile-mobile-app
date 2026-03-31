@@ -1,3 +1,14 @@
+/// Injection de dependances — enregistre toutes les instances dans GetIt.
+///
+/// Convention :
+/// - **LazySingleton** : une seule instance partagee (repositories, services,
+///   AuthBloc). Utilise quand l'etat doit etre coherent dans toute l'app.
+/// - **Factory** : nouvelle instance a chaque appel (ProfileBloc, FeedBloc).
+///   Utilise quand chaque ecran a besoin de son propre etat independant.
+///
+/// Acces : `GetIt.I<ProfileRepository>()` ou via l'alias `sl<ProfileRepository>()`
+library;
+
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -7,11 +18,10 @@ import '../core/services/supabase_service.dart';
 import '../core/services/video_upload_service.dart';
 import '../features/admin/data/repositories/admin_repository.dart';
 import '../features/applications/data/repositories/application_repository.dart';
-import '../features/messages/data/repositories/block_repository.dart';
-import '../features/report/data/repositories/report_repository.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/feed/data/repositories/feed_repository.dart';
 import '../features/feed/presentation/bloc/feed_bloc.dart';
+import '../features/messages/data/repositories/block_repository.dart';
 import '../features/messages/data/repositories/conversation_repository.dart';
 import '../features/messages/data/repositories/message_repository.dart';
 import '../features/messages/presentation/bloc/message_bloc.dart';
@@ -19,130 +29,58 @@ import '../features/payment/data/repositories/payment_repository.dart';
 import '../features/profile/data/repositories/profile_repository.dart';
 import '../features/profile/data/repositories/stats_repository.dart';
 import '../features/profile/presentation/bloc/profile_bloc.dart';
+import '../features/report/data/repositories/report_repository.dart';
 import '../features/video/data/repositories/video_repository.dart';
 import '../features/video/presentation/bloc/video_bloc.dart';
 
-/// Service locator instance
 final GetIt sl = GetIt.instance;
 
-/// Initialize all dependencies
 Future<void> init() async {
-  // ============================================
-  // EXTERNAL DEPENDENCIES
-  // ============================================
-
-  // Supabase client
+  // --- Dependances externes ---
   sl.registerLazySingleton<SupabaseClient>(
     () => Supabase.instance.client,
   );
 
-  // ============================================
-  // SERVICES
-  // ============================================
-
-  // Supabase Service - centralized access to Supabase features
+  // --- Services ---
   sl.registerLazySingleton<SupabaseService>(
     () => SupabaseService(client: sl()),
   );
-
-  // Stripe Service - payment processing
   sl.registerLazySingleton<StripeService>(
     () => StripeService(supabaseService: sl()),
   );
-
-  // Push Notification Service - SINGLETON
   sl.registerLazySingleton<PushNotificationService>(
     () => PushNotificationService(supabaseClient: sl()),
   );
-
-  // Video Upload Service - SINGLETON
   sl.registerLazySingleton<VideoUploadService>(
     () => VideoUploadService(supabaseClient: sl()),
   );
 
-  // ============================================
-  // REPOSITORIES
-  // ============================================
-
-  // Profile repository
-  sl.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepository(supabaseClient: sl()),
-  );
-
-  // Stats repository
-  sl.registerLazySingleton<StatsRepository>(
-    () => StatsRepository(supabaseClient: sl()),
-  );
-
-  // Video repository
-  sl.registerLazySingleton<VideoRepository>(
-    () => VideoRepository(supabaseClient: sl()),
-  );
-
-  // Feed repository
-  sl.registerLazySingleton<FeedRepository>(
-    () => FeedRepository(supabaseClient: sl()),
-  );
-
-  // Conversation repository
-  sl.registerLazySingleton<ConversationRepository>(
-    () => ConversationRepository(supabaseClient: sl()),
-  );
-
-  // Message repository
-  sl.registerLazySingleton<MessageRepository>(
-    () => MessageRepository(supabaseClient: sl()),
-  );
-
-  // Payment repository
-  sl.registerLazySingleton<PaymentRepository>(
+  // --- Repositories (singletons : une seule source de verite par domaine) ---
+  sl.registerLazySingleton(() => ProfileRepository(supabaseClient: sl()));
+  sl.registerLazySingleton(() => StatsRepository(supabaseClient: sl()));
+  sl.registerLazySingleton(() => VideoRepository(supabaseClient: sl()));
+  sl.registerLazySingleton(() => FeedRepository(supabaseClient: sl()));
+  sl.registerLazySingleton(() => ConversationRepository(supabaseClient: sl()));
+  sl.registerLazySingleton(() => MessageRepository(supabaseClient: sl()));
+  sl.registerLazySingleton(() => BlockRepository(supabaseClient: sl()));
+  sl.registerLazySingleton(() => ReportRepository(supabaseClient: sl()));
+  sl.registerLazySingleton(() => ApplicationRepository(supabaseClient: sl()));
+  sl.registerLazySingleton(() => AdminRepository(supabaseClient: sl()));
+  sl.registerLazySingleton(
     () => PaymentRepository(supabaseClient: sl(), stripeService: sl()),
   );
 
-  // Admin repository
-  sl.registerLazySingleton<AdminRepository>(
-    () => AdminRepository(supabaseClient: sl()),
-  );
+  // --- BLoCs ---
 
-  // Report repository
-  sl.registerLazySingleton<ReportRepository>(
-    () => ReportRepository(supabaseClient: sl()),
-  );
-
-  // Block repository
-  sl.registerLazySingleton<BlockRepository>(
-    () => BlockRepository(supabaseClient: sl()),
-  );
-
-  // Application repository (candidatures par offre)
-  sl.registerLazySingleton<ApplicationRepository>(
-    () => ApplicationRepository(supabaseClient: sl()),
-  );
-
-  // ============================================
-  // FEATURES - MESSAGES
-  // ============================================
-
-  // MessageBloc
-  sl.registerFactory<MessageBloc>(
-    () => MessageBloc(messageRepository: sl()),
-  );
-
-  // ============================================
-  // FEATURES - AUTH
-  // ============================================
-
-  // AuthBloc - SINGLETON pour maintenir un etat coherent dans toute l'app
-  sl.registerLazySingleton<AuthBloc>(
+  // AuthBloc : singleton car l'etat d'authentification est global.
+  // Tous les ecrans observent la meme instance.
+  sl.registerLazySingleton(
     () => AuthBloc(supabaseClient: sl(), profileRepository: sl()),
   );
 
-  // ============================================
-  // FEATURES - PROFILE
-  // ============================================
-
-  // ProfileBloc
-  sl.registerFactory<ProfileBloc>(
+  // Les autres BLoCs sont des factories : chaque ecran cree sa propre
+  // instance pour eviter les conflits d'etat entre navigations.
+  sl.registerFactory(
     () => ProfileBloc(
       profileRepository: sl(),
       videoRepository: sl(),
@@ -150,22 +88,13 @@ Future<void> init() async {
       supabaseClient: sl(),
     ),
   );
-
-  // ============================================
-  // FEATURES - VIDEO
-  // ============================================
-
-  // VideoBloc
-  sl.registerFactory<VideoBloc>(
+  sl.registerFactory(
     () => VideoBloc(videoRepository: sl(), uploadService: sl()),
   );
-
-  // ============================================
-  // FEATURES - FEED
-  // ============================================
-
-  // FeedBloc
-  sl.registerFactory<FeedBloc>(
+  sl.registerFactory(
+    () => MessageBloc(messageRepository: sl()),
+  );
+  sl.registerFactory(
     () => FeedBloc(
       feedRepository: sl(),
       blockRepository: sl(),

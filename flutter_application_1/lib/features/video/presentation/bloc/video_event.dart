@@ -1,6 +1,8 @@
+/// Evenements du BLoC video (upload, publication, suppression).
+
 part of 'video_bloc.dart';
 
-/// Base class for video events
+/// Classe de base des evenements video.
 sealed class VideoEvent extends Equatable {
   const VideoEvent();
 

@@ -1,3 +1,7 @@
+library;
+
+/// Page affichant les candidats ayant postule a une offre donnee (fiche candidat + video).
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';

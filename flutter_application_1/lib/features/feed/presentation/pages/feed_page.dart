@@ -1,3 +1,7 @@
+library;
+
+/// Page du feed video vertical (TikTok-style) avec swipe et postulation.
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -704,11 +708,8 @@ class _VideoCard extends StatelessWidget {
     }
   }
 
-  /// Open message / start conversation (recruiter only)
+  /// Ouvre la messagerie / demarre une conversation (recruteur).
   Future<void> _onMessageTap(BuildContext context) async {
-    debugPrint('[Feed] _onMessageTap called for user: ${feedItem.video.userId}');
-    debugPrint('[Feed] feedItem.userName: ${feedItem.userName}');
-
     // Check profile completion before allowing contact
     final allowed = await checkProfileGate(context);
     if (!allowed || !context.mounted) return;
@@ -717,26 +718,16 @@ class _VideoCard extends StatelessWidget {
     _startConversation(context);
   }
 
-  /// Create or find conversation and navigate to chat
+  /// Cree ou retrouve une conversation et navigue vers le chat.
   Future<void> _startConversation(BuildContext context) async {
     final navigator = Navigator.of(context, rootNavigator: true);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
 
-    debugPrint('[Feed] ========== START CONVERSATION ==========');
-    debugPrint('[Feed] Video userId: ${feedItem.video.userId}');
-    debugPrint('[Feed] Video id: ${feedItem.video.id}');
-
-    // Get repository early
     final conversationRepo = GetIt.I<ConversationRepository>();
     final currentUserId = conversationRepo.currentUserId;
 
-    debugPrint('[Feed] Current user: $currentUserId');
-    debugPrint('[Feed] Other user: ${feedItem.video.userId}');
-
-    // Check if trying to message self
     if (currentUserId == feedItem.video.userId) {
-      debugPrint('[Feed] ERROR: Trying to message self');
       scaffoldMessenger.showSnackBar(
         const SnackBar(
           content: Text('Vous ne pouvez pas vous envoyer un message'),
@@ -756,28 +747,19 @@ class _VideoCard extends StatelessWidget {
     );
 
     try {
-      debugPrint('[Feed] Creating/finding conversation...');
-
       final conversationId = await conversationRepo.findOrCreateConversation(
         otherUserId: feedItem.video.userId,
         videoId: feedItem.video.id,
       );
 
-      debugPrint('[Feed] Conversation ID: $conversationId');
-
       // Close loading dialog
       navigator.pop();
 
       // Navigate to chat
-      final chatRoute = AppRoutes.chatWith(conversationId);
-      debugPrint('[Feed] Navigating to: $chatRoute');
-      router.push(chatRoute);
+      router.push(AppRoutes.chatWith(conversationId));
 
-      debugPrint('[Feed] ========== NAVIGATION DONE ==========');
-
-    } catch (e, stackTrace) {
-      debugPrint('[Feed] ERROR: $e');
-      debugPrint('[Feed] Stack: $stackTrace');
+    } catch (e) {
+      debugPrint('[Feed] Erreur conversation: $e');
 
       // Close loading dialog
       navigator.pop();

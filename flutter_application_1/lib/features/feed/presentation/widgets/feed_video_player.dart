@@ -1,10 +1,14 @@
+library;
+
+/// Lecteur video pour les elements du feed.
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../core/constants/app_colors.dart';
 
-/// Video player widget for feed items.
+/// Lecteur video avec autoplay, boucle et miniature.
 ///
 /// Waits for preloaded controller from the manager. Falls back to creating
 /// its own after a short timeout. Shows buffering progress while loading.

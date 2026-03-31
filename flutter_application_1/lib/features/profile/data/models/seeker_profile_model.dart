@@ -1,6 +1,13 @@
+library;
+
+/// Modele de profil chercheur d'emploi (alternance beta).
+///
+/// Contient les informations personnelles, academiques et de
+/// localisation du chercheur, ainsi que le calcul de completude.
+
 import 'package:equatable/equatable.dart';
 
-/// Model representing a job seeker's profile (alternance beta)
+/// Profil chercheur : identite, etudes, localisation, domaine.
 class SeekerProfile extends Equatable {
   final String userId;
   final String firstName;

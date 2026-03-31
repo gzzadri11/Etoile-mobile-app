@@ -1,3 +1,10 @@
+library;
+
+/// Page du tableau de bord administrateur.
+///
+/// Affiche les compteurs principaux (recruteurs en attente, signalements)
+/// et fournit la navigation vers les sous-pages admin.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';

@@ -1,11 +1,17 @@
+library;
+
+/// Page legale generique affichant du contenu texte statique.
+///
+/// Reutilisee pour : Mentions legales, CGU, Politique de confidentialite.
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 
-/// Generic legal page displaying static text content in a ScrollView.
+/// Page legale generique affichant du contenu statique dans un ScrollView.
 ///
-/// Reused for: Mentions legales, CGU, Politique de confidentialite.
+/// Reutilisee pour : Mentions legales, CGU, Politique de confidentialite.
 class LegalPage extends StatelessWidget {
   final String title;
   final List<LegalSection> sections;

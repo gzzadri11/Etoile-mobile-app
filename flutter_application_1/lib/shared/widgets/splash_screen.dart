@@ -1,9 +1,13 @@
+library;
+
+/// Ecran de demarrage anime affiche pendant l'initialisation.
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Animated splash screen shown during app initialization
+/// Splash screen avec animation du logo Etoile.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 

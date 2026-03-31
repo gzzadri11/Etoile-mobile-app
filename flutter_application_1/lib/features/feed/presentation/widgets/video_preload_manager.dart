@@ -1,11 +1,14 @@
+library;
+
+/// Gestionnaire de prechargement video pour un defilement fluide.
+///
+/// Strategie : prioriser la bande passante de la video courante,
+/// ne precharger la suivante qu'apres le debut de lecture.
+
 import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
 
-/// Manages video preloading for smooth feed scrolling.
-///
-/// Strategy: prioritize current video bandwidth. Only preload NEXT
-/// video after the current one starts playing. This avoids concurrent
-/// downloads stealing bandwidth from the video the user is watching.
+/// Precharge la video suivante apres le debut de lecture de la courante.
 class VideoPreloadManager extends ChangeNotifier {
   final Map<String, VideoPlayerController> _controllers = {};
   final Map<String, bool> _isInitialized = {};

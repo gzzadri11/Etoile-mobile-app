@@ -1,3 +1,10 @@
+library;
+
+/// BLoC de gestion des paiements et abonnements.
+///
+/// Orchestre les evenements de souscription, annulation et
+/// chargement du statut premium via le [PaymentRepository].
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,6 +13,7 @@ import '../../data/repositories/payment_repository.dart';
 import 'payment_event.dart';
 import 'payment_state.dart';
 
+/// BLoC gerant le cycle de vie des paiements recruteur.
 class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
   final PaymentRepository _paymentRepository;
 

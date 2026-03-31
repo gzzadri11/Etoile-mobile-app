@@ -1,8 +1,12 @@
+library;
+
+/// Repository d'operations video (CRUD) via Supabase.
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/video_model.dart';
 
-/// Repository for video operations with Supabase
+/// CRUD video : creation, lecture, suppression, publications.
 class VideoRepository {
   final SupabaseClient _supabaseClient;
 

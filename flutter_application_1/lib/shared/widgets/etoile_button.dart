@@ -1,11 +1,13 @@
+library;
+
+/// Bouton principal de l'application Etoile (4 variantes).
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Primary button widget for Etoile app
-///
-/// Supports:
+/// Bouton Etoile : primaire, outline, texte, danger.
 /// - Primary (filled with gradient)
 /// - Secondary (outlined)
 /// - Ghost (text only)

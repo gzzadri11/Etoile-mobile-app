@@ -1,3 +1,10 @@
+library;
+
+/// Page de reinitialisation du mot de passe.
+///
+/// Permet a l'utilisateur de saisir son email pour recevoir
+/// un lien de reinitialisation via Supabase Auth.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';

@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-03-20
-**Statut** : Sprint 26 TERMINE. Sprint 25 TERMINE. Deploiement infra TERMINE. Sprint 13 camera toujours reportee.
+**Date de mise a jour** : 2026-03-31
+**Statut** : Sprint 27 (nettoyage codebase) TERMINE. 89/89 tests, 0 issues analyze. Toutes migrations deployees (19/19). Sprint 13 camera toujours reportee.
 
 ---
 
@@ -16,6 +16,35 @@ flutter run -d edge
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+---
+
+## Ce qui a ete fait — Sprint 27 : Nettoyage et documentation du codebase (2026-03-31)
+
+### Objectif
+Homogeneiser tout le codebase Flutter (~98 fichiers) avec des conventions de documentation francaise, supprimer le code mort, et reduire les debugPrints excessifs. Aucune modification de logique.
+
+### Suppression de code mort — DONE
+- **Supprime** : `lib/core/services/r2_service.dart` (377 lignes) — jamais importe, dupliquait video_upload_service.dart
+- **Supprime** : `lib/core/network/api_client.dart` (348 lignes) + dossier `network/` — jamais importe
+- **Retire** : shadow tokens inutilises dans `app_theme.dart` (shadowSm/Md/Lg/Xl, 34 lignes)
+- **Retire** : 1 TODO stale dans `video_record_page.dart`
+- **Total** : 725 lignes mortes supprimees
+
+### Documentation francaise ~98 fichiers — DONE
+- Tous les fichiers standalone : `library;` + `/// Description francaise.`
+- Tous les fichiers `part of` : `/// Description francaise.` avant `part of`
+- Tous les `///` anglais traduits en francais sur classes/methodes publiques
+
+### Reduction debugPrints — DONE
+- ~100 debugPrints de routine supprimes (sur 224 total)
+- Restent ~130 debugPrints, tous dans des blocs `catch` (diagnostics d'erreur uniquement)
+- Fichiers principaux nettoyes : push_notification_service, sirene_service, feed_page, message_repository, conversation_repository, application_repository, admin_repository, admin_bloc
+
+### Resultats
+- **89/89 tests pass**, 0 issues flutter analyze
+- 0 appels `print()`, 0 `withOpacity()` deprecie, 0 TODO/FIXME
+- CLAUDE.md mis a jour avec les nouveaux standards de documentation
 
 ---
 
@@ -778,11 +807,12 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 | **24** | **Photo profil chercheur + Profil public seeker + Feed optimise + Nav messagerie (6 changements)** | **DONE** |
 | **25** | **Dossiers Candidatures par Offre — page offres + fiche candidat avec video + badge conversations (7 stories, 26 pts)** | **DONE** |
 | **26** | **Decoupler Candidatures des Conversations — table applications, postuler 1-clic, animation, page seeker, contacter (7 stories, 27 pts)** | **DONE** |
+| **27** | **Nettoyage codebase — doc FR ~98 fichiers, suppression 725 lignes mortes, reduction debugPrints** | **DONE** |
 
 ### Prochains sprints
 
 - Story reportee : 13.1 Camera in-app (8 pts, emulateur requis)
-- Deployer migrations SQL : `20260318000000_seeker_photo_url.sql` + `20260320000000_applications_table.sql`
+- ~~Deployer migrations SQL~~ — **FAIT** (19/19 synchronisees, verifie 2026-03-30)
 - Passage Stripe test → production (juste avant soumission store, KYC 1-3j)
 - **Preparation beta** (store listing, TestFlight/Play Console) ← PROCHAINE ETAPE
 - Tous les pre-requis infra sont deployes (migrations, OTP, admin, bucket, Edge Functions, RLS, VIEW users, audit_logs)
@@ -833,5 +863,5 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 
 ---
 
-*Sauvegarde mise a jour le 2026-03-20*
-*Sprint 26 TERMINE. Candidatures decouples des conversations : table applications, postuler en 1 clic avec animation, page "Mes candidatures" seeker, recruteur "Contacter" cree la conversation, badges status. 88/88 tests pass. Migration SQL a deployer. Next: Deployer migrations + preparation beta.*
+*Sauvegarde mise a jour le 2026-03-31*
+*Sprint 27 TERMINE. Nettoyage codebase complet : ~98 fichiers documentes en francais (library; + ///), 725 lignes mortes supprimees (r2_service + api_client + shadows), ~100 debugPrints de routine retires. 89/89 tests pass, 0 issues analyze. Next: Preparation beta (store listing, TestFlight/Play Console).*

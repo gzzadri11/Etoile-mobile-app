@@ -1,3 +1,10 @@
+library;
+
+/// Traducteur d'exceptions brutes en [Failure] typees.
+///
+/// Convertit les exceptions Supabase, Stripe et reseau en
+/// erreurs applicatives avec messages francais pour l'utilisateur.
+
 import 'dart:async';
 import 'dart:io';
 
@@ -7,16 +14,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../errors/failures.dart';
 
-/// Translates raw exceptions into typed [Failure] instances with French messages.
-///
-/// Usage in repositories and BLoCs:
-/// ```dart
-/// try {
-///   // ...
-/// } catch (e) {
-///   return ErrorTranslator.translate(e);
-/// }
-/// ```
+/// Traduit les exceptions brutes en [Failure] typees avec messages FR.
 abstract class ErrorTranslator {
   /// Translate any exception into a typed [Failure].
   static Failure translate(dynamic exception) {

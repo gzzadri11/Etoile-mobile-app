@@ -1,3 +1,10 @@
+library;
+
+/// Page d'accueil pour les utilisateurs non authentifies.
+///
+/// Affiche le branding de l'application avec le slogan,
+/// la mascotte et les boutons de connexion / inscription.
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -5,9 +12,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 
-/// Welcome page shown to unauthenticated users.
+/// Page d'accueil affichee aux utilisateurs non authentifies.
 ///
-/// Displays the app branding with tagline,
+/// Presente le branding avec le slogan,
 /// and CTA buttons for seekers, recruiters, and existing users.
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
