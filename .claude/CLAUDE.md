@@ -20,14 +20,22 @@ Etoile est une application mobile Flutter de recrutement par video courte (40 se
 
 ## Tech Stack
 
+### App Mobile (Chercheur)
 - **Frontend** : Flutter 3.x / Dart (iOS + Android, une seule codebase)
 - **State Management** : BLoC pattern (flutter_bloc)
 - **Navigation** : GoRouter (go_router)
-- **Backend** : Supabase (PostgreSQL + Auth + Realtime + Edge Functions)
-- **Stockage video** : Cloudflare R2 (egress gratuit) via Workers
 - **Push Notifications** : Firebase Cloud Messaging
 - **Carte** : flutter_map + OpenStreetMap (Photon API pour autocompletion)
-- **Paiements** : Apple IAP (iOS) + Google Play Billing (Android) + Stripe (web)
+
+### SaaS Web (Recruteur)
+- **Frontend** : Next.js 16 + TypeScript + Tailwind v4 + Shadcn/ui
+- **Deploiement** : Vercel (hobby) + domaine custom app.etoile-recrutement.fr
+- **Auth** : Supabase SSR (@supabase/ssr) — browser client + server client + middleware
+
+### Backend Partage
+- **Supabase** : PostgreSQL + Auth + Realtime + Edge Functions (meme projet pour les deux plateformes)
+- **Stockage video** : Cloudflare R2 (egress gratuit) via Workers
+- **Paiements** : Stripe direct web SaaS (PAS d'IAP Apple/Google)
 
 ## Project Structure
 
@@ -48,7 +56,7 @@ ETOILE/Etoile-mobile-app/           <- git root (CE REPERTOIRE)
 ├── cloudflare/                      <- Cloudflare Workers (R2 presigned URLs)
 │   ├── src/index.ts
 │   └── wrangler.toml
-├── flutter_application_1/           <- PROJET FLUTTER (code source)
+├── flutter_application_1/           <- PROJET FLUTTER (app mobile chercheur)
 │   ├── lib/
 │   │   ├── main.dart
 │   │   ├── app.dart                 <- Widget principal + GoRouter + Push init
@@ -66,6 +74,20 @@ ETOILE/Etoile-mobile-app/           <- git root (CE REPERTOIRE)
 │   ├── android/
 │   ├── ios/
 │   └── pubspec.yaml
+├── saas-etoile/                     <- PROJET NEXT.JS (SaaS web recruteur)
+│   ├── app/                         <- App Router (pages + layouts)
+│   │   ├── (auth)/                  <- Layout auth (login, register, verify)
+│   │   ├── (dashboard)/             <- Layout dashboard (sidebar + header)
+│   │   └── auth/callback/           <- Supabase auth callback
+│   ├── components/
+│   │   ├── ui/                      <- Shadcn/ui components
+│   │   └── layout/                  <- Sidebar, Header
+│   ├── lib/
+│   │   ├── supabase/                <- Browser + Server clients
+│   │   ├── types/                   <- TypeScript interfaces (miroir modeles Dart)
+│   │   └── constants/               <- Secteurs, routes (miroir sector_constants.dart)
+│   ├── middleware.ts                <- Auth session refresh + route protection
+│   └── package.json
 ├── supabase/                        <- Supabase Edge Functions + migrations
 │   ├── functions/send-push/
 │   └── migrations/
@@ -146,7 +168,7 @@ Ce projet utilise le **BMAD Method** (Business-Market Alignment Development) pou
 ## Environment & Commands
 
 ```bash
-# Projet Flutter
+# === App Mobile (Flutter) ===
 cd C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app\flutter_application_1
 
 # Test rapide sur Edge (le plus rapide, pas d'emulateur)
@@ -159,7 +181,19 @@ flutter run -d emulator-5554
 # Analyse statique
 flutter analyze
 
-# Supabase CLI (installe localement)
+# === SaaS Web (Next.js) ===
+cd C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app\saas-etoile
+
+# Dev server
+npm run dev
+
+# Build production
+npm run build
+
+# Ajouter un composant Shadcn/ui
+npx shadcn@latest add <component> --yes
+
+# === Supabase CLI ===
 npx --prefix supabase supabase <cmd> --project-ref ojslqytmuifaofojutgb
 ```
 
@@ -183,7 +217,7 @@ npx --prefix supabase supabase <cmd> --project-ref ojslqytmuifaofojutgb
 
 - **Project ref** : `ojslqytmuifaofojutgb`
 - **Region** : West EU (Paris)
-- **Tables principales** : users, seeker_profiles, recruiter_profiles, videos, conversations, messages, device_tokens, notification_log
+- **Tables principales** : user_roles (+ VIEW public.users), seeker_profiles, recruiter_profiles, videos, conversations, messages, device_tokens, applications, audit_logs
 - **RLS** : actif sur toutes les tables
 - **Edge Functions** : `send-push` (notifications Firebase)
 - **Triggers** : `trigger_send_push` (sur INSERT messages), `trigger_create_profile` (sur INSERT auth.users)

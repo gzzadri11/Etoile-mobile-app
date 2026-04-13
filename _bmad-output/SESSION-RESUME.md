@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-04-13
-**Statut** : Sprint 30 DONE + Camera 13.1 DONE (testee Android physique). App mobile = chercheurs only, prete pour store. SaaS web = recruteurs only, a construire. 73/73 tests, 0 issues analyze. 22/22 migrations deployees.
+**Date de mise a jour** : 2026-04-14
+**Statut** : Sprint 30 DONE + Camera 13.1 DONE + **Sprint SaaS-1 DONE** (init Next.js). App mobile = chercheurs only, prete pour store. SaaS web = fondations posees (auth + layout + dashboard placeholder). 73/73 tests Flutter, 0 issues analyze, build Next.js OK. 22/22 migrations deployees.
 
 ---
 
@@ -31,7 +31,7 @@
 
 ### Prochaines etapes
 1. **App mobile** : ~~tester camera (Story 13.1)~~ DONE — preparation store listing (screenshots, description)
-2. **SaaS web** : init projet Next.js, migrations DB (~5 tables), pages core, integration ← **EN COURS**
+2. **SaaS web** : ~~init projet Next.js~~ DONE (Sprint SaaS-1) — **prochaine etape : Migrations DB (~5 tables) + Publication offres (Epic 11)** ← **EN COURS**
 
 ---
 
@@ -42,11 +42,21 @@
 cd C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app\flutter_application_1
 flutter run -d edge
 
-# SaaS web (Next.js) — a creer
+# SaaS web (Next.js)
 cd C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app\saas-etoile
+npm run dev          # http://localhost:3000
+npm run build        # verif build prod
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+### Prochaine session SaaS — quoi faire
+1. **Migrations DB** : creer ~5 nouvelles tables (`candidate_evaluations`, `candidate_tags`, `evaluation_tags`, `team_shares`, `match_scores`) + RLS
+2. **Publication offres (Epic 11)** : page creation d'offre recruteur — c'est le maillon manquant qui debloque tout le flux (offre → candidature chercheur → grille recruteur)
+3. **Grille candidats (Epic 12)** : miniatures video, hover preview, score matching, modal decision
+4. **Dashboard briefing (Epic 13)** : nouvelles candidatures, messages non lus, KPIs
+
+**Reference brainstorming** : `saas-etoile/brainstorming-architecture-saas.md` (47 idees, decisions techniques, roadmap)
 
 ---
 
@@ -69,6 +79,59 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 - Epic 15 : Messagerie Recruteur (sync Realtime avec app mobile)
 - Epic 16 : Paiements Recruteur (Stripe direct web)
 - Epic 17 : Administration
+
+---
+
+## Ce qui a ete fait — Sprint SaaS-1 : Init projet Next.js recruteurs (2026-04-14)
+
+### Objectif
+Scaffold fonctionnel du SaaS web recruteur avec auth (login + register + OTP) + layout dashboard + connexion Supabase. Fondation sans features metier.
+
+### Setup — DONE
+- **Scaffold** : Next.js 16 + TypeScript + Tailwind v4 + ESLint + App Router
+- **Dependances** : `@supabase/supabase-js`, `@supabase/ssr`, 6 composants Shadcn/ui (button, input, label, card, separator, sonner)
+- **Theme Etoile** : palette couleurs complete miroir `app_colors.dart` (jaune #FFB800, orange #FF8C00, neutres, semantiques)
+- **Supabase SSR** : `lib/supabase/client.ts` (browser), `lib/supabase/server.ts` (server), `middleware.ts` (session refresh + route protection), `app/auth/callback/route.ts`
+- **.env.local** : NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY (gitignore, pas commite)
+
+### Types & Constantes — DONE
+- `lib/types/database.ts` : interfaces TypeScript `RecruiterProfile`, `SeekerProfile`, `UserRole` (miroir modeles Dart)
+- `lib/constants/sectors.ts` : secteurs, specialites, niveaux etudes (miroir `sector_constants.dart`)
+- `lib/constants/routes.ts` : paths constants (/login, /register, /dashboard, etc.)
+
+### Layouts — DONE
+- **Root** (`app/layout.tsx`) : Font Inter, `<html lang="fr">`, metadata "Etoile Recruteurs", Toaster
+- **Auth** (`app/(auth)/layout.tsx`) : centrage vertical, logo E, pas de sidebar
+- **Dashboard** (`app/(dashboard)/layout.tsx`) : sidebar 240px (5 nav items + deconnexion) + header titre dynamique
+
+### Pages — DONE
+- **Landing** (`/`) : hero "Recrutez vos alternants par la video", 3 features, CTAs
+- **Login** (`/login`) : email + mdp, `signInWithPassword()`, erreurs FR
+- **Register** (`/register`) : entreprise + email + SIRET 14 chiffres (filtre digits) + mdp + confirmer + CGU, `signUp()` avec metadata `role: "recruiter"`
+- **OTP** (`/verify`) : 6 inputs, auto-focus, paste support, auto-submit, timer resend 60s, `verifyOtp()`, Suspense boundary
+- **Dashboard** (`/dashboard`) : "Bonjour {entreprise}", 3 cards placeholder (Candidatures 0, Messages 0, Offres 0)
+- **Deconnexion** : sidebar → `signOut()` + redirect `/login`
+
+### Resultats
+- **Build production OK** : `npm run build` sans erreur, 0 erreur TypeScript
+- **Flutter** : 73/73 tests, 0 issues analyze (pas de regression)
+- Warning : Next.js 16 deprecie `middleware.ts` au profit de `proxy` — fonctionnel, migration optionnelle
+
+### Structure fichiers (39 fichiers commites)
+```
+saas-etoile/
+├── .env.local (gitignore) / .env.example (commite)
+├── middleware.ts
+├── lib/supabase/{client,server}.ts
+├── lib/types/database.ts
+├── lib/constants/{sectors,routes}.ts
+├── components/layout/{sidebar,header}.tsx
+├── components/ui/{button,input,label,card,separator,sonner}.tsx
+├── app/layout.tsx, page.tsx (landing)
+├── app/(auth)/{login,register,verify}/page.tsx
+├── app/(dashboard)/dashboard/page.tsx
+└── app/auth/callback/route.ts
+```
 
 ---
 
@@ -944,6 +1007,7 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 | **29** | **Username @pseudo chercheur — migration SQL, modele, formulaire, verification unicite temps reel** | **DONE** |
 | **30** | **Nettoyage DB — DROP 4 tables + 17 colonnes, suppression 3 fichiers orphelins, retrait categories du code** | **DONE** |
 | **13.1** | **Camera in-app — testee et validee sur Android physique** | **DONE** |
+| **SaaS-1** | **Init Next.js recruteurs — auth + layout + dashboard placeholder** | **DONE** |
 
 ### Prochains sprints
 
@@ -956,10 +1020,13 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 - [ ] Preparation store (screenshots, description, soumission)
 
 **Track 2 : SaaS Web (Recruteur)**
-- [ ] Init projet Next.js + Tailwind + Shadcn/ui + Supabase
-- [ ] Migrations DB (~5 tables)
-- [ ] Pages core : login, briefing, grille, modal, dashboard, messages
-- [ ] Edge Function scoring
+- [x] ~~Init projet Next.js + Tailwind + Shadcn/ui + Supabase~~ — **DONE** (Sprint SaaS-1)
+- [ ] **Migrations DB (~5 tables)** — candidate_evaluations, candidate_tags, evaluation_tags, team_shares, match_scores + RLS ← **PROCHAIN**
+- [ ] **Publication offres (Epic 11)** — page creation d'offre recruteur ← **PROCHAIN** (debloque le flux complet)
+- [ ] Grille candidats (Epic 12) — miniatures video, hover preview, modal decision
+- [ ] Dashboard briefing (Epic 13) — nouvelles candidatures, messages non lus, KPIs
+- [ ] Edge Function scoring (Epic 14)
+- [ ] Messagerie (Epic 15)
 - [ ] Integration & Tests (Playwright)
 - [ ] Beta recruteurs (5-10 invites)
 
@@ -1015,4 +1082,4 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 ---
 
 *Sauvegarde mise a jour le 2026-04-14*
-*Sprint 30 TERMINE + Story 13.1 Camera DONE (Android physique). App mobile prete pour store. Next: Init SaaS Next.js (Track 2 recruteurs) + preparation store listing.*
+*Sprint SaaS-1 TERMINE. Fondations SaaS posees (auth + layout + dashboard). Next: Migrations DB (~5 tables) + Publication offres (Epic 11) pour debloquer le flux recruteur→chercheur→recruteur.*
