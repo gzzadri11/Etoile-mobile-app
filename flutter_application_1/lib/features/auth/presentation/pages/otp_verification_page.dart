@@ -103,10 +103,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            final route = widget.role == 'recruiter'
-                ? AppRoutes.onboardingRecruiter
-                : AppRoutes.onboardingSeeker;
-            context.go(route);
+            context.go(AppRoutes.onboardingSeeker);
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

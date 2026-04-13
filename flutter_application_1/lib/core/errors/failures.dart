@@ -197,34 +197,6 @@ class VideoFailure extends Failure {
       );
 }
 
-/// Payment-related failures
-class PaymentFailure extends Failure {
-  const PaymentFailure({
-    required super.message,
-    super.code,
-  });
-
-  factory PaymentFailure.cardDeclined() => const PaymentFailure(
-        message: 'Paiement refuse. Verifiez vos informations de carte.',
-        code: 'CARD_DECLINED',
-      );
-
-  factory PaymentFailure.insufficientFunds() => const PaymentFailure(
-        message: 'Fonds insuffisants',
-        code: 'INSUFFICIENT_FUNDS',
-      );
-
-  factory PaymentFailure.paymentCancelled() => const PaymentFailure(
-        message: 'Paiement annule',
-        code: 'PAYMENT_CANCELLED',
-      );
-
-  factory PaymentFailure.subscriptionNotFound() => const PaymentFailure(
-        message: 'Abonnement introuvable',
-        code: 'SUBSCRIPTION_NOT_FOUND',
-      );
-}
-
 /// Validation failures (form validation)
 class ValidationFailure extends Failure {
   final Map<String, String>? fieldErrors;

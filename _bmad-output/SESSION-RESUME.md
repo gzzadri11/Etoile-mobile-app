@@ -1,21 +1,110 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-03-31
-**Statut** : Sprint 27 (nettoyage codebase) TERMINE. 89/89 tests, 0 issues analyze. Toutes migrations deployees (19/19). Sprint 13 camera toujours reportee.
+**Date de mise a jour** : 2026-04-13
+**Statut** : Sprint 29 DONE — Username @pseudo chercheur. App mobile = chercheurs only. SaaS web = recruteurs only. 73/73 tests, 0 issues analyze. 21/21 migrations deployees.
+
+---
+
+## PIVOT (2026-04-03) : Modele Deux Plateformes
+
+### Ancien modele
+- App mobile unique pour chercheurs ET recruteurs
+
+### Nouveau modele
+- **App mobile (Flutter)** = chercheurs d'alternance uniquement
+- **SaaS web (Next.js + Tailwind + Shadcn/ui)** = recruteurs uniquement
+- **Backend partage** = meme projet Supabase (Auth, DB, Realtime, Edge Functions, R2)
+- **Paiements** : Stripe direct sur le web SaaS (plus besoin d'IAP Apple/Google)
+- **Positionnement** : complement au CV, pre-selection par soft skills
+
+### Decisions techniques SaaS
+- Stack : Next.js + Tailwind + Shadcn/ui + Recharts
+- Deploiement : Vercel + domaine custom (app.etoile-recrutement.fr)
+- Backend : Supabase partage (zero infra supplementaire, cout ~10€/an)
+- Nouvelles tables : ~5 (candidate_evaluations, candidate_tags, evaluation_tags, team_shares, match_scores)
+- Nouvelle colonne : `seeker_profiles.username` (UNIQUE)
+- Scoring : Edge Function secteur(30%) + ville(25%) + niveau(25%) + specialite(20%)
+
+### PRD mis a jour
+- `_bmad-output/prd-etoile-draft.md` — reecrit avec 17 Epics (7 mobile + 8 SaaS + admin + alertes)
+- Source brainstorming : `saas-etoile/` (47 idees, 4 phases)
+
+### Prochaines etapes
+1. **App mobile** : tester camera (Story 13.1), preparation store listing
+2. **SaaS web** : init projet Next.js, migrations DB, pages core, integration
 
 ---
 
 ## Pour reprendre
 
 ```bash
-# 1. Ouvrir le terminal dans le projet
+# App mobile (Flutter)
 cd C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app\flutter_application_1
-
-# 2. Lancer l'app sur Edge (test rapide) ou emulateur (test push/camera)
 flutter run -d edge
+
+# SaaS web (Next.js) — a creer
+cd C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app\saas-etoile
 ```
 
 Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
+
+---
+
+## Ce qui a ete fait — Pivot PRD Deux Plateformes (2026-04-03)
+
+### PRD reecrit
+- Executive Summary : modele deux plateformes (app mobile chercheur + SaaS web recruteur)
+- 17 Epics (vs 9 avant) : 7 Epics app mobile + 8 Epics SaaS + 1 admin + 1 alertes
+- Suppression IAP Apple/Google (plus necessaire)
+- Ajout : username chercheur (@pseudo), score de matching, grille candidats, modal decision
+- Modele economique : chercheurs gratuits, recruteurs Stripe web (499€/mois)
+- Timeline : 6-8 semaines en deux tracks paralleles
+
+### Nouvelles Epics SaaS
+- Epic 10 : Auth & Profil Recruteur
+- Epic 11 : Publication Offres
+- Epic 12 : Grille & Modal Candidats (grille miniatures, hover preview, actions rapides, raccourcis clavier)
+- Epic 13 : Dashboard Recruteur (briefing, funnel, KPIs)
+- Epic 14 : Scoring & Matching (Edge Function, recherche @username)
+- Epic 15 : Messagerie Recruteur (sync Realtime avec app mobile)
+- Epic 16 : Paiements Recruteur (Stripe direct web)
+- Epic 17 : Administration
+
+---
+
+## Ce qui a ete fait — Sprint 29 : Username @pseudo chercheur (2026-04-13)
+
+### Objectif
+Ajouter un champ `@username` unique au profil chercheur pour identification sur le SaaS web recruteur.
+
+### Migration SQL — DONE
+- `20260413000000_seeker_username.sql` : colonne `username VARCHAR(10) UNIQUE` + index
+- `20260413100000_seeker_username_max10.sql` : reduction VARCHAR(50) → VARCHAR(10)
+- Deployees en production (21/21 migrations)
+
+### Modele SeekerProfile — DONE
+- `seeker_profile_model.dart` : +propriete `username` (fromJson/toJson/copyWith/props)
+- **Completude profil** : categorie Identite exige maintenant prenom + nom + age + **username** (4 champs)
+- Seekers existants passent de 100% a 80% → profile gate les redirige pour completer
+
+### Repository — DONE
+- `profile_repository.dart` : +`isUsernameAvailable(username)` — verification unicite temps reel
+
+### Formulaire profil — DONE
+- `edit_seeker_profile_page.dart` : champ username dans section Identite (apres Nom)
+  - Icone `@` (alternate_email), InputFormatter `[a-z0-9_-]`, max 10 chars
+  - Debounce 500ms verification unicite Supabase
+  - Feedback visuel : spinner (checking), check vert (disponible), croix rouge (pris)
+  - Validator : requis, min 3 chars, regex, unicite
+
+### Tests — DONE
+- `profile_completion_test.dart` : tous les tests mis a jour (identite = 4 champs)
+- **73/73 tests pass**, 0 issues flutter analyze
+
+### Unicite garantie a 3 niveaux
+1. PostgreSQL : UNIQUE constraint (rejet en base)
+2. Repository : `isUsernameAvailable()` (verification avant save)
+3. UI : feedback temps reel + validation au submit
 
 ---
 
@@ -808,14 +897,29 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 | **25** | **Dossiers Candidatures par Offre — page offres + fiche candidat avec video + badge conversations (7 stories, 26 pts)** | **DONE** |
 | **26** | **Decoupler Candidatures des Conversations — table applications, postuler 1-clic, animation, page seeker, contacter (7 stories, 27 pts)** | **DONE** |
 | **27** | **Nettoyage codebase — doc FR ~98 fichiers, suppression 725 lignes mortes, reduction debugPrints** | **DONE** |
+| **29** | **Username @pseudo chercheur — migration SQL, modele, formulaire, verification unicite temps reel** | **DONE** |
 
 ### Prochains sprints
 
-- Story reportee : 13.1 Camera in-app (8 pts, emulateur requis)
-- ~~Deployer migrations SQL~~ — **FAIT** (19/19 synchronisees, verifie 2026-03-30)
-- Passage Stripe test → production (juste avant soumission store, KYC 1-3j)
-- **Preparation beta** (store listing, TestFlight/Play Console) ← PROCHAINE ETAPE
-- Tous les pre-requis infra sont deployes (migrations, OTP, admin, bucket, Edge Functions, RLS, VIEW users, audit_logs)
+**Track 1 : App Mobile (Chercheur only)**
+- [x] ~~Nettoyer/masquer le code recruteur dans l'app Flutter~~
+- [x] ~~Ajouter champ username (@pseudo) dans le profil chercheur~~
+- [x] ~~Deployer migrations username~~
+- [ ] Story 13.1 : Camera in-app (8 pts, emulateur requis)
+- [ ] Preparation store (screenshots, description, soumission)
+
+**Track 2 : SaaS Web (Recruteur)**
+- [ ] Init projet Next.js + Tailwind + Shadcn/ui + Supabase
+- [ ] Migrations DB (~5 tables + colonne username)
+- [ ] Pages core : login, briefing, grille, modal, dashboard, messages
+- [ ] Edge Function scoring
+- [ ] Integration & Tests (Playwright)
+- [ ] Beta recruteurs (5-10 invites)
+
+**Infra**
+- ~~Deployer migrations SQL~~ — **FAIT** (19/19 synchronisees)
+- Stripe : rester en mode test pendant la beta, passage prod avant soumission store (KYC 1-3j)
+- Tous les pre-requis infra sont deployes (migrations, OTP, admin, bucket, Edge Functions, RLS)
 
 ---
 
@@ -863,5 +967,5 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 
 ---
 
-*Sauvegarde mise a jour le 2026-03-31*
-*Sprint 27 TERMINE. Nettoyage codebase complet : ~98 fichiers documentes en francais (library; + ///), 725 lignes mortes supprimees (r2_service + api_client + shadows), ~100 debugPrints de routine retires. 89/89 tests pass, 0 issues analyze. Next: Preparation beta (store listing, TestFlight/Play Console).*
+*Sauvegarde mise a jour le 2026-04-13*
+*Sprint 29 TERMINE. Username @pseudo chercheur ajoute : migration SQL (VARCHAR(10) UNIQUE + index), modele SeekerProfile mis a jour, formulaire avec verification unicite temps reel (debounce 500ms), completude profil exige username. 73/73 tests pass, 0 issues analyze. 21/21 migrations deployees. Next: Camera in-app (Story 13.1) + preparation store.*

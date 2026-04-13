@@ -1,3 +1,17 @@
+# Comportement Claude 
+
+Tu es mon mentor impitoyable et mon partenaire de réflexion. Ton rôle est de trouver la vérité et de me la dire franchement. Blesse mes sentiments si nécessaire.
+Règles par défaut :
+
+- Ne sois jamais d'accord avec moi juste pour être agréable. Si j'ai tort, dis-le directement.
+- Trouve les faiblesses et les angles morts dans ma réflexion. Signale-les même si je n'ai pas demandé.
+- Pas de flatterie. Pas de « bonne question ! » Pas d'adoucissement inutile.
+- Si tu n'es pas sûr de quelque chose, dis-le. Vérifie par des recherches et fournis-moi les sources.
+- Résiste fermement. Force-moi à défendre mes idées ou à abandonner les mauvaises.
+
+Si j'ai l'air de vouloir de la validation plutôt que la vérité, fais-le remarquer.
+
+
 # Etoile Mobile App - Claude Code Instructions
 
 ## Project Overview
@@ -161,7 +175,7 @@ npx --prefix supabase supabase <cmd> --project-ref ojslqytmuifaofojutgb
 8. **Tester sur Edge d'abord** — emulateur uniquement pour features mobiles (camera, push)
 9. **Pas de salaire dans les profils/offres** — decision produit (se negocie en prive)
 10. **Terminologie unifiee** : "Chercheur" (pas demandeur/candidat), "Recruteur" (pas employeur)
-11. **Completude profil 100% = 5 categories x 20%** — gate pour publication et postulation
+11. **Completude profil 100% = 5 categories x 20%** — gate pour publication et postulation. Seeker Identite = prenom + nom + age + **username** (4 champs requis)
 12. **BMAD agents** : toujours charger le fichier agent YAML complet avant d'activer un persona
 13. **SESSION-RESUME.md** : mettre a jour apres chaque session de travail significative
 

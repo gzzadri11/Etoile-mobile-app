@@ -30,30 +30,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final _controller = PageController();
   int _currentPage = 0;
 
-  bool get _isSeeker => widget.role == 'seeker';
-
   List<_OnboardingSlide> get _slides => [
-        _OnboardingSlide(
-          title: _isSeeker
-              ? 'Enregistrez votre vidéo en 40 secondes'
-              : 'Trouvez les meilleurs talents',
-          subtitle: _isSeeker
-              ? 'Présentez-vous aux recruteurs avec une vidéo courte et percutante.'
-              : 'Découvrez des candidats motivés grâce à leurs vidéos de présentation.',
+        const _OnboardingSlide(
+          title: 'Enregistrez votre vidéo en 40 secondes',
+          subtitle: 'Présentez-vous aux recruteurs avec une vidéo courte et percutante.',
         ),
-        _OnboardingSlide(
-          title: _isSeeker
-              ? 'Découvrez des offres dans votre secteur'
-              : 'Publiez vos offres en vidéo ou en affiche',
-          subtitle: _isSeeker
-              ? 'Parcourez les offres des recruteurs et trouvez le poste idéal.'
-              : 'Attirez les meilleurs profils avec des offres visuelles et engageantes.',
+        const _OnboardingSlide(
+          title: 'Découvrez des offres dans votre secteur',
+          subtitle: 'Parcourez les offres des recruteurs et trouvez le poste idéal.',
         ),
-        _OnboardingSlide(
+        const _OnboardingSlide(
           title: 'Contactez directement par messagerie',
-          subtitle: _isSeeker
-              ? 'Échangez avec les recruteurs en temps réel, sans intermédiaire.'
-              : 'Discutez avec les candidats qui vous intéressent, simplement.',
+          subtitle: 'Échangez avec les recruteurs en temps réel, sans intermédiaire.',
         ),
       ];
 
@@ -61,12 +49,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
     if (mounted) {
-      // Redirect to profile edit so the user completes their profile
-      if (widget.role == 'recruiter') {
-        context.go(AppRoutes.editRecruiterProfile);
-      } else {
-        context.go(AppRoutes.editProfile);
-      }
+      context.go(AppRoutes.editProfile);
     }
   }
 

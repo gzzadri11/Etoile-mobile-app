@@ -31,6 +31,7 @@ class SeekerProfileLoaded extends ProfileState {
   final List<Map<String, dynamic>> categories;
   final bool isPremium;
   final VideoStats stats;
+  final Video? presentationVideo;
 
   const SeekerProfileLoaded({
     required this.profile,
@@ -43,38 +44,11 @@ class SeekerProfileLoaded extends ProfileState {
       lastWeekViews: 0,
       trendPercent: 0,
     ),
+    this.presentationVideo,
   });
 
   @override
-  List<Object?> get props => [profile, categories, isPremium, stats];
-}
-
-/// Recruiter profile loaded successfully
-class RecruiterProfileLoaded extends ProfileState {
-  final RecruiterProfile profile;
-  final int presentationCount;
-  final int offerCount;
-  final int posterCount;
-  final bool isPremium;
-  final VideoStats stats;
-
-  const RecruiterProfileLoaded({
-    required this.profile,
-    this.presentationCount = 0,
-    this.offerCount = 0,
-    this.posterCount = 0,
-    this.isPremium = false,
-    this.stats = const VideoStats(
-      totalViews: 0,
-      uniqueViewers: 0,
-      thisWeekViews: 0,
-      lastWeekViews: 0,
-      trendPercent: 0,
-    ),
-  });
-
-  @override
-  List<Object?> get props => [profile, presentationCount, offerCount, posterCount, isPremium, stats];
+  List<Object?> get props => [profile, categories, isPremium, stats, presentationVideo];
 }
 
 /// Admin profile loaded - minimal state for admin users

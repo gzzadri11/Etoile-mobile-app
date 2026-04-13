@@ -17,27 +17,6 @@ class StatsRepository {
   StatsRepository({required SupabaseClient supabaseClient})
       : _supabaseClient = supabaseClient;
 
-  String? get _currentUserId => _supabaseClient.auth.currentUser?.id;
-
-  /// Check if the current user has premium status
-  Future<bool> isPremium() async {
-    final userId = _currentUserId;
-    if (userId == null) return false;
-
-    try {
-      final response = await _supabaseClient
-          .from('user_roles')
-          .select('is_premium')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      return response?['is_premium'] == true;
-    } catch (e) {
-      debugPrint('[StatsRepository] Error checking premium: $e');
-      return false;
-    }
-  }
-
   /// Get video statistics for the current user
   ///
   /// Uses RLS on video_views: only returns views for owned videos.

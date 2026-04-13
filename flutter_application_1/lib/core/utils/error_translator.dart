@@ -2,14 +2,13 @@ library;
 
 /// Traducteur d'exceptions brutes en [Failure] typees.
 ///
-/// Convertit les exceptions Supabase, Stripe et reseau en
+/// Convertit les exceptions Supabase et reseau en
 /// erreurs applicatives avec messages francais pour l'utilisateur.
 
 import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../errors/failures.dart';
@@ -52,13 +51,6 @@ abstract class ErrorTranslator {
             ? int.tryParse(exception.statusCode!)
             : null,
       );
-    }
-
-    // =========================================================================
-    // Stripe exceptions
-    // =========================================================================
-    if (exception is StripeException) {
-      return _translateStripeException(exception);
     }
 
     // =========================================================================
@@ -186,32 +178,4 @@ abstract class ErrorTranslator {
     }
   }
 
-  // ===========================================================================
-  // Stripe
-  // ===========================================================================
-  static Failure _translateStripeException(StripeException e) {
-    final code = e.error.code;
-
-    if (code == FailureCode.Canceled) {
-      return PaymentFailure.paymentCancelled();
-    }
-    if (code == FailureCode.Failed) {
-      final msg = e.error.localizedMessage?.toLowerCase() ?? '';
-      if (msg.contains('insufficient funds')) {
-        return PaymentFailure.insufficientFunds();
-      }
-      if (msg.contains('declined') || msg.contains('refuse')) {
-        return PaymentFailure.cardDeclined();
-      }
-      return PaymentFailure(
-        message: e.error.localizedMessage ?? 'Le paiement a echoue.',
-        code: 'STRIPE_FAILED',
-      );
-    }
-
-    return PaymentFailure(
-      message: e.error.localizedMessage ?? 'Erreur de paiement.',
-      code: 'STRIPE_ERROR',
-    );
-  }
 }

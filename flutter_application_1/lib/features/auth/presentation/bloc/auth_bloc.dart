@@ -163,19 +163,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _isProcessingAuth = true;
 
     try {
-      // Pour les recruteurs, le nom d'entreprise sert de first_name
-      // (affiche dans le backoffice Supabase et les triggers de profil)
-      final firstName = (event.role == 'recruiter' && event.companyName != null)
-          ? event.companyName!
-          : event.firstName;
-
       final metadata = <String, dynamic>{
         'role': event.role,
-        'first_name': firstName,
-        if (event.siret != null) 'siret': event.siret,
-        if (event.companyName != null) 'company_name': event.companyName,
-        if (event.siren != null) 'siren': event.siren,
-        if (event.legalForm != null) 'legal_form': event.legalForm,
+        'first_name': event.firstName,
       };
 
       final response = await _supabaseClient.auth.signUp(

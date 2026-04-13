@@ -28,7 +28,7 @@ bucket_name = "etoile-thumnails"
 [vars]
 ENVIRONMENT = "development"
 ALLOWED_ORIGINS = "http://localhost:3000,https://etoile-app.fr"
-MAX_VIDEO_SIZE_MB = "50"
+MAX_VIDEO_SIZE_MB = "100"
 VIDEO_DURATION_SECONDS = "40"
 PRESIGNED_URL_EXPIRY_SECONDS = "3600"
 

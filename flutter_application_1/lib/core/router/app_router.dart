@@ -9,7 +9,6 @@
 /// - Non authentifie → /welcome
 /// - Authentifie + profil incomplet → edit profil (sauf routes autorisees)
 /// - Admin non verifie → /verify-admin (double authentification)
-/// - Seeker sur /publish → /record (et inversement pour recruiter)
 library;
 
 import 'dart:async';
@@ -29,8 +28,6 @@ import '../../features/admin/presentation/pages/recruiter_verification_page.dart
 import '../../features/admin/presentation/pages/reports_page.dart';
 import '../../features/admin/presentation/pages/verification_queue_page.dart';
 import '../../features/admin/presentation/widgets/admin_scaffold.dart';
-import '../../features/applications/presentation/pages/offer_applications_page.dart';
-import '../../features/applications/presentation/pages/offer_candidates_page.dart';
 import '../../features/applications/presentation/pages/seeker_applications_page.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
@@ -42,14 +39,8 @@ import '../../features/feed/presentation/pages/search_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
-import '../../features/payment/data/repositories/payment_repository.dart';
-import '../../features/payment/presentation/bloc/payment_bloc.dart';
-import '../../features/payment/presentation/bloc/payment_event.dart';
-import '../../features/payment/presentation/pages/recruiter_premium_page.dart';
-import '../../features/payment/presentation/pages/subscription_management_page.dart';
 import '../../features/profile/data/repositories/profile_repository.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
-import '../../features/profile/presentation/pages/edit_recruiter_profile_page.dart';
 import '../../features/profile/presentation/pages/edit_seeker_profile_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/public_recruiter_profile_page.dart';
@@ -59,8 +50,7 @@ import '../../features/settings/presentation/pages/contact_support_page.dart';
 import '../../features/settings/presentation/pages/faq_page.dart';
 import '../../features/settings/presentation/pages/legal_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
-import '../../features/video/presentation/pages/my_publications_page.dart';
-import '../../features/video/presentation/pages/publish_offer_page.dart';
+import '../../features/video/presentation/bloc/video_bloc.dart';
 import '../../features/video/presentation/pages/video_record_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
 import '../../shared/widgets/splash_screen.dart';
@@ -80,7 +70,6 @@ abstract class AppRoutes {
 
   // Onboarding
   static const String onboardingSeeker = '/onboarding/seeker';
-  static const String onboardingRecruiter = '/onboarding/recruiter';
 
   // Navigation principale (bottom nav)
   static const String search = '/search';
@@ -88,7 +77,6 @@ abstract class AppRoutes {
   static const String messages = '/messages';
   static const String profile = '/profile';
   static const String record = '/record';
-  static const String publish = '/publish';
 
   // Detail
   static const String chat = '/messages/:conversationId';
@@ -97,8 +85,6 @@ abstract class AppRoutes {
 
   // Profil
   static const String editProfile = '/profile/edit';
-  static const String editRecruiterProfile = '/profile/edit-recruiter';
-  static const String myPublications = '/my-publications';
 
   // Parametres
   static const String settings = '/settings';
@@ -109,11 +95,6 @@ abstract class AppRoutes {
   static const String termsOfService = '/settings/terms';
   static const String privacyPolicy = '/settings/privacy';
 
-  // Paiement
-  static const String premium = '/premium';
-  static const String premiumRecruiter = '/premium/recruiter';
-  static const String premiumManage = '/premium/manage';
-
   // Admin
   static const String admin = '/admin';
   static const String adminAuth = '/verify-admin';
@@ -122,15 +103,12 @@ abstract class AppRoutes {
   static const String adminStats = '/admin/stats';
 
   // Candidatures
-  static const String offerApplications = '/offers/applications';
-  static const String offerCandidates = '/offers/:videoId/candidates';
   static const String seekerApplications = '/my-applications';
 
   // Helpers pour les routes parametrees
   static String chatWith(String id) => '/messages/$id';
   static String videoDetailFor(String id) => '/video/$id';
   static String publicProfileFor(String id) => '/profile/$id';
-  static String offerCandidatesFor(String id) => '/offers/$id/candidates';
 }
 
 // =============================================================================
@@ -184,10 +162,9 @@ class AppRouter {
         ..._authRoutes(),
         ..._onboardingRoutes(),
         _mainShellRoute(authBloc),
-        ..._detailRoutes(),
         ..._profileRoutes(),
+        ..._detailRoutes(),
         ..._applicationRoutes(),
-        ..._premiumRoutes(authBloc),
         _settingsRoute(),
         _adminAuthRoute(),
         _adminShellRoute(authBloc),
@@ -219,8 +196,7 @@ class AppRouter {
 
     // Routes qui ne necessitent pas d'etre authentifie
     final isAuthRoute = _authLocations.contains(location);
-    final isOnboarding = location == AppRoutes.onboardingSeeker ||
-        location == AppRoutes.onboardingRecruiter;
+    final isOnboarding = location == AppRoutes.onboardingSeeker;
 
     // 1. Splash : attend la resolution auth
     if (location == AppRoutes.splash) {
@@ -258,9 +234,7 @@ class AppRouter {
     // 6. Profil incomplet → formulaire d'edition
     if (authState is AuthAuthenticated && _profileChecked && !_profileComplete) {
       if (!authState.isAdmin && !_isAllowedWhenIncomplete(location)) {
-        return authState.isRecruiter
-            ? AppRoutes.editRecruiterProfile
-            : AppRoutes.editProfile;
+        return AppRoutes.editProfile;
       }
     }
 
@@ -277,10 +251,8 @@ class AppRouter {
   /// Routes accessibles meme avec un profil incomplet
   static bool _isAllowedWhenIncomplete(String location) {
     return location == AppRoutes.editProfile ||
-        location == AppRoutes.editRecruiterProfile ||
         location == AppRoutes.profile ||
         location == AppRoutes.onboardingSeeker ||
-        location == AppRoutes.onboardingRecruiter ||
         location == AppRoutes.settings ||
         location.startsWith('/settings/');
   }
@@ -305,10 +277,7 @@ class AppRouter {
     ),
     GoRoute(
       path: AppRoutes.register,
-      builder: (_, state) {
-        final role = state.uri.queryParameters['role'] ?? 'seeker';
-        return RegisterPage(initialRole: role);
-      },
+      builder: (_, _) => const RegisterPage(),
     ),
     GoRoute(
       path: AppRoutes.forgotPassword,
@@ -320,10 +289,6 @@ class AppRouter {
     GoRoute(
       path: AppRoutes.onboardingSeeker,
       builder: (_, _) => const OnboardingPage(role: 'seeker'),
-    ),
-    GoRoute(
-      path: AppRoutes.onboardingRecruiter,
-      builder: (_, _) => const OnboardingPage(role: 'recruiter'),
     ),
   ];
 
@@ -364,28 +329,14 @@ class AppRouter {
         pageBuilder: (_, _) =>
             const NoTransitionPage(child: ProfilePage()),
       ),
-      // Seeker → /record (enregistrer video), Recruiter → /publish (publier offre)
       GoRoute(
         path: AppRoutes.record,
-        redirect: (_, _) {
-          final s = authBloc.state;
-          return (s is AuthAuthenticated && s.isRecruiter)
-              ? AppRoutes.publish
-              : null;
-        },
-        pageBuilder: (_, _) =>
-            const NoTransitionPage(child: VideoRecordPage()),
-      ),
-      GoRoute(
-        path: AppRoutes.publish,
-        redirect: (_, _) {
-          final s = authBloc.state;
-          return (s is AuthAuthenticated && s.isSeeker)
-              ? AppRoutes.record
-              : null;
-        },
-        pageBuilder: (_, _) =>
-            const NoTransitionPage(child: PublishOfferPage()),
+        pageBuilder: (_, _) => NoTransitionPage(
+              child: BlocProvider(
+                create: (_) => GetIt.I<VideoBloc>(),
+                child: const VideoRecordPage(),
+              ),
+            ),
       ),
     ],
   );
@@ -415,78 +366,14 @@ class AppRouter {
         child: const EditSeekerProfilePage(),
       ),
     ),
-    GoRoute(
-      path: AppRoutes.editRecruiterProfile,
-      builder: (_, _) => BlocProvider(
-        create: (_) => GetIt.I<ProfileBloc>()
-          ..add(const ProfileLoadRequested()),
-        child: const EditRecruiterProfilePage(),
-      ),
-    ),
-    GoRoute(
-      path: AppRoutes.myPublications,
-      builder: (_, state) {
-        final tab = state.uri.queryParameters['tab'] ?? 'recruitment';
-        return MyPublicationsPage(initialTab: tab);
-      },
-    ),
   ];
 
   static List<GoRoute> _applicationRoutes() => [
-    GoRoute(
-      path: AppRoutes.offerApplications,
-      builder: (_, _) => const OfferApplicationsPage(),
-    ),
-    GoRoute(
-      path: AppRoutes.offerCandidates,
-      builder: (_, state) => OfferCandidatesPage(
-        videoId: state.pathParameters['videoId']!,
-        offerTitle: state.uri.queryParameters['title'],
-      ),
-    ),
     GoRoute(
       path: AppRoutes.seekerApplications,
       builder: (_, _) => const SeekerApplicationsPage(),
     ),
   ];
-
-  static List<GoRoute> _premiumRoutes(AuthBloc authBloc) {
-    // Guard commun : seeker n'a pas acces aux pages premium
-    String? seekerGuard(_, _) {
-      final s = authBloc.state;
-      return (s is AuthAuthenticated && s.isSeeker)
-          ? AppRoutes.search
-          : null;
-    }
-
-    return [
-      GoRoute(
-        path: AppRoutes.premium,
-        redirect: seekerGuard,
-        builder: (_, _) => const _PremiumPlaceholder(),
-      ),
-      GoRoute(
-        path: AppRoutes.premiumRecruiter,
-        redirect: seekerGuard,
-        builder: (_, _) => BlocProvider(
-          create: (_) => PaymentBloc(
-            paymentRepository: GetIt.I<PaymentRepository>(),
-          )..add(const PaymentLoadStatus()),
-          child: const RecruiterPremiumPage(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.premiumManage,
-        redirect: seekerGuard,
-        builder: (_, _) => BlocProvider(
-          create: (_) => PaymentBloc(
-            paymentRepository: GetIt.I<PaymentRepository>(),
-          )..add(const PaymentLoadHistory()),
-          child: const SubscriptionManagementPage(),
-        ),
-      ),
-    ];
-  }
 
   static GoRoute _settingsRoute() => GoRoute(
     path: AppRoutes.settings,
@@ -680,18 +567,6 @@ class _PublicProfileRouterState extends State<_PublicProfileRouter> {
       return PublicSeekerProfilePage(userId: widget.userId);
     }
     return PublicRecruiterProfilePage(userId: widget.userId);
-  }
-}
-
-class _PremiumPlaceholder extends StatelessWidget {
-  const _PremiumPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Premium')),
-      body: const Center(child: Text('Page Premium — a implementer')),
-    );
   }
 }
 

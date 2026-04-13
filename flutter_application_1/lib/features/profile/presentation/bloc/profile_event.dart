@@ -15,18 +15,16 @@ class ProfileLoadRequested extends ProfileEvent {
   const ProfileLoadRequested();
 }
 
-/// Update user profile
+/// Update seeker profile
 class ProfileUpdateRequested extends ProfileEvent {
   final SeekerProfile? seekerProfile;
-  final RecruiterProfile? recruiterProfile;
 
   const ProfileUpdateRequested({
     this.seekerProfile,
-    this.recruiterProfile,
   });
 
   @override
-  List<Object?> get props => [seekerProfile, recruiterProfile];
+  List<Object?> get props => [seekerProfile];
 }
 
 /// Refresh profile data

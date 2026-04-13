@@ -1,22 +1,14 @@
 library;
 
-/// Scaffold principal avec barre de navigation basse (chercheur/recruteur).
+/// Scaffold principal avec barre de navigation basse (chercheur).
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/router/app_router.dart';
-import '../../features/auth/presentation/bloc/auth_bloc.dart';
 
-/// Main scaffold with bottom navigation
-///
-/// Used as the shell for the main app screens:
-/// - Feed
-/// - Messages
-/// - Profile
-/// - Record (for seekers) / Publish (for recruiters)
+/// Main scaffold with bottom navigation (seeker-only).
 class MainScaffold extends StatelessWidget {
   final Widget child;
 
@@ -27,31 +19,15 @@ class MainScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        final isSeeker = state is AuthAuthenticated && state.isSeeker;
-        final isRecruiter = state is AuthAuthenticated && state.isRecruiter;
-
-        return Scaffold(
-          body: child,
-          bottomNavigationBar: _EtoileBottomNavBar(
-            showRecordTab: isSeeker,
-            showPublishTab: isRecruiter,
-          ),
-        );
-      },
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: const _EtoileBottomNavBar(),
     );
   }
 }
 
 class _EtoileBottomNavBar extends StatelessWidget {
-  final bool showRecordTab;
-  final bool showPublishTab;
-
-  const _EtoileBottomNavBar({
-    required this.showRecordTab,
-    required this.showPublishTab,
-  });
+  const _EtoileBottomNavBar();
 
   int _getCurrentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
@@ -61,7 +37,6 @@ class _EtoileBottomNavBar extends StatelessWidget {
     if (location.startsWith(AppRoutes.messages)) return 2;
     if (location.startsWith(AppRoutes.profile)) return 3;
     if (location.startsWith(AppRoutes.record)) return 4;
-    if (location.startsWith(AppRoutes.publish)) return 4;
 
     return 0;
   }
@@ -70,23 +45,14 @@ class _EtoileBottomNavBar extends StatelessWidget {
     switch (index) {
       case 0:
         context.go(AppRoutes.search);
-        break;
       case 1:
         context.go(AppRoutes.feed);
-        break;
       case 2:
         context.go(AppRoutes.messages);
-        break;
       case 3:
         context.go(AppRoutes.profile);
-        break;
       case 4:
-        if (showPublishTab) {
-          context.go(AppRoutes.publish);
-        } else {
-          context.go(AppRoutes.record);
-        }
-        break;
+        context.go(AppRoutes.record);
     }
   }
 
@@ -94,39 +60,32 @@ class _EtoileBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentIndex = _getCurrentIndex(context);
 
-    final items = <BottomNavigationBarItem>[
-      const BottomNavigationBarItem(
+    const items = <BottomNavigationBarItem>[
+      BottomNavigationBarItem(
         icon: Icon(Icons.search_outlined),
         activeIcon: Icon(Icons.search),
         label: 'Rechercher',
       ),
-      const BottomNavigationBarItem(
+      BottomNavigationBarItem(
         icon: Icon(Icons.home_outlined),
         activeIcon: Icon(Icons.home),
         label: 'Feed',
       ),
-      const BottomNavigationBarItem(
+      BottomNavigationBarItem(
         icon: _MessageIcon(hasUnread: false),
         activeIcon: _MessageIcon(hasUnread: false, isActive: true),
         label: 'Messages',
       ),
-      const BottomNavigationBarItem(
+      BottomNavigationBarItem(
         icon: Icon(Icons.person_outline),
         activeIcon: Icon(Icons.person),
         label: 'Profil',
       ),
-      if (showRecordTab)
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.videocam_outlined),
-          activeIcon: Icon(Icons.videocam),
-          label: 'Enregistrer',
-        ),
-      if (showPublishTab)
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle_outline),
-          activeIcon: Icon(Icons.add_circle),
-          label: 'Publier',
-        ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.videocam_outlined),
+        activeIcon: Icon(Icons.videocam),
+        label: 'Enregistrer',
+      ),
     ];
 
     return Container(

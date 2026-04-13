@@ -10,11 +10,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/models/seeker_profile_model.dart';
-import '../../data/models/recruiter_profile_model.dart';
 import '../../data/models/video_stats.dart';
 import '../../../../core/router/app_router.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../data/repositories/stats_repository.dart';
+import '../../../video/data/models/video_model.dart';
 import '../../../video/data/repositories/video_repository.dart';
 
 part 'profile_event.dart';
@@ -56,54 +56,19 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         final profile = await _profileRepository.getSeekerProfile();
         final categories = await _profileRepository.getCategories();
         final stats = await _statsRepository.getStats();
+        Video? presentationVideo;
+        try {
+          presentationVideo = await _videoRepository.getMyPresentationVideo();
+        } catch (_) {}
 
         if (profile != null) {
-          // B2B model: seekers are never premium (free access to stats)
           AppRouter.updateProfileComplete(profile.completionPercentage >= 100);
           emit(SeekerProfileLoaded(
             profile: profile,
             categories: categories,
             isPremium: false,
             stats: stats,
-          ));
-        } else {
-          emit(const ProfileError(message: 'Profil non trouve'));
-        }
-      } else if (role == 'recruiter') {
-        final profile = await _profileRepository.getRecruiterProfile();
-        final isPremium = await _statsRepository.isPremium();
-        final stats = await _statsRepository.getStats();
-
-        if (profile != null) {
-          // Count publications by type
-          int presentationCount = 0;
-          int offerCount = 0;
-          int posterCount = 0;
-          try {
-            final userId = _videoRepository.currentUserId;
-            if (userId != null) {
-              final videos = await _videoRepository.getVideosForUser(userId);
-              for (final video in videos) {
-                switch (video.type) {
-                  case 'presentation':
-                    presentationCount++;
-                  case 'offer':
-                    offerCount++;
-                  case 'poster':
-                    posterCount++;
-                }
-              }
-            }
-          } catch (_) {}
-
-          AppRouter.updateProfileComplete(profile.completionPercentage >= 100);
-          emit(RecruiterProfileLoaded(
-            profile: profile,
-            presentationCount: presentationCount,
-            offerCount: offerCount,
-            posterCount: posterCount,
-            isPremium: isPremium,
-            stats: stats,
+            presentationVideo: presentationVideo,
           ));
         } else {
           emit(const ProfileError(message: 'Profil non trouve'));
@@ -143,35 +108,13 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           categories: categories,
           isPremium: prevSeeker?.isPremium ?? false,
           stats: prevSeeker?.stats ?? VideoStats.empty(),
+          presentationVideo: prevSeeker?.presentationVideo,
         ));
-      } else if (event.recruiterProfile != null) {
-        final updated = await _profileRepository
-            .updateRecruiterProfile(event.recruiterProfile!);
-
-        AppRouter.updateProfileComplete(updated.completionPercentage >= 100);
-        emit(ProfileSaveSuccess());
-        // Preserve counters and stats from previous state
-        final prevState = currentState;
-        if (prevState is RecruiterProfileLoaded) {
-          emit(RecruiterProfileLoaded(
-            profile: updated,
-            presentationCount: prevState.presentationCount,
-            offerCount: prevState.offerCount,
-            posterCount: prevState.posterCount,
-            isPremium: prevState.isPremium,
-            stats: prevState.stats,
-          ));
-        } else {
-          emit(RecruiterProfileLoaded(profile: updated));
-        }
       }
     } catch (e) {
       emit(ProfileError(message: 'Erreur de sauvegarde: ${e.toString()}'));
 
-      // Restore previous state
       if (currentState is SeekerProfileLoaded) {
-        emit(currentState);
-      } else if (currentState is RecruiterProfileLoaded) {
         emit(currentState);
       }
     }

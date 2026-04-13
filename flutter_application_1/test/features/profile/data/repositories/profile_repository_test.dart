@@ -75,11 +75,4 @@ void main() {
     });
   });
 
-  group('getRecruiterProfile', () {
-    test('returns null when no user is logged in', () async {
-      when(() => mockAuth.currentUser).thenReturn(null);
-      final result = await repository.getRecruiterProfile();
-      expect(result, isNull);
-    });
-  });
 }

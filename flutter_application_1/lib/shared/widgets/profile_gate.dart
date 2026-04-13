@@ -23,8 +23,6 @@ Future<bool> checkProfileGate(BuildContext context) async {
 
   if (!context.mounted) return false;
 
-  final isSeeker = profileRepo.currentUserRole == 'seeker';
-
   await showDialog(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -65,11 +63,7 @@ Future<bool> checkProfileGate(BuildContext context) async {
         TextButton(
           onPressed: () {
             Navigator.pop(ctx);
-            context.push(
-              isSeeker
-                  ? AppRoutes.editProfile
-                  : AppRoutes.editRecruiterProfile,
-            );
+            context.push(AppRoutes.editProfile);
           },
           child: const Text('Completer mon profil'),
         ),

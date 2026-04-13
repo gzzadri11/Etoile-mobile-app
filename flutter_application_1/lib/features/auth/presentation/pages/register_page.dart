@@ -1,33 +1,26 @@
 library;
 
-/// Page d'inscription (choix role, email, mot de passe, prenom/SIRET).
+/// Page d'inscription chercheur (prenom, email, mot de passe).
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
-import '../../../../core/services/sirene_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/validators.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
 import '../bloc/auth_bloc.dart';
 
-/// Page d'inscription.
+/// Page d'inscription seeker-only.
 ///
-/// Deux parcours selon le role :
-/// - **Seeker** : prenom + email + mot de passe
-/// - **Recruiter** : SIRET (verifie via API Sirene) + email + mot de passe
-///
-/// Apres inscription, redirige vers l'onboarding du role correspondant.
+/// Parcours : prenom + email + mot de passe.
+/// Apres inscription, redirige vers l'onboarding seeker.
 class RegisterPage extends StatefulWidget {
-  final String initialRole;
-
-  const RegisterPage({super.key, this.initialRole = 'seeker'});
+  const RegisterPage({super.key});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -39,21 +32,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _siretController = TextEditingController();
-
-  final _sireneService = SireneService();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  late String _selectedRole;
-  bool _siretVerifying = false;
-  String? _siretError;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedRole = widget.initialRole;
-  }
 
   @override
   void dispose() {
@@ -61,63 +42,17 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _siretController.dispose();
     super.dispose();
   }
 
-  Future<void> _onRegisterPressed() async {
+  void _onRegisterPressed() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    if (_selectedRole == 'recruiter') {
-      await _registerRecruiter();
-    } else {
-      _registerSeeker();
-    }
-  }
-
-  void _registerSeeker() {
     context.read<AuthBloc>().add(AuthRegisterRequested(
       email: _emailController.text.trim(),
       password: _passwordController.text,
       firstName: _firstNameController.text.trim(),
-      role: _selectedRole,
-    ));
-  }
-
-  /// Verifie le SIRET via l'API Sirene (entreprises.gouv.fr) puis inscrit.
-  /// Si le SIRET est invalide ou l'entreprise fermee, affiche une erreur
-  /// sous le champ SIRET sans bloquer le reste du formulaire.
-  Future<void> _registerRecruiter() async {
-    setState(() {
-      _siretVerifying = true;
-      _siretError = null;
-    });
-
-    final result = await _sireneService.verifySiret(
-      _siretController.text.trim(),
-    );
-
-    if (!mounted) return;
-
-    if (!result.isValid) {
-      setState(() {
-        _siretVerifying = false;
-        _siretError = result.errorMessage;
-      });
-      return;
-    }
-
-    setState(() => _siretVerifying = false);
-
-    context.read<AuthBloc>().add(AuthRegisterRequested(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      firstName: result.companyName ?? 'Entreprise',
-      role: _selectedRole,
-      siret: _siretController.text.trim(),
-      companyName: result.companyName,
-      siren: result.siren,
-      legalForm: result.legalForm,
+      role: 'seeker',
     ));
   }
 
@@ -133,10 +68,7 @@ class _RegisterPageState extends State<RegisterPage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            final route = _selectedRole == 'recruiter'
-                ? AppRoutes.onboardingRecruiter
-                : AppRoutes.onboardingSeeker;
-            context.go(route);
+            context.go(AppRoutes.onboardingSeeker);
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -147,7 +79,7 @@ class _RegisterPageState extends State<RegisterPage> {
           }
         },
         builder: (context, state) {
-          final isLoading = state is AuthLoading || _siretVerifying;
+          final isLoading = state is AuthLoading;
 
           return SafeArea(
             child: SingleChildScrollView(
@@ -170,73 +102,21 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: AppTheme.spaceLg),
 
-                    _buildRoleSelector(),
-                    const SizedBox(height: AppTheme.spaceLg),
-
-                    // Prenom (seeker uniquement)
-                    if (_selectedRole == 'seeker') ...[
-                      EtoileTextField(
-                        controller: _firstNameController,
-                        label: AppStrings.firstName,
-                        hintText: 'Votre prenom',
-                        textInputAction: TextInputAction.next,
-                        prefixIcon: Icons.person_outlined,
-                        enabled: !isLoading,
-                        validator: validateRequired,
-                      ),
-                    ],
-
-                    // SIRET (recruiter uniquement)
-                    if (_selectedRole == 'recruiter') ...[
-                      const SizedBox(height: AppTheme.spaceMd),
-                      EtoileTextField(
-                        controller: _siretController,
-                        label: 'SIRET',
-                        hintText: '14 chiffres',
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.next,
-                        prefixIcon: Icons.badge_outlined,
-                        enabled: !isLoading,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(14),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Le SIRET est obligatoire';
-                          }
-                          if (value.length != 14) {
-                            return 'Le SIRET doit contenir 14 chiffres';
-                          }
-                          return null;
-                        },
-                      ),
-                      // Erreur retournee par l'API Sirene (entreprise fermee, etc.)
-                      if (_siretError != null)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            top: AppTheme.spaceXs,
-                            left: 12,
-                          ),
-                          child: Text(
-                            _siretError!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: AppColors.error),
-                          ),
-                        ),
-                    ],
+                    EtoileTextField(
+                      controller: _firstNameController,
+                      label: AppStrings.firstName,
+                      hintText: 'Votre prenom',
+                      textInputAction: TextInputAction.next,
+                      prefixIcon: Icons.person_outlined,
+                      enabled: !isLoading,
+                      validator: validateRequired,
+                    ),
 
                     const SizedBox(height: AppTheme.spaceMd),
                     EtoileTextField(
                       controller: _emailController,
-                      label: _selectedRole == 'recruiter'
-                          ? 'Email professionnel'
-                          : AppStrings.email,
-                      hintText: _selectedRole == 'recruiter'
-                          ? 'contact@entreprise.com'
-                          : 'votre@email.com',
+                      label: AppStrings.email,
+                      hintText: 'votre@email.com',
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       prefixIcon: Icons.email_outlined,
@@ -327,109 +207,6 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildRoleSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Je suis...',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: AppColors.greyWarm,
-          ),
-        ),
-        const SizedBox(height: AppTheme.spaceSm),
-        Row(
-          children: [
-            Expanded(
-              child: _RoleCard(
-                title: 'Chercheur',
-                subtitle: "d'emploi",
-                icon: Icons.person_search_outlined,
-                isSelected: _selectedRole == 'seeker',
-                onTap: () => setState(() {
-                  _selectedRole = 'seeker';
-                  _siretError = null;
-                }),
-              ),
-            ),
-            const SizedBox(width: AppTheme.spaceMd),
-            Expanded(
-              child: _RoleCard(
-                title: 'Recruteur',
-                subtitle: "d'entreprise",
-                icon: Icons.business_outlined,
-                isSelected: _selectedRole == 'recruiter',
-                onTap: () => setState(() {
-                  _selectedRole = 'recruiter';
-                  _siretError = null;
-                }),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Carte de selection du role (seeker/recruiter) avec animation.
-class _RoleCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _RoleCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.tagBackground : AppColors.greyLight,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryYellow : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 32,
-              color: isSelected ? AppColors.primaryOrange : AppColors.greyWarm,
-            ),
-            const SizedBox(height: AppTheme.spaceSm),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: isSelected ? AppColors.black : AppColors.greyWarm,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.greyWarm,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

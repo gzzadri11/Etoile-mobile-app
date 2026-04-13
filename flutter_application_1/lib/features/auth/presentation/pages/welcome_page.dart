@@ -75,18 +75,8 @@ class WelcomePage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => context.push('${AppRoutes.register}?role=seeker'),
-                  child: const Text('Je cherche un emploi'),
-                ),
-              ),
-
-              const SizedBox(height: AppTheme.spaceMd),
-
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => context.push('${AppRoutes.register}?role=recruiter'),
-                  child: const Text('Je recrute'),
+                  onPressed: () => context.push(AppRoutes.register),
+                  child: const Text('Je cherche une alternance'),
                 ),
               ),
 

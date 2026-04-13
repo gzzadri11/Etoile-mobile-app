@@ -110,7 +110,7 @@ class AppConfig {
   static const int videoDurationSeconds = 40;
 
   /// Taille max d'une video en MB (limite MVP, ffmpeg Phase 2)
-  static const int videoMaxSizeMB = 50;
+  static const int videoMaxSizeMB = 100;
 
   /// Phases de la video : intro (10s) + contenu principal (20s) + conclusion (10s)
   static const List<int> videoPhases = [10, 20, 10];

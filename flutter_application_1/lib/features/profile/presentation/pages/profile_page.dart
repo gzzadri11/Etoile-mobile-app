@@ -1,14 +1,15 @@
 library;
 
-/// Page de profil utilisateur (chercheur ou recruteur).
+/// Page de profil chercheur.
 ///
 /// Affiche les informations du profil, la photo, les stats video,
-/// et les actions d'edition selon le role.
+/// et les actions d'edition.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -18,8 +19,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../data/models/seeker_profile_model.dart';
-import '../../data/models/recruiter_profile_model.dart';
 import '../../data/models/video_stats.dart';
+import '../../../video/data/models/video_model.dart';
 import '../bloc/profile_bloc.dart';
 import '../widgets/stats_card.dart';
 
@@ -52,19 +53,8 @@ class _ProfilePageContent extends StatelessWidget {
         if (state is SeekerProfileLoaded) {
           return _SeekerProfileView(
             profile: state.profile,
-            isPremium: state.isPremium,
             stats: state.stats,
-          );
-        }
-
-        if (state is RecruiterProfileLoaded) {
-          return _RecruiterProfileView(
-            profile: state.profile,
-            presentationCount: state.presentationCount,
-            offerCount: state.offerCount,
-            posterCount: state.posterCount,
-            isPremium: state.isPremium,
-            stats: state.stats,
+            presentationVideo: state.presentationVideo,
           );
         }
 
@@ -101,13 +91,13 @@ class _ProfilePageContent extends StatelessWidget {
 /// Seeker profile view
 class _SeekerProfileView extends StatelessWidget {
   final SeekerProfile profile;
-  final bool isPremium;
   final VideoStats stats;
+  final Video? presentationVideo;
 
   const _SeekerProfileView({
     required this.profile,
-    required this.isPremium,
     required this.stats,
+    this.presentationVideo,
   });
 
   static String _getDomainLabel(SeekerProfile profile) {
@@ -151,7 +141,7 @@ class _SeekerProfileView extends StatelessWidget {
           child: Column(
             children: [
               // Video preview card
-              _VideoPreviewCard(),
+              _VideoPreviewCard(video: presentationVideo),
 
               const SizedBox(height: AppTheme.spaceLg),
 
@@ -197,9 +187,7 @@ class _SeekerProfileView extends StatelessWidget {
 
               // Statistics card
               StatsCard(
-                isPremium: isPremium,
                 stats: stats,
-                isSeeker: true,
               ),
 
               const SizedBox(height: AppTheme.spaceLg),
@@ -248,209 +236,6 @@ class _SeekerProfileView extends StatelessWidget {
               ),
 
               const SizedBox(height: AppTheme.spaceLg),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Recruiter profile view
-class _RecruiterProfileView extends StatelessWidget {
-  final RecruiterProfile profile;
-  final int presentationCount;
-  final int offerCount;
-  final int posterCount;
-  final bool isPremium;
-  final VideoStats stats;
-
-  const _RecruiterProfileView({
-    required this.profile,
-    this.presentationCount = 0,
-    this.offerCount = 0,
-    this.posterCount = 0,
-    required this.isPremium,
-    required this.stats,
-  });
-
-  static String _getSectorLabel(String? sector) {
-    return SectorConstants.getSectorLabel(sector);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.profile),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push(AppRoutes.settings),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          context.read<ProfileBloc>().add(const ProfileRefreshRequested());
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: [
-              // === Cover + Logo header ===
-              _RecruiterHeader(
-                coverUrl: profile.coverUrl,
-                companyName: profile.companyName,
-                sector: _getSectorLabel(profile.sector),
-                isVerified: profile.isVerified,
-              ),
-
-              Padding(
-                padding: const EdgeInsets.all(AppTheme.spaceMd),
-                child: Column(
-                  children: [
-                    // Description
-                    if (profile.description != null &&
-                        profile.description!.isNotEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(AppTheme.spaceMd),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusLg),
-                          border: Border.all(color: AppColors.greyLight),
-                        ),
-                        child: Text(
-                          profile.description!,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ),
-
-                    if (profile.description != null &&
-                        profile.description!.isNotEmpty)
-                      const SizedBox(height: AppTheme.spaceLg),
-
-                    // Location (beta: city text)
-                    if (profile.locations.isNotEmpty) ...[
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on,
-                              color: AppColors.primaryOrange, size: 20),
-                          const SizedBox(width: AppTheme.spaceXs),
-                          Text(
-                            'Localisation',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppTheme.spaceSm),
-                      Text(
-                        profile.locations.first,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: AppTheme.spaceLg),
-                    ],
-
-                    // Verification status
-                    if (!profile.isVerified)
-                      _VerificationStatusCard(
-                        status: profile.verificationStatus,
-                        rejectionReason: profile.rejectionReason,
-                      ),
-
-                    if (!profile.isVerified)
-                      const SizedBox(height: AppTheme.spaceLg),
-
-                    // Presentations section
-                    GestureDetector(
-                      onTap: () => context.push('${AppRoutes.myPublications}?tab=presentations'),
-                      child: _PublicationSectionCard(
-                        icon: Icons.business,
-                        title: 'Présentations entreprise',
-                        subtitle: 'Vidéos de présentation',
-                        count: presentationCount,
-                      ),
-                    ),
-
-                    const SizedBox(height: AppTheme.spaceMd),
-
-                    // Recruitment publications section
-                    GestureDetector(
-                      onTap: () => context.push('${AppRoutes.myPublications}?tab=recruitment'),
-                      child: _PublicationSectionCard(
-                        icon: Icons.work,
-                        title: 'Publications de recrutement',
-                        subtitle: '${profile.videoCredits} crédits vidéo, ${profile.posterCredits} crédits affiche',
-                        count: offerCount + posterCount,
-                      ),
-                    ),
-
-                    const SizedBox(height: AppTheme.spaceMd),
-
-                    // Candidatures section
-                    GestureDetector(
-                      onTap: () => context.push(AppRoutes.offerApplications),
-                      child: const _PublicationSectionCard(
-                        icon: Icons.people,
-                        title: 'Mes candidatures',
-                        subtitle: 'Candidats ayant postulé à vos offres',
-                        count: 0,
-                        hideCount: true,
-                      ),
-                    ),
-
-                    const SizedBox(height: AppTheme.spaceLg),
-
-                    // Statistics card
-                    StatsCard(
-                      isPremium: isPremium,
-                      stats: stats,
-                      isSeeker: false,
-                    ),
-
-                    const SizedBox(height: AppTheme.spaceLg),
-
-                    // Action buttons
-                    EtoileButton(
-                      label: 'Publier',
-                      icon: Icons.add,
-                      onPressed: () => context.go(AppRoutes.publish),
-                    ),
-
-                    const SizedBox(height: AppTheme.spaceMd),
-
-                    EtoileButton.outlined(
-                      label: AppStrings.editProfile,
-                      icon: Icons.edit_outlined,
-                      onPressed: () =>
-                          context.push(AppRoutes.editRecruiterProfile),
-                    ),
-
-                    const SizedBox(height: AppTheme.spaceLg),
-
-                    // Logout button
-                    TextButton.icon(
-                      onPressed: () {
-                        context
-                            .read<AuthBloc>()
-                            .add(const AuthLogoutRequested());
-                      },
-                      icon: const Icon(Icons.logout, color: AppColors.error),
-                      label: Text(
-                        AppStrings.logout,
-                        style: TextStyle(color: AppColors.error),
-                      ),
-                    ),
-
-                    const SizedBox(height: AppTheme.spaceLg),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
@@ -555,115 +340,138 @@ class _ProfileCompletionCard extends StatelessWidget {
   }
 }
 
-/// Verification status card for recruiters
-class _VerificationStatusCard extends StatelessWidget {
-  final String status;
-  final String? rejectionReason;
+/// Video preview card for seekers — affiche la thumbnail si une video existe,
+/// sinon un placeholder invitant a enregistrer.
+class _VideoPreviewCard extends StatelessWidget {
+  final Video? video;
 
-  const _VerificationStatusCard({
-    required this.status,
-    this.rejectionReason,
-  });
+  const _VideoPreviewCard({this.video});
 
   @override
   Widget build(BuildContext context) {
-    final isPending = status == 'pending';
-    final isRejected = status == 'rejected';
+    final hasVideo = video != null && video!.status == 'active';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppTheme.spaceMd),
-      decoration: BoxDecoration(
-        color: isRejected
-            ? AppColors.error.withAlpha(25)
-            : AppColors.warning.withAlpha(25),
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(
-          color: isRejected
-              ? AppColors.error.withAlpha(100)
-              : AppColors.warning.withAlpha(100),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isPending ? Icons.hourglass_empty : Icons.error_outline,
-                color: isRejected ? AppColors.error : AppColors.warning,
-              ),
-              const SizedBox(width: AppTheme.spaceSm),
-              Expanded(
-                child: Text(
-                  isPending
-                      ? 'Vérification en cours'
-                      : 'Vérification refusée',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-              ),
-            ],
+    return GestureDetector(
+      onTap: () {
+        if (hasVideo && video!.videoUrl != null) {
+          _showVideoPlayer(context, video!.videoUrl!);
+        } else {
+          context.push(AppRoutes.record);
+        }
+      },
+      child: Semantics(
+        label: hasVideo
+            ? 'Vidéo de présentation — appuyez pour visionner'
+            : 'Aucune vidéo enregistrée — appuyez pour enregistrer',
+        child: Container(
+          width: double.infinity,
+          height: 200,
+          decoration: BoxDecoration(
+            color: AppColors.black,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           ),
-          if (rejectionReason != null) ...[
-            const SizedBox(height: AppTheme.spaceSm),
-            Text(
-              rejectionReason!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.error,
-                  ),
-            ),
-          ],
-        ],
+          clipBehavior: Clip.antiAlias,
+          child: hasVideo ? _buildVideoPreview(context) : _buildPlaceholder(context),
+        ),
       ),
     );
   }
-}
 
-/// Video preview card for seekers
-class _VideoPreviewCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Espace video de presentation - Aucune video enregistree',
-      child: Container(
-        width: double.infinity,
-        height: 200,
-        decoration: BoxDecoration(
-          color: AppColors.black,
-          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.videocam_outlined,
-                  size: 48,
-                  color: AppColors.white.withAlpha(180),
-                ),
-                const SizedBox(height: AppTheme.spaceSm),
-                Text(
-                  'Aucune vidéo',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.white.withAlpha(180),
-                      ),
-                ),
-                const SizedBox(height: AppTheme.spaceSm),
-                Text(
-                  'Enregistrez votre vidéo de présentation',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.white.withAlpha(120),
-                      ),
-                ),
-              ],
+  Widget _buildVideoPreview(BuildContext context) {
+    final hasThumbnail = video!.thumbnailUrl != null && video!.thumbnailUrl!.isNotEmpty;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        if (hasThumbnail)
+          Image.network(
+            video!.thumbnailUrl!,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const ColoredBox(
+              color: AppColors.black,
+              child: Center(
+                child: Icon(Icons.videocam, size: 48, color: Colors.white54),
+              ),
             ),
-          ],
+          )
+        else
+          const ColoredBox(
+            color: AppColors.black,
+            child: Center(
+              child: Icon(Icons.videocam, size: 48, color: Colors.white54),
+            ),
+          ),
+        // Play icon overlay
+        Center(
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.black.withAlpha(120),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.play_arrow, size: 36, color: Colors.white),
+          ),
         ),
+        // "Visionner" badge
+        Positioned(
+          bottom: 8,
+          right: 8,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primaryOrange,
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+            ),
+            child: Text(
+              'Visionner',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showVideoPlayer(BuildContext context, String videoUrl) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: true,
+        pageBuilder: (_, _, _) => _VideoPlayerScreen(videoUrl: videoUrl),
+        transitionsBuilder: (_, animation, _, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
       ),
+    );
+  }
+
+  Widget _buildPlaceholder(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.videocam_outlined,
+          size: 48,
+          color: AppColors.white.withAlpha(180),
+        ),
+        const SizedBox(height: AppTheme.spaceSm),
+        Text(
+          'Aucune vidéo',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.white.withAlpha(180),
+              ),
+        ),
+        const SizedBox(height: AppTheme.spaceSm),
+        Text(
+          'Appuyez pour enregistrer votre présentation',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.white.withAlpha(120),
+              ),
+        ),
+      ],
     );
   }
 }
@@ -750,114 +558,7 @@ class _ProfileInfoCard extends StatelessWidget {
   }
 }
 
-/// Recruiter header with cover photo + logo overlay
-class _RecruiterHeader extends StatelessWidget {
-  final String? coverUrl;
-  final String companyName;
-  final String sector;
-  final bool isVerified;
-
-  const _RecruiterHeader({
-    this.coverUrl,
-    required this.companyName,
-    required this.sector,
-    required this.isVerified,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasCover = coverUrl != null && coverUrl!.isNotEmpty;
-
-    return SizedBox(
-      height: 200,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Cover photo
-          Container(
-            height: 160,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppColors.greyLight,
-              image: hasCover
-                  ? DecorationImage(
-                      image: NetworkImage(coverUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-            ),
-            child: !hasCover
-                ? const Center(
-                    child: Icon(
-                      Icons.photo_camera_outlined,
-                      size: 40,
-                      color: AppColors.greyMedium,
-                    ),
-                  )
-                : null,
-          ),
-          // Gradient overlay for text readability
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            height: 120,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black54],
-                ),
-              ),
-            ),
-          ),
-          // Company name + sector
-          Positioned(
-            bottom: 16,
-            left: AppTheme.spaceMd,
-            right: AppTheme.spaceMd,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        companyName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.white,
-                            ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (isVerified) ...[
-                      const SizedBox(width: AppTheme.spaceSm),
-                      const Icon(
-                        Icons.check_circle,
-                        size: 18,
-                        color: AppColors.primaryYellow,
-                      ),
-                    ],
-                  ],
-                ),
-                Text(
-                  sector,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.white.withAlpha(200),
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Publication section card for recruiter profile
+/// Publication section card
 class _PublicationSectionCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -943,4 +644,191 @@ class _PublicationSectionCard extends StatelessWidget {
   }
 }
 
+/// Fullscreen video player for previewing presentation video.
+///
+/// Supporte : bouton retour, swipe-down pour fermer, tap pour play/pause,
+/// controles auto-hide apres 3 secondes.
+class _VideoPlayerScreen extends StatefulWidget {
+  final String videoUrl;
+  const _VideoPlayerScreen({required this.videoUrl});
 
+  @override
+  State<_VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
+  late VideoPlayerController _controller;
+  bool _initialized = false;
+  bool _showControls = true;
+  double _dragOffset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() => _initialized = true);
+          _controller.play();
+          _autoHideControls();
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _autoHideControls() {
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted && _controller.value.isPlaying && _showControls) {
+        setState(() => _showControls = false);
+      }
+    });
+  }
+
+  void _togglePlayPause() {
+    setState(() {
+      if (_controller.value.isPlaying) {
+        _controller.pause();
+        _showControls = true;
+      } else {
+        _controller.play();
+        _autoHideControls();
+      }
+    });
+  }
+
+  void _onTapVideo() {
+    if (!_initialized) return;
+    if (_controller.value.isPlaying) {
+      setState(() => _showControls = !_showControls);
+      if (_showControls) _autoHideControls();
+    } else {
+      _togglePlayPause();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        onTap: _onTapVideo,
+        onVerticalDragUpdate: (details) {
+          setState(() => _dragOffset += details.delta.dy);
+        },
+        onVerticalDragEnd: (details) {
+          // Swipe down to dismiss (seuil 150px ou velocite rapide)
+          if (_dragOffset > 150 ||
+              details.velocity.pixelsPerSecond.dy > 500) {
+            Navigator.pop(context);
+          } else {
+            setState(() => _dragOffset = 0);
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: Matrix4.translationValues(0, _dragOffset.clamp(0, 400), 0),
+          color: Colors.black,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Video
+              Center(
+                child: _initialized
+                    ? AspectRatio(
+                        aspectRatio: _controller.value.aspectRatio,
+                        child: VideoPlayer(_controller),
+                      )
+                    : const CircularProgressIndicator(
+                        color: AppColors.primaryYellow),
+              ),
+
+              // Top bar (retour + titre) — toujours au-dessus
+              AnimatedOpacity(
+                opacity: _showControls || !_controller.value.isPlaying ? 1 : 0,
+                duration: const Duration(milliseconds: 200),
+                child: IgnorePointer(
+                  ignoring:
+                      !_showControls && _controller.value.isPlaying,
+                  child: Container(
+                    alignment: Alignment.topLeft,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.black54, Colors.transparent],
+                        stops: [0.0, 1.0],
+                      ),
+                    ),
+                    padding: EdgeInsets.only(top: topPadding),
+                    child: SizedBox(
+                      height: 56,
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back,
+                                color: Colors.white, size: 26),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          const Text(
+                            'Ma vidéo',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Centre play/pause
+              if (_initialized && !_controller.value.isPlaying)
+                Center(
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withAlpha(120),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.play_arrow,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+
+              // Hint swipe down (visible au debut)
+              if (_showControls && _initialized)
+                Positioned(
+                  bottom: MediaQuery.of(context).padding.bottom + 16,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Text(
+                      'Glissez vers le bas pour fermer',
+                      style: TextStyle(
+                        color: Colors.white.withAlpha(150),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

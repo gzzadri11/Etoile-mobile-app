@@ -13,7 +13,6 @@ import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/services/push_notification_service.dart';
-import '../core/services/stripe_service.dart';
 import '../core/services/supabase_service.dart';
 import '../core/services/video_upload_service.dart';
 import '../features/admin/data/repositories/admin_repository.dart';
@@ -25,7 +24,6 @@ import '../features/messages/data/repositories/block_repository.dart';
 import '../features/messages/data/repositories/conversation_repository.dart';
 import '../features/messages/data/repositories/message_repository.dart';
 import '../features/messages/presentation/bloc/message_bloc.dart';
-import '../features/payment/data/repositories/payment_repository.dart';
 import '../features/profile/data/repositories/profile_repository.dart';
 import '../features/profile/data/repositories/stats_repository.dart';
 import '../features/profile/presentation/bloc/profile_bloc.dart';
@@ -45,16 +43,12 @@ Future<void> init() async {
   sl.registerLazySingleton<SupabaseService>(
     () => SupabaseService(client: sl()),
   );
-  sl.registerLazySingleton<StripeService>(
-    () => StripeService(supabaseService: sl()),
-  );
   sl.registerLazySingleton<PushNotificationService>(
     () => PushNotificationService(supabaseClient: sl()),
   );
   sl.registerLazySingleton<VideoUploadService>(
     () => VideoUploadService(supabaseClient: sl()),
   );
-
   // --- Repositories (singletons : une seule source de verite par domaine) ---
   sl.registerLazySingleton(() => ProfileRepository(supabaseClient: sl()));
   sl.registerLazySingleton(() => StatsRepository(supabaseClient: sl()));
@@ -66,9 +60,6 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ReportRepository(supabaseClient: sl()));
   sl.registerLazySingleton(() => ApplicationRepository(supabaseClient: sl()));
   sl.registerLazySingleton(() => AdminRepository(supabaseClient: sl()));
-  sl.registerLazySingleton(
-    () => PaymentRepository(supabaseClient: sl(), stripeService: sl()),
-  );
 
   // --- BLoCs ---
 

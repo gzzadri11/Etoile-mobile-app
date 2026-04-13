@@ -222,18 +222,12 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     FeedFilters? filters,
   }) async {
     List<FeedItem> items;
-    if (role == 'seeker' && feedTab == 'discover') {
+    if (feedTab == 'discover') {
       items = await _feedRepository.getSeekerDiscoverFeed(
           limit: limit, offset: offset, filters: filters);
     } else {
-      items = await switch (role) {
-        'seeker' => _feedRepository.getSeekerOffersFeed(
-            limit: limit, offset: offset, filters: filters),
-        'recruiter' => _feedRepository.getRecruiterFeed(
-            limit: limit, offset: offset, filters: filters),
-        _ => _feedRepository.getMixedFeed(
-            limit: limit, offset: offset, filters: filters),
-      };
+      items = await _feedRepository.getSeekerOffersFeed(
+          limit: limit, offset: offset, filters: filters);
     }
 
     // Filter out blocked users

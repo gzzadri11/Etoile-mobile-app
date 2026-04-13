@@ -25,6 +25,9 @@ class SeekerProfile extends Equatable {
   final String? domain;
   final String? specialty;
 
+  // Username (@pseudo unique pour identification SaaS)
+  final String? username;
+
   // Photo
   final String? photoUrl;
 
@@ -54,6 +57,7 @@ class SeekerProfile extends Equatable {
     this.studyLevel,
     this.domain,
     this.specialty,
+    this.username,
     this.photoUrl,
     this.categories = const [],
     this.contractTypes = const [],
@@ -69,7 +73,7 @@ class SeekerProfile extends Equatable {
   /// Profile completion percentage (5 categories x 20% = 100%)
   ///
   /// - Photo (20%): photoUrl non-null and non-empty
-  /// - Identity (20%): firstName + lastName + age
+  /// - Identity (20%): firstName + lastName + age + username
   /// - Studies (20%): school + studyLevel
   /// - Location (20%): city non-empty
   /// - Domain (20%): domain non-empty
@@ -80,7 +84,9 @@ class SeekerProfile extends Equatable {
         lastName != null &&
         lastName!.isNotEmpty &&
         age != null &&
-        age!.isNotEmpty) {
+        age!.isNotEmpty &&
+        username != null &&
+        username!.isNotEmpty) {
       score += 20;
     }
     if (school != null &&
@@ -128,6 +134,7 @@ class SeekerProfile extends Equatable {
       studyLevel: json['study_level'] as String?,
       domain: json['domain'] as String?,
       specialty: json['specialty'] as String?,
+      username: json['username'] as String?,
       photoUrl: json['photo_url'] as String?,
       categories: (json['categories'] as List<dynamic>?)
               ?.map((e) => e as String)
@@ -162,6 +169,7 @@ class SeekerProfile extends Equatable {
       'study_level': studyLevel,
       'domain': domain,
       'specialty': specialty,
+      'username': username,
       'photo_url': photoUrl,
       'categories': categories,
       'contract_types': contractTypes,
@@ -187,6 +195,7 @@ class SeekerProfile extends Equatable {
     String? studyLevel,
     String? domain,
     String? specialty,
+    String? username,
     String? photoUrl,
     List<String>? categories,
     List<String>? contractTypes,
@@ -210,6 +219,7 @@ class SeekerProfile extends Equatable {
       studyLevel: studyLevel ?? this.studyLevel,
       domain: domain ?? this.domain,
       specialty: specialty ?? this.specialty,
+      username: username ?? this.username,
       photoUrl: photoUrl ?? this.photoUrl,
       categories: categories ?? this.categories,
       contractTypes: contractTypes ?? this.contractTypes,
@@ -238,6 +248,7 @@ class SeekerProfile extends Equatable {
         studyLevel,
         domain,
         specialty,
+        username,
         photoUrl,
         categories,
         contractTypes,

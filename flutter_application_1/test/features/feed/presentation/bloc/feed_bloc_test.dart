@@ -155,31 +155,6 @@ void main() {
       ],
     );
 
-    blocTest<FeedBloc, FeedState>(
-      'does not load appliedVideoIds for recruiter role',
-      build: () {
-        when(() => mockFeedRepo.getRecruiterFeed(
-              limit: any(named: 'limit'),
-              offset: any(named: 'offset'),
-              filters: any(named: 'filters'),
-            )).thenAnswer((_) async => [_makeItem(id: 'v1')]);
-        when(() => mockFeedRepo.getCategories())
-            .thenAnswer((_) async => _categories);
-        when(() => mockBlockRepo.getBlockedUserIds())
-            .thenAnswer((_) async => []);
-        return buildBloc();
-      },
-      act: (bloc) =>
-          bloc.add(const FeedLoadRequested(userRole: 'recruiter')),
-      expect: () => [
-        isA<FeedLoading>(),
-        isA<FeedLoaded>()
-            .having((s) => s.appliedVideoIds.isEmpty, 'empty appliedVideoIds', true),
-      ],
-      verify: (_) {
-        verifyNever(() => mockAppRepo.getAppliedVideoIds());
-      },
-    );
   });
 
   group('FeedApplyToOffer', () {

@@ -124,9 +124,10 @@ class VideoBloc extends Bloc<VideoEvent, VideoState> {
       );
 
       emit(VideoUploadSuccess(video: updatedVideo));
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('[VideoBloc] Upload error: $e');
-      emit(VideoError(message: 'Erreur upload: ${e.toString()}'));
+      debugPrint('[VideoBloc] Stack trace: $stackTrace');
+      emit(VideoError(message: 'Erreur upload: $e'));
     }
   }
 

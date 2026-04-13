@@ -940,14 +940,11 @@ class _FilterSheetState extends State<_FilterSheet> {
 
               const Divider(height: 1),
 
-              // Role-specific filters
               Expanded(
                 child: ListView(
                   controller: scrollController,
                   padding: const EdgeInsets.all(AppTheme.spaceMd),
-                  children: widget.userRole == 'seeker'
-                      ? _buildSeekerFilters()
-                      : _buildRecruiterFilters(),
+                  children: _buildSeekerFilters(),
                 ),
               ),
 
@@ -985,54 +982,6 @@ class _FilterSheetState extends State<_FilterSheet> {
     return [
       _FilterSection(
         title: 'Secteur',
-        options: const [
-          'commerce_vente',
-          'restauration_hotellerie',
-        ],
-        optionLabels: const {
-          'commerce_vente': 'Commerce / Vente',
-          'restauration_hotellerie': 'Restauration / Hôtellerie',
-        },
-        selectedValue: _filters.sector,
-        onChanged: (value) {
-          setState(() {
-            if (value == null) {
-              _filters = _filters.copyWith(clearSector: true, clearSpecialty: true);
-            } else {
-              _filters = _filters.copyWith(sector: value, clearSpecialty: true);
-            }
-          });
-        },
-      ),
-      if (specialties.isNotEmpty) ...[
-        const SizedBox(height: AppTheme.spaceMd),
-        _FilterSection(
-          title: 'Spécialité',
-          options: specialties,
-          optionLabels: {
-            for (final s in specialties) s: SectorConstants.getSpecialtyLabel(s),
-          },
-          selectedValue: _filters.specialty,
-          onChanged: (value) {
-            setState(() {
-              if (value == null) {
-                _filters = _filters.copyWith(clearSpecialty: true);
-              } else {
-                _filters = _filters.copyWith(specialty: value);
-              }
-            });
-          },
-        ),
-      ],
-    ];
-  }
-
-  /// Recruiter filters (beta): Domaine + Spécialité
-  List<Widget> _buildRecruiterFilters() {
-    final specialties = SectorConstants.getSpecialtiesForSector(_filters.sector);
-    return [
-      _FilterSection(
-        title: 'Domaine',
         options: const [
           'commerce_vente',
           'restauration_hotellerie',

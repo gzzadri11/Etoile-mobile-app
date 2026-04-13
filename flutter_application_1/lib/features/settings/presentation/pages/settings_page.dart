@@ -26,7 +26,6 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
-    final isSeeker = authState is AuthAuthenticated && authState.isSeeker;
     final isAdmin = authState is AuthAuthenticated && authState.isAdmin;
 
     return Scaffold(
@@ -56,26 +55,8 @@ class SettingsPage extends StatelessWidget {
             context,
             icon: Icons.person_outline,
             title: AppStrings.editProfile,
-            onTap: () => context.push(
-              isSeeker
-                  ? AppRoutes.editProfile
-                  : AppRoutes.editRecruiterProfile,
-            ),
+            onTap: () => context.push(AppRoutes.editProfile),
           ),
-          if (!isSeeker) ...[
-            _buildTile(
-              context,
-              icon: Icons.star_outline,
-              title: AppStrings.goPremium,
-              onTap: () => context.push(AppRoutes.premiumRecruiter),
-            ),
-            _buildTile(
-              context,
-              icon: Icons.receipt_long_outlined,
-              title: 'Mon abonnement',
-              onTap: () => context.push(AppRoutes.premiumManage),
-            ),
-          ],
           _buildTile(
             context,
             icon: Icons.download_outlined,

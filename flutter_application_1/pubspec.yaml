@@ -46,6 +46,10 @@ dependencies:
   latlong2: ^0.9.1
   geolocator: ^13.0.2
 
+  # File system
+  path_provider: ^2.1.4
+  path: ^1.9.0
+
   # Utils
   dartz: ^0.10.1
   get_it: ^8.0.2
@@ -60,10 +64,6 @@ dependencies:
   firebase_crashlytics: ^4.3.3
   firebase_messaging: ^15.2.4
   flutter_local_notifications: ^18.0.1
-
-  # Payments
-  flutter_stripe: ^11.2.0
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

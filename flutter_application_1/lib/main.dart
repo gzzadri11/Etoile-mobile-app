@@ -1,9 +1,10 @@
+library;
+
 /// Point d'entree de l'application Etoile.
 ///
-/// Initialise les services externes (Firebase, Supabase, Stripe)
+/// Initialise les services externes (Firebase, Supabase)
 /// puis lance l'interface graphique. Si un service echoue,
 /// un ecran d'erreur de secours est affiche.
-library;
 
 import 'dart:ui';
 
@@ -13,13 +14,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
 import 'core/services/push_notification_service.dart';
-import 'core/services/stripe_service.dart';
 import 'di/injection_container.dart' as di;
 
 Future<void> main() async {
@@ -75,12 +74,6 @@ Future<void> main() async {
     // Injection de dependances : repositories, BLoCs, services
     await di.init();
     debugPrint('[Main] Dependances enregistrees');
-
-    // Stripe : paiements — SDK Flutter non disponible sur web
-    if (!kIsWeb) {
-      await GetIt.I<StripeService>().initialize();
-      debugPrint('[Main] Stripe initialise');
-    }
 
     runApp(const EtoileApp());
   } on ConfigurationException catch (e) {

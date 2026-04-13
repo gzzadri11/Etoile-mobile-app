@@ -10,23 +10,15 @@ class SectorConstants {
 
   // --- Sectors ---
   static const List<String> sectorOptions = [
-    'commerce_vente',
     'restauration_hotellerie',
   ];
 
   static const Map<String, String> sectorLabels = {
-    'commerce_vente': 'Commerce / Vente',
     'restauration_hotellerie': 'Restauration / Hôtellerie',
   };
 
   // --- Specialties per sector ---
   static const Map<String, List<String>> specialtiesBySector = {
-    'commerce_vente': [
-      'vente_magasin',
-      'caisse',
-      'merchandising',
-      'ecommerce',
-    ],
     'restauration_hotellerie': [
       'service_salle',
       'cuisine',
@@ -36,10 +28,6 @@ class SectorConstants {
   };
 
   static const Map<String, String> specialtyLabels = {
-    'vente_magasin': 'Vente en magasin',
-    'caisse': 'Caisse',
-    'merchandising': 'Merchandising',
-    'ecommerce': 'E-commerce',
     'service_salle': 'Service en salle',
     'cuisine': 'Cuisine',
     'patisserie': 'Pâtisserie',

@@ -183,52 +183,6 @@ void main() {
     );
 
     blocTest<AuthBloc, AuthState>(
-      'emits [AuthLoading, AuthAuthenticated] on recruiter registration with companyName as firstName',
-      build: () {
-        final mockUser = MockUser();
-        when(() => mockUser.id).thenReturn('user-789');
-        when(() => mockUser.email).thenReturn('recruiter@example.com');
-        when(() => mockUser.userMetadata).thenReturn({'role': 'recruiter'});
-
-        when(() => mockAuth.signUp(
-              email: any(named: 'email'),
-              password: any(named: 'password'),
-              data: any(named: 'data'),
-            )).thenAnswer((_) async => supa.AuthResponse(
-              session: MockSession(),
-              user: mockUser,
-            ));
-
-        return buildBloc();
-      },
-      act: (bloc) => bloc.add(const AuthRegisterRequested(
-        email: 'recruiter@example.com',
-        password: 'password123',
-        firstName: 'Mon Entreprise SAS',
-        role: 'recruiter',
-        siret: '12345678901234',
-        companyName: 'Mon Entreprise SAS',
-      )),
-      expect: () => [
-        isA<AuthLoading>(),
-        isA<AuthAuthenticated>()
-            .having((s) => s.role, 'role', 'recruiter'),
-      ],
-      verify: (_) {
-        final captured = verify(() => mockAuth.signUp(
-              email: any(named: 'email'),
-              password: any(named: 'password'),
-              data: captureAny(named: 'data'),
-            )).captured;
-        final metadata = captured.last as Map<String, dynamic>;
-        // Verify companyName is used as first_name for recruiters
-        expect(metadata['first_name'], equals('Mon Entreprise SAS'));
-        expect(metadata['company_name'], equals('Mon Entreprise SAS'));
-        expect(metadata['role'], equals('recruiter'));
-      },
-    );
-
-    blocTest<AuthBloc, AuthState>(
       'emits [AuthLoading, AuthError] when email already exists',
       build: () {
         when(() => mockAuth.signUp(

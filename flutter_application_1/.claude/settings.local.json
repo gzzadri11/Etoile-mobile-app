@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sort:*)",
+      "Bash(xargs -I{} git log -1 --format=\"%ai {}\" -- \"{}\")",
+      "Bash(npx --prefix supabase supabase db push:*)",
+      "Bash(npx --prefix supabase supabase login:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter test)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter logs:*)",
+      "Bash(curl:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(flutter test:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

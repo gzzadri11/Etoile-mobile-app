@@ -294,12 +294,7 @@ class PushNotificationService {
         }
         break;
       case 'profile_reminder':
-        final userRole = message.data['user_role'];
-        if (userRole == 'recruiter') {
-          goRouter.push(AppRoutes.editRecruiterProfile);
-        } else {
-          goRouter.push(AppRoutes.editProfile);
-        }
+        goRouter.push(AppRoutes.editProfile);
         break;
       default:
         debugPrint('[PushNotif] Unknown notification type: $type');
@@ -324,11 +319,7 @@ class PushNotificationService {
         goRouter.push(AppRoutes.chatWith(value));
         break;
       case 'profile_reminder':
-        if (value == 'recruiter') {
-          goRouter.push(AppRoutes.editRecruiterProfile);
-        } else {
-          goRouter.push(AppRoutes.editProfile);
-        }
+        goRouter.push(AppRoutes.editProfile);
         break;
     }
   }

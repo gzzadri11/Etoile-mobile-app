@@ -10,7 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/seeker_profile_model.dart';
 import '../models/recruiter_profile_model.dart';
 
-/// Operations CRUD sur les profils (seeker + recruiter) via Supabase.
+/// Operations CRUD sur les profils via Supabase.
 class ProfileRepository {
   final SupabaseClient _supabaseClient;
 
@@ -78,24 +78,24 @@ class ProfileRepository {
     return profile.completionPercentage >= 100;
   }
 
-  // ===========================================================================
-  // RECRUITER PROFILE
-  // ===========================================================================
-
-  /// Fetch recruiter profile for current user
-  Future<RecruiterProfile?> getRecruiterProfile() async {
+  /// Verifie si un username est disponible (non pris par un autre seeker).
+  Future<bool> isUsernameAvailable(String username) async {
     final userId = currentUserId;
-    if (userId == null) return null;
+    if (userId == null) return false;
 
     final response = await _supabaseClient
-        .from('recruiter_profiles')
-        .select()
-        .eq('user_id', userId)
+        .from('seeker_profiles')
+        .select('user_id')
+        .eq('username', username)
+        .neq('user_id', userId)
         .maybeSingle();
 
-    if (response == null) return null;
-    return RecruiterProfile.fromJson(response);
+    return response == null;
   }
+
+  // ===========================================================================
+  // RECRUITER PROFILE (read-only — seekers view company profiles)
+  // ===========================================================================
 
   /// Fetch recruiter profile by user ID (for viewing company profiles)
   Future<RecruiterProfile?> getRecruiterProfileById(String userId) async {
@@ -109,78 +109,9 @@ class ProfileRepository {
     return RecruiterProfile.fromJson(response);
   }
 
-  /// Update recruiter profile
-  Future<RecruiterProfile> updateRecruiterProfile(
-      RecruiterProfile profile) async {
-    final response = await _supabaseClient
-        .from('recruiter_profiles')
-        .update(profile.toJson())
-        .eq('user_id', profile.userId)
-        .select()
-        .single();
-
-    return RecruiterProfile.fromJson(response);
-  }
-
-  /// Check if recruiter profile is complete
-  Future<bool> isRecruiterProfileComplete() async {
-    final profile = await getRecruiterProfile();
-    if (profile == null) return false;
-
-    // Profile is complete if these fields are filled
-    return profile.companyName.isNotEmpty &&
-        profile.companyName != 'A completer' &&
-        profile.sector != null &&
-        profile.sector!.isNotEmpty &&
-        profile.description != null &&
-        profile.description!.isNotEmpty;
-  }
-
-  /// Upload company logo to Supabase Storage and return public URL
-  Future<String> uploadLogo(Uint8List bytes, String extension) async {
-    final userId = currentUserId;
-    if (userId == null) throw Exception('Utilisateur non connecte');
-
-    final path = '$userId/logo.$extension';
-
-    await _supabaseClient.storage.from('company-logos').uploadBinary(
-          path,
-          bytes,
-          fileOptions: FileOptions(
-            upsert: true,
-            contentType: 'image/$extension',
-          ),
-        );
-
-    final url = _supabaseClient.storage
-        .from('company-logos')
-        .getPublicUrl(path);
-
-    return url;
-  }
-
-  /// Upload cover photo to Supabase Storage and return public URL
-  Future<String> uploadCover(Uint8List bytes, String extension) async {
-    final userId = currentUserId;
-    if (userId == null) throw Exception('Utilisateur non connecte');
-
-    final path = '$userId/cover.$extension';
-
-    await _supabaseClient.storage.from('company-logos').uploadBinary(
-          path,
-          bytes,
-          fileOptions: FileOptions(
-            upsert: true,
-            contentType: 'image/$extension',
-          ),
-        );
-
-    final url = _supabaseClient.storage
-        .from('company-logos')
-        .getPublicUrl(path);
-
-    return url;
-  }
+  // ===========================================================================
+  // SEEKER PHOTO
+  // ===========================================================================
 
   /// Upload seeker photo to Supabase Storage and return public URL
   Future<String> uploadSeekerPhoto(Uint8List bytes, String extension) async {
@@ -203,83 +134,6 @@ class ProfileRepository {
         .getPublicUrl(path);
 
     return url;
-  }
-
-  // ===========================================================================
-  // DOCUMENT JUSTIFICATIF
-  // ===========================================================================
-
-  /// Upload a verification document to Supabase Storage (private bucket).
-  ///
-  /// Returns the storage path. Also updates the recruiter_profiles table
-  /// with document_url, document_type, and document_uploaded_at.
-  Future<String> uploadDocument(
-    Uint8List bytes,
-    String extension, {
-    required String documentType,
-  }) async {
-    final userId = currentUserId;
-    if (userId == null) throw Exception('Utilisateur non connecte');
-
-    final path = '$userId/document.$extension';
-
-    await _supabaseClient.storage.from('verification-docs').uploadBinary(
-          path,
-          bytes,
-          fileOptions: FileOptions(
-            upsert: true,
-            contentType: extension == 'pdf'
-                ? 'application/pdf'
-                : 'image/$extension',
-          ),
-        );
-
-    // Store the storage path (not public URL — bucket is private)
-    // Update recruiter profile with document info + re-submit for review
-    await _supabaseClient.from('recruiter_profiles').update({
-      'document_url': path,
-      'document_type': documentType,
-      'document_uploaded_at': DateTime.now().toIso8601String(),
-      'verification_status': 'pending',
-      'rejection_reason': null,
-    }).eq('user_id', userId);
-
-    return path;
-  }
-
-  /// Remove the current verification document from storage and profile.
-  ///
-  /// Clears document_url, document_type, document_uploaded_at and resets
-  /// verification_status so the recruiter can upload a new document.
-  Future<void> removeDocument() async {
-    final userId = currentUserId;
-    if (userId == null) throw Exception('Utilisateur non connecte');
-
-    // Try to delete file from storage (best-effort, may already be gone)
-    try {
-      final profile = await _supabaseClient
-          .from('recruiter_profiles')
-          .select('document_url')
-          .eq('user_id', userId)
-          .single();
-      final docUrl = profile['document_url'] as String?;
-      if (docUrl != null && docUrl.isNotEmpty) {
-        await _supabaseClient.storage
-            .from('verification-docs')
-            .remove([docUrl]);
-      }
-    } catch (e) {
-      debugPrint('[ProfileRepository] Storage remove failed (non-blocking): $e');
-    }
-
-    // Clear document fields in profile
-    await _supabaseClient.from('recruiter_profiles').update({
-      'document_url': null,
-      'document_type': null,
-      'document_uploaded_at': null,
-      'verification_status': 'pending',
-      'rejection_reason': null,
-    }).eq('user_id', userId);
   }
 
   // ===========================================================================
@@ -306,14 +160,8 @@ class ProfileRepository {
 
   /// Get current user's profile completion percentage (0-100).
   Future<int> getProfileCompletionPercentage() async {
-    final role = currentUserRole;
-    if (role == 'seeker') {
-      final profile = await getSeekerProfile();
-      return profile?.completionPercentage ?? 0;
-    } else {
-      final profile = await getRecruiterProfile();
-      return profile?.completionPercentage ?? 0;
-    }
+    final profile = await getSeekerProfile();
+    return profile?.completionPercentage ?? 0;
   }
 
   // ===========================================================================

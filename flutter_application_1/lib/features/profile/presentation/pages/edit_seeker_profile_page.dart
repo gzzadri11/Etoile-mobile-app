@@ -5,9 +5,9 @@ library;
 /// Formulaire complet : identite, date de naissance, photo,
 /// ecole, niveau d'etudes, ville (autocompletion IdF), domaine/specialite.
 
-import 'dart:typed_data';
-
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -40,6 +40,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
 
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
+  late TextEditingController _usernameController;
   late TextEditingController _schoolController;
 
   String? _selectedAge;
@@ -52,22 +53,29 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
   String? _pickedPhotoExtension;
   String? _existingPhotoUrl;
 
+  // Username availability check
+  Timer? _usernameDebounce;
+  bool? _usernameAvailable;
+  bool _usernameChecking = false;
+  String? _initialUsername;
+
   bool _isInitialized = false;
   bool _dismissedMascotte = false;
 
   /// Calculates real-time profile completion percentage.
-  /// Seeker: photo(20) + identite(prenom+nom+age)(20) + etudes(ecole+niveau)(20) + localisation(ville)(20) + domaine(20)
+  /// Seeker: photo(20) + identite(prenom+nom+age+username)(20) + etudes(ecole+niveau)(20) + localisation(ville)(20) + domaine(20)
   int get _completionPercentage {
     int pct = 0;
     // Photo (20%)
     if (_pickedPhotoBytes != null || (_existingPhotoUrl != null && _existingPhotoUrl!.isNotEmpty)) {
       pct += 20;
     }
-    // Identite: prenom + nom + age (all 3 required for 20%)
+    // Identite: prenom + nom + age + username (all 4 required for 20%)
     final hasFirstName = _firstNameController.text.trim().isNotEmpty;
     final hasLastName = _lastNameController.text.trim().isNotEmpty;
     final hasAge = _selectedAge != null;
-    if (hasFirstName && hasLastName && hasAge) pct += 20;
+    final hasUsername = _usernameController.text.trim().isNotEmpty;
+    if (hasFirstName && hasLastName && hasAge && hasUsername) pct += 20;
     // Etudes: ecole + niveau (both required for 20%)
     final hasSchool = _schoolController.text.trim().isNotEmpty;
     final hasStudyLevel = _selectedStudyLevel != null;
@@ -87,11 +95,14 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
     super.initState();
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
+    _usernameController = TextEditingController();
     _schoolController = TextEditingController();
 
     // Listeners to recalculate completion % in real-time
     _firstNameController.addListener(_onFieldChanged);
     _lastNameController.addListener(_onFieldChanged);
+    _usernameController.addListener(_onFieldChanged);
+    _usernameController.addListener(_onUsernameChanged);
     _schoolController.addListener(_onFieldChanged);
   }
 
@@ -99,13 +110,59 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
     setState(() {});
   }
 
+  void _onUsernameChanged() {
+    _usernameDebounce?.cancel();
+    final value = _usernameController.text.trim().toLowerCase();
+
+    // Skip check if empty or same as initial
+    if (value.isEmpty || value == _initialUsername) {
+      setState(() {
+        _usernameAvailable = null;
+        _usernameChecking = false;
+      });
+      return;
+    }
+
+    // Validate format before checking availability
+    if (!RegExp(r'^[a-z0-9_-]+$').hasMatch(value) || value.length < 3) {
+      setState(() {
+        _usernameAvailable = null;
+        _usernameChecking = false;
+      });
+      return;
+    }
+
+    setState(() => _usernameChecking = true);
+    _usernameDebounce = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final repo = GetIt.I<ProfileRepository>();
+        final available = await repo.isUsernameAvailable(value);
+        if (mounted && _usernameController.text.trim().toLowerCase() == value) {
+          setState(() {
+            _usernameAvailable = available;
+            _usernameChecking = false;
+          });
+        }
+      } catch (e) {
+        debugPrint('Username check error: $e');
+        if (mounted) {
+          setState(() => _usernameChecking = false);
+        }
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _usernameDebounce?.cancel();
     _firstNameController.removeListener(_onFieldChanged);
     _lastNameController.removeListener(_onFieldChanged);
+    _usernameController.removeListener(_onFieldChanged);
+    _usernameController.removeListener(_onUsernameChanged);
     _schoolController.removeListener(_onFieldChanged);
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _usernameController.dispose();
     _schoolController.dispose();
     super.dispose();
   }
@@ -153,6 +210,8 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
 
     _firstNameController.text = profile.firstName;
     _lastNameController.text = profile.lastName ?? '';
+    _usernameController.text = profile.username ?? '';
+    _initialUsername = profile.username;
     _schoolController.text = profile.school ?? '';
     _selectedAge = profile.age;
     _selectedStudyLevel = SectorConstants.studyLevelOptions.contains(profile.studyLevel)
@@ -202,6 +261,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
     final updatedProfile = currentProfile.copyWith(
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
+      username: _usernameController.text.trim().toLowerCase(),
       age: _selectedAge,
       city: _selectedCity ?? '',
       school: _schoolController.text.trim(),
@@ -398,6 +458,60 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                     enabled: !isSaving,
                     validator: (v) =>
                         v?.isEmpty ?? true ? 'Champ requis' : null,
+                  ),
+                  const SizedBox(height: AppTheme.spaceMd),
+
+                  // Username field with @ prefix and availability check
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Nom d'utilisateur",
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: AppColors.greyWarm,
+                            ),
+                      ),
+                      const SizedBox(height: AppTheme.spaceSm),
+                      TextFormField(
+                        controller: _usernameController,
+                        enabled: !isSaving,
+                        textCapitalization: TextCapitalization.none,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.alternate_email, color: AppColors.greyWarm, size: 20),
+                          hintText: 'pseudo',
+                          helperText: '3-10 caractères, lettres minuscules et chiffres',
+                          suffixIcon: _usernameChecking
+                              ? const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                )
+                              : _usernameAvailable != null
+                                  ? Icon(
+                                      _usernameAvailable! ? Icons.check_circle : Icons.cancel,
+                                      color: _usernameAvailable! ? AppColors.success : AppColors.error,
+                                    )
+                                  : null,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9_-]')),
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Champ requis';
+                          if (v.trim().length < 3) return '3 caractères minimum';
+                          if (!RegExp(r'^[a-z0-9_-]+$').hasMatch(v.trim())) {
+                            return 'Lettres minuscules, chiffres, - et _ uniquement';
+                          }
+                          if (_usernameAvailable == false) return 'Ce pseudo est déjà pris';
+                          return null;
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppTheme.spaceMd),
 

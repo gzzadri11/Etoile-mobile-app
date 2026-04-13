@@ -11,7 +11,12 @@
       "Bash(node -e:*)",
       "Bash(flutter test:*)",
       "Bash(git commit:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git push:*)",
+      "Bash(flutter run:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(grep:*)",
+      "Bash(flutter pub get:*)"
     ]
   }
 }

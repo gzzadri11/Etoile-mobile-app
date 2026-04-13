@@ -29,36 +29,22 @@ class AuthLoginRequested extends AuthEvent {
   List<Object> get props => [email, password];
 }
 
-/// Inscription d'un nouvel utilisateur.
-///
-/// Pour un recruteur, les champs SIRET/SIREN/legalForm sont renseignes
-/// apres verification via l'API Sirene (entreprises.gouv.fr).
+/// Inscription d'un nouveau chercheur.
 class AuthRegisterRequested extends AuthEvent {
   final String email;
   final String password;
   final String firstName;
-  final String role; // 'seeker' ou 'recruiter'
-  final String? siret;
-  final String? companyName;
-  final String? siren;
-  final String? legalForm;
+  final String role;
 
   const AuthRegisterRequested({
     required this.email,
     required this.password,
     required this.firstName,
-    required this.role,
-    this.siret,
-    this.companyName,
-    this.siren,
-    this.legalForm,
+    this.role = 'seeker',
   });
 
   @override
-  List<Object?> get props => [
-    email, password, firstName, role,
-    siret, companyName, siren, legalForm,
-  ];
+  List<Object?> get props => [email, password, firstName, role];
 }
 
 /// Deconnexion.

@@ -3,11 +3,8 @@ library;
 /// Carte de statistiques video affichee sur la page profil.
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/video_stats.dart';
 
@@ -16,15 +13,11 @@ import '../../data/models/video_stats.dart';
 /// - Premium users see real stats (total views, unique viewers, trend).
 /// - Non-premium users see a teaser message + CTA to upgrade.
 class StatsCard extends StatelessWidget {
-  final bool isPremium;
   final VideoStats stats;
-  final bool isSeeker;
 
   const StatsCard({
     super.key,
-    required this.isPremium,
     required this.stats,
-    this.isSeeker = true,
   });
 
   @override
@@ -52,11 +45,7 @@ class StatsCard extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spaceMd),
 
-          // B2B model: seekers always see stats, recruiters need premium
-          if (isSeeker || isPremium)
-            _PremiumStatsContent(stats: stats, isSeeker: isSeeker)
-          else
-            _NonPremiumContent(isSeeker: isSeeker),
+          _PremiumStatsContent(stats: stats, isSeeker: true),
         ],
       ),
     );
@@ -214,34 +203,3 @@ class _TrendIndicator extends StatelessWidget {
   }
 }
 
-/// Non-premium content: teaser + CTA
-class _NonPremiumContent extends StatelessWidget {
-  final bool isSeeker;
-
-  const _NonPremiumContent({required this.isSeeker});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          AppStrings.infoStatsNonPremium,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.greyWarm,
-              ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: AppTheme.spaceMd),
-        OutlinedButton.icon(
-          onPressed: () => context.push(AppRoutes.premiumRecruiter),
-          icon: const Icon(Icons.star_outline),
-          label: const Text(AppStrings.goPremium),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.primaryOrange,
-            side: const BorderSide(color: AppColors.primaryOrange),
-          ),
-        ),
-      ],
-    );
-  }
-}
