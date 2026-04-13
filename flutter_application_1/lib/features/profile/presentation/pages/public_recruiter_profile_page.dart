@@ -177,7 +177,6 @@ class _PublicRecruiterProfilePageState
         children: [
           // 1. Header
           _PublicRecruiterHeader(
-            coverUrl: profile.coverUrl,
             companyName: profile.companyName,
             sector: _getSectorLabel(profile.sector),
             isVerified: profile.isVerified,
@@ -381,15 +380,13 @@ class _PublicRecruiterProfilePageState
   }
 }
 
-/// Header with cover + logo + company info
+/// Header with company info
 class _PublicRecruiterHeader extends StatelessWidget {
-  final String? coverUrl;
   final String companyName;
   final String sector;
   final bool isVerified;
 
   const _PublicRecruiterHeader({
-    this.coverUrl,
     required this.companyName,
     required this.sector,
     required this.isVerified,
@@ -397,35 +394,25 @@ class _PublicRecruiterHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasCover = coverUrl != null && coverUrl!.isNotEmpty;
-
     return SizedBox(
       height: 200,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Cover photo
+          // Cover placeholder
           Container(
             height: 160,
             width: double.infinity,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.greyLight,
-              image: hasCover
-                  ? DecorationImage(
-                      image: NetworkImage(coverUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
             ),
-            child: !hasCover
-                ? const Center(
-                    child: Icon(
-                      Icons.photo_camera_outlined,
-                      size: 40,
-                      color: AppColors.greyMedium,
-                    ),
-                  )
-                : null,
+            child: const Center(
+              child: Icon(
+                Icons.business_outlined,
+                size: 40,
+                color: AppColors.greyMedium,
+              ),
+            ),
           ),
           // Gradient overlay
           Positioned(

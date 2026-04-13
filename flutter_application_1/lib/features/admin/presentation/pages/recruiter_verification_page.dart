@@ -107,10 +107,6 @@ class RecruiterVerificationPage extends StatelessWidget {
                     label: 'Secteur',
                     value: profile.sector ?? 'Non renseigné',
                   ),
-                  if (profile.companySize != null)
-                    _InfoRow(label: 'Taille', value: profile.companySize!),
-                  if (profile.website != null)
-                    _InfoRow(label: 'Site web', value: profile.website!),
                 ]),
 
                 const SizedBox(height: AppTheme.spaceMd),

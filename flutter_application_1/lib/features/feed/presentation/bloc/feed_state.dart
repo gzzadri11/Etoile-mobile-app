@@ -23,7 +23,6 @@ class FeedLoading extends FeedState {
 /// Feed loaded successfully
 class FeedLoaded extends FeedState {
   final List<FeedItem> items;
-  final List<Map<String, dynamic>> categories;
   final bool hasMore;
   final bool isLoadingMore;
   final FeedFilters filters;
@@ -33,7 +32,6 @@ class FeedLoaded extends FeedState {
 
   const FeedLoaded({
     required this.items,
-    required this.categories,
     this.hasMore = false,
     this.isLoadingMore = false,
     required this.filters,
@@ -53,7 +51,6 @@ class FeedLoaded extends FeedState {
 
   FeedLoaded copyWith({
     List<FeedItem>? items,
-    List<Map<String, dynamic>>? categories,
     bool? hasMore,
     bool? isLoadingMore,
     FeedFilters? filters,
@@ -63,7 +60,6 @@ class FeedLoaded extends FeedState {
   }) {
     return FeedLoaded(
       items: items ?? this.items,
-      categories: categories ?? this.categories,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       filters: filters ?? this.filters,
@@ -74,7 +70,7 @@ class FeedLoaded extends FeedState {
   }
 
   @override
-  List<Object?> get props => [items, categories, hasMore, isLoadingMore, filters, userRole, feedTab, appliedVideoIds];
+  List<Object?> get props => [items, hasMore, isLoadingMore, filters, userRole, feedTab, appliedVideoIds];
 }
 
 /// Error state

@@ -94,9 +94,6 @@ class FeedRepository {
         isVerified: true,
         region: _getFirstLocation(recruiterProfile['locations'] as List<dynamic>?),
         sector: recruiterProfile['sector'] as String?,
-        categories: recruiterProfile['sector'] != null
-            ? [recruiterProfile['sector'] as String]
-            : [],
       ));
     }
 
@@ -161,9 +158,6 @@ class FeedRepository {
         isVerified: true,
         region: _getFirstLocation(recruiterProfile['locations'] as List<dynamic>?),
         sector: recruiterProfile['sector'] as String?,
-        categories: recruiterProfile['sector'] != null
-            ? [recruiterProfile['sector'] as String]
-            : [],
       ));
     }
 
@@ -198,7 +192,7 @@ class FeedRepository {
     // 2. Get unique user IDs from videos
     final userIds = videos.map((v) => v.userId).toSet().toList();
 
-    // 3. Fetch seeker profiles for these users (with all filterable fields)
+    // 3. Fetch seeker profiles for these users
     final seekerProfilesResponse = await _supabaseClient
         .from('seeker_profiles')
         .select()
@@ -222,7 +216,7 @@ class FeedRepository {
       recruiterProfiles[p['user_id'] as String] = p;
     }
 
-    // 5. Build FeedItems with all filterable data
+    // 5. Build FeedItems
     final feedItems = <FeedItem>[];
     for (final video in videos) {
       final seekerProfile = seekerProfiles[video.userId];
@@ -235,14 +229,9 @@ class FeedRepository {
             ? '$firstName $lastName'.trim()
             : firstName;
 
-        // Parse categories and contract_types arrays
-        final categories = _parseStringList(seekerProfile['categories']);
-        final contractTypes = _parseStringList(seekerProfile['contract_types']);
-
         feedItems.add(FeedItem(
           video: video,
           userName: fullName.isNotEmpty ? fullName : 'Utilisateur',
-          userTitle: seekerProfile['bio'] as String?,
           userLocation: _buildLocation(
             seekerProfile['city'] as String?,
             seekerProfile['region'] as String?,
@@ -250,12 +239,8 @@ class FeedRepository {
           userAvatarUrl: seekerProfile['photo_url'] as String?,
           isRecruiter: false,
           isVerified: false,
-          // Filterable fields
           region: seekerProfile['region'] as String?,
           city: seekerProfile['city'] as String?,
-          categories: categories,
-          contractTypes: contractTypes,
-          availability: seekerProfile['availability'] as String?,
         ));
       } else if (recruiterProfile != null) {
         feedItems.add(FeedItem(
@@ -268,11 +253,8 @@ class FeedRepository {
           userAvatarUrl: recruiterProfile['logo_url'] as String?,
           isRecruiter: true,
           isVerified: recruiterProfile['verification_status'] == 'verified',
-          // Filterable fields for recruiters
           region: _getFirstLocation(recruiterProfile['locations'] as List<dynamic>?),
-          categories: recruiterProfile['sector'] != null
-              ? [recruiterProfile['sector'] as String]
-              : [],
+          sector: recruiterProfile['sector'] as String?,
         ));
       } else {
         // No profile found, still show the video
@@ -291,15 +273,6 @@ class FeedRepository {
     }
 
     return feedItems;
-  }
-
-  /// Parse PostgreSQL array to List of String
-  List<String> _parseStringList(dynamic value) {
-    if (value == null) return [];
-    if (value is List) {
-      return value.map((e) => e.toString()).toList();
-    }
-    return [];
   }
 
   String? _getFirstLocation(List<dynamic>? locations) {
@@ -341,16 +314,6 @@ class FeedRepository {
         }
       }
 
-      // Filter by contract type
-      if (filters.contractType != null && filters.contractType!.isNotEmpty) {
-        final hasMatchingContract = item.contractTypes.any(
-          (ct) => ct.toLowerCase() == filters.contractType!.toLowerCase(),
-        );
-        if (!hasMatchingContract) {
-          return false;
-        }
-      }
-
       return true;
     }).toList();
   }
@@ -370,45 +333,15 @@ class FeedRepository {
         }
       }
 
-      if (filters.categoryName != null && filters.categoryName!.isNotEmpty) {
-        final filterCategory = filters.categoryName!.toLowerCase();
-        final hasMatchingCategory = item.categories.any(
-          (cat) => cat.toLowerCase().contains(filterCategory),
-        );
-        if (!hasMatchingCategory) {
-          return false;
-        }
-      }
-
-      if (filters.availability != null && filters.availability!.isNotEmpty) {
-        if (item.availability == null ||
-            item.availability != filters.availability) {
-          return false;
-        }
-      }
-
-      if (filters.contractType != null && filters.contractType!.isNotEmpty) {
-        final hasMatchingContract = item.contractTypes.any(
-          (ct) => ct.toLowerCase() == filters.contractType!.toLowerCase(),
-        );
-        if (!hasMatchingContract) {
+      if (filters.sector != null && filters.sector!.isNotEmpty) {
+        if (item.sector == null ||
+            !item.sector!.toLowerCase().contains(filters.sector!.toLowerCase())) {
           return false;
         }
       }
 
       return true;
     }).toList();
-  }
-
-  /// Get all categories for filtering
-  Future<List<Map<String, dynamic>>> getCategories() async {
-    final response = await _supabaseClient
-        .from('categories')
-        .select()
-        .eq('is_active', true)
-        .order('sort_order');
-
-    return (response as List).cast<Map<String, dynamic>>();
   }
 
   /// Get distinct regions from seeker profiles

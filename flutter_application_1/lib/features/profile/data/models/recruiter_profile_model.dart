@@ -1,41 +1,11 @@
 library;
 
-/// Modele de profil recruteur et marqueur cartographique.
+/// Modele de profil recruteur.
 ///
 /// Contient les informations de l'entreprise (nom, SIRET, secteur),
 /// la localisation et le statut de verification.
 
 import 'package:equatable/equatable.dart';
-
-/// Marqueur nomme sur la carte (siege de l'entreprise).
-class MapMarker extends Equatable {
-  final String name;
-  final double latitude;
-  final double longitude;
-
-  const MapMarker({
-    required this.name,
-    required this.latitude,
-    required this.longitude,
-  });
-
-  factory MapMarker.fromJson(Map<String, dynamic> json) {
-    return MapMarker(
-      name: json['name'] as String? ?? '',
-      latitude: (json['lat'] as num).toDouble(),
-      longitude: (json['lng'] as num).toDouble(),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        'name': name,
-        'lat': latitude,
-        'lng': longitude,
-      };
-
-  @override
-  List<Object?> get props => [name, latitude, longitude];
-}
 
 /// Model representing a recruiter's company profile
 class RecruiterProfile extends Equatable {
@@ -48,13 +18,9 @@ class RecruiterProfile extends Equatable {
   final String? documentUrl;
   final DateTime? documentUploadedAt;
   final String? logoUrl;
-  final String? coverUrl;
   final String? description;
-  final String? website;
   final String? sector;
-  final String? companySize;
   final List<String> locations;
-  final List<MapMarker> mapMarkers;
   final String verificationStatus;
   final DateTime? verifiedAt;
   final String? rejectionReason;
@@ -73,13 +39,9 @@ class RecruiterProfile extends Equatable {
     this.documentUrl,
     this.documentUploadedAt,
     this.logoUrl,
-    this.coverUrl,
     this.description,
-    this.website,
     this.sector,
-    this.companySize,
     this.locations = const [],
-    this.mapMarkers = const [],
     this.verificationStatus = 'pending',
     this.verifiedAt,
     this.rejectionReason,
@@ -89,14 +51,12 @@ class RecruiterProfile extends Equatable {
     required this.updatedAt,
   });
 
-  bool get hasMapMarkers => mapMarkers.isNotEmpty;
-
   /// Profile completion percentage (5 categories x 20% = 100%)
   ///
   /// - Inscription (20%): always complete (user registered)
   /// - Company (20%): companyName (not "A completer") + sector non-empty
   /// - Description (20%): description >= 50 characters
-  /// - Location (20%): locations or mapMarkers non-empty
+  /// - Location (20%): locations non-empty
   /// - Verification (20%): siret filled + document uploaded
   int get completionPercentage {
     // Verified by admin = profile considered 100% complete
@@ -110,7 +70,7 @@ class RecruiterProfile extends Equatable {
       score += 20;
     }
     if (description != null && description!.length >= 50) score += 20;
-    if (locations.isNotEmpty || mapMarkers.isNotEmpty) score += 20;
+    if (locations.isNotEmpty) score += 20;
     if (siret != null &&
         siret!.isNotEmpty &&
         documentUrl != null &&
@@ -143,17 +103,10 @@ class RecruiterProfile extends Equatable {
           ? DateTime.parse(json['document_uploaded_at'] as String)
           : null,
       logoUrl: json['logo_url'] as String?,
-      coverUrl: json['cover_url'] as String?,
       description: json['description'] as String?,
-      website: json['website'] as String?,
       sector: json['sector'] as String?,
-      companySize: json['company_size'] as String?,
       locations: (json['locations'] as List<dynamic>?)
               ?.map((e) => e as String)
-              .toList() ??
-          [],
-      mapMarkers: (json['map_markers'] as List<dynamic>?)
-              ?.map((e) => MapMarker.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       verificationStatus: json['verification_status'] as String? ?? 'pending',
@@ -178,13 +131,9 @@ class RecruiterProfile extends Equatable {
       'document_type': documentType,
       'document_url': documentUrl,
       'logo_url': logoUrl,
-      'cover_url': coverUrl,
       'description': description,
-      'website': website,
       'sector': sector,
-      'company_size': companySize,
       'locations': locations,
-      'map_markers': mapMarkers.map((m) => m.toJson()).toList(),
     };
   }
 
@@ -198,13 +147,9 @@ class RecruiterProfile extends Equatable {
     String? documentUrl,
     DateTime? documentUploadedAt,
     String? logoUrl,
-    String? coverUrl,
     String? description,
-    String? website,
     String? sector,
-    String? companySize,
     List<String>? locations,
-    List<MapMarker>? mapMarkers,
     String? verificationStatus,
     int? videoCredits,
     int? posterCredits,
@@ -219,13 +164,9 @@ class RecruiterProfile extends Equatable {
       documentUrl: documentUrl ?? this.documentUrl,
       documentUploadedAt: documentUploadedAt ?? this.documentUploadedAt,
       logoUrl: logoUrl ?? this.logoUrl,
-      coverUrl: coverUrl ?? this.coverUrl,
       description: description ?? this.description,
-      website: website ?? this.website,
       sector: sector ?? this.sector,
-      companySize: companySize ?? this.companySize,
       locations: locations ?? this.locations,
-      mapMarkers: mapMarkers ?? this.mapMarkers,
       verificationStatus: verificationStatus ?? this.verificationStatus,
       verifiedAt: verifiedAt,
       rejectionReason: rejectionReason,
@@ -246,13 +187,9 @@ class RecruiterProfile extends Equatable {
         documentType,
         documentUrl,
         logoUrl,
-        coverUrl,
         description,
-        website,
         sector,
-        companySize,
         locations,
-        mapMarkers,
         verificationStatus,
         videoCredits,
         posterCredits,

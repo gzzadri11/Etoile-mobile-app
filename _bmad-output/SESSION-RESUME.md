@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
 **Date de mise a jour** : 2026-04-13
-**Statut** : Sprint 29 DONE — Username @pseudo chercheur. App mobile = chercheurs only. SaaS web = recruteurs only. 73/73 tests, 0 issues analyze. 21/21 migrations deployees.
+**Statut** : Sprint 30 DONE — Nettoyage DB (4 tables + 17 colonnes DROP). App mobile = chercheurs only. SaaS web = recruteurs only. 73/73 tests, 0 issues analyze. 22/22 migrations deployees.
 
 ---
 
@@ -31,7 +31,7 @@
 
 ### Prochaines etapes
 1. **App mobile** : tester camera (Story 13.1), preparation store listing
-2. **SaaS web** : init projet Next.js, migrations DB, pages core, integration
+2. **SaaS web** : init projet Next.js, migrations DB (~5 tables), pages core, integration
 
 ---
 
@@ -69,6 +69,50 @@ Puis tape `/bmad` et dis : **"reprend la ou on s'est arrete"**
 - Epic 15 : Messagerie Recruteur (sync Realtime avec app mobile)
 - Epic 16 : Paiements Recruteur (Stripe direct web)
 - Epic 17 : Administration
+
+---
+
+## Ce qui a ete fait — Sprint 30 : Nettoyage DB — Suppression tables et colonnes inutilisees (2026-04-13)
+
+### Objectif
+Apres le pivot deux plateformes, supprimer les tables, colonnes et fichiers devenus du code mort.
+
+### Migration SQL `20260413200000_cleanup_unused.sql` — DONE (deployee)
+- **4 tables DROP** : `purchases` (paiements IAP migres Stripe), `notification_log` (jamais requetee), `admin_secrets` (plus de page admin_auth), `push_tokens` (remplacee par `device_tokens`)
+- **10 colonnes seeker_profiles DROP** : `phone`, `birth_date`, `postal_code`, `categories`, `contract_types`, `experience_level`, `availability`, `salary_expectation`, `bio`, `profile_complete`
+- **6 colonnes recruiter_profiles DROP** : `cover_url`, `website`, `company_size`, `latitude`, `longitude`, `map_markers`
+- **1 colonne videos DROP** : `codec`
+
+### Code Dart nettoye — DONE
+- **SeekerProfileModel** : 10 champs retires (props, fromJson, toJson, copyWith)
+- **RecruiterProfileModel** : 6 champs + classe `MapMarker` + getter `hasMapMarkers` retires ; completionPercentage simplifie (locations only, plus mapMarkers)
+- **FeedItem** : 5 champs retires (`categories`, `contractTypes`, `availability`, `experienceLevel`, `salaryExpectation`)
+- **FeedFilters** : 6 champs retires (`categoryId`, `categoryName`, `contractType`, `availability`, `experienceLevel`, `salaryRange`) — ne garde que `region`, `sector`, `specialty`, `city`, `studyLevel`
+- **FeedRepository** : `getCategories()` supprime, `_parseStringList()` supprime, filtres simplifies
+- **FeedBloc** : plus d'appels `getCategories()`, `categories` retire de `FeedLoaded`
+- **FeedState** : `categories` retire de `FeedLoaded` (constructeur, copyWith, props)
+- **ProfileRepository** : `getCategories()` supprime
+- **ProfileBloc/State** : `categories` retire de `SeekerProfileLoaded`
+- **UI** : `coverUrl`/`website`/`companySize` retires des pages admin verification + profil public recruteur
+
+### Fichiers orphelins supprimes — DONE
+- `lib/features/feed/presentation/widgets/profile_bottom_sheet.dart`
+- `lib/shared/widgets/location_map_widget.dart`
+- `lib/shared/widgets/location_picker_widget.dart`
+
+### Tests adaptes — DONE
+- `feed_bloc_test.dart` : mock `getCategories` retire, `FeedLoaded` sans `categories`, filtre test `categoryId` → `sector`
+- `profile_completion_test.dart` : aucun changement (champs supprimes deja optionnels)
+
+### Resultats
+- **73/73 tests pass**, 0 issues flutter analyze
+- Migration deployee en production (22/22 total)
+
+### Tables/colonnes CONSERVEES
+- Table `categories` en DB (pas de DROP) — juste retrait des requetes Dart
+- Table `subscriptions` — utilisee dans admin stats
+- `recruiter_profiles.logo_url` — utilisee dans feed pour avatar recruteur
+- `seeker_profiles.region` — pourrait servir plus tard
 
 ---
 
@@ -898,6 +942,7 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 | **26** | **Decoupler Candidatures des Conversations — table applications, postuler 1-clic, animation, page seeker, contacter (7 stories, 27 pts)** | **DONE** |
 | **27** | **Nettoyage codebase — doc FR ~98 fichiers, suppression 725 lignes mortes, reduction debugPrints** | **DONE** |
 | **29** | **Username @pseudo chercheur — migration SQL, modele, formulaire, verification unicite temps reel** | **DONE** |
+| **30** | **Nettoyage DB — DROP 4 tables + 17 colonnes, suppression 3 fichiers orphelins, retrait categories du code** | **DONE** |
 
 ### Prochains sprints
 
@@ -905,19 +950,20 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 - [x] ~~Nettoyer/masquer le code recruteur dans l'app Flutter~~
 - [x] ~~Ajouter champ username (@pseudo) dans le profil chercheur~~
 - [x] ~~Deployer migrations username~~
+- [x] ~~Nettoyage DB : tables/colonnes/fichiers inutilises~~
 - [ ] Story 13.1 : Camera in-app (8 pts, emulateur requis)
 - [ ] Preparation store (screenshots, description, soumission)
 
 **Track 2 : SaaS Web (Recruteur)**
 - [ ] Init projet Next.js + Tailwind + Shadcn/ui + Supabase
-- [ ] Migrations DB (~5 tables + colonne username)
+- [ ] Migrations DB (~5 tables)
 - [ ] Pages core : login, briefing, grille, modal, dashboard, messages
 - [ ] Edge Function scoring
 - [ ] Integration & Tests (Playwright)
 - [ ] Beta recruteurs (5-10 invites)
 
 **Infra**
-- ~~Deployer migrations SQL~~ — **FAIT** (19/19 synchronisees)
+- ~~Deployer migrations SQL~~ — **FAIT** (22/22 synchronisees)
 - Stripe : rester en mode test pendant la beta, passage prod avant soumission store (KYC 1-3j)
 - Tous les pre-requis infra sont deployes (migrations, OTP, admin, bucket, Edge Functions, RLS)
 
@@ -968,4 +1014,4 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 ---
 
 *Sauvegarde mise a jour le 2026-04-13*
-*Sprint 29 TERMINE. Username @pseudo chercheur ajoute : migration SQL (VARCHAR(10) UNIQUE + index), modele SeekerProfile mis a jour, formulaire avec verification unicite temps reel (debounce 500ms), completude profil exige username. 73/73 tests pass, 0 issues analyze. 21/21 migrations deployees. Next: Camera in-app (Story 13.1) + preparation store.*
+*Sprint 30 TERMINE. Nettoyage DB post-pivot : 4 tables DROP (purchases, notification_log, admin_secrets, push_tokens), 17 colonnes DROP (10 seeker + 6 recruiter + 1 videos), 3 fichiers orphelins supprimes, categories retire du code Dart. 73/73 tests pass, 0 issues analyze. 22/22 migrations deployees. Next: Camera in-app (Story 13.1) + preparation store.*

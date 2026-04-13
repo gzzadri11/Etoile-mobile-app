@@ -164,18 +164,4 @@ class ProfileRepository {
     return profile?.completionPercentage ?? 0;
   }
 
-  // ===========================================================================
-  // CATEGORIES
-  // ===========================================================================
-
-  /// Get all available categories
-  Future<List<Map<String, dynamic>>> getCategories() async {
-    final response = await _supabaseClient
-        .from('categories')
-        .select()
-        .eq('is_active', true)
-        .order('sort_order');
-
-    return List<Map<String, dynamic>>.from(response);
-  }
 }

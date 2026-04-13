@@ -39,10 +39,6 @@ FeedItem _makeItem({String id = 'v1', String userId = 'u1'}) => FeedItem(
       userName: 'User $id',
     );
 
-const _categories = <Map<String, dynamic>>[
-  {'id': 'cat1', 'name': 'Dev', 'is_active': true},
-];
-
 // ============================================================================
 // Tests
 // ============================================================================
@@ -73,8 +69,6 @@ void main() {
           offset: any(named: 'offset'),
           filters: any(named: 'filters'),
         )).thenAnswer((_) async => items);
-    when(() => mockFeedRepo.getCategories())
-        .thenAnswer((_) async => _categories);
     when(() => mockBlockRepo.getBlockedUserIds())
         .thenAnswer((_) async => []);
     when(() => mockAppRepo.getAppliedVideoIds())
@@ -122,8 +116,6 @@ void main() {
               offset: any(named: 'offset'),
               filters: any(named: 'filters'),
             )).thenThrow(Exception('Network error'));
-        when(() => mockFeedRepo.getCategories())
-            .thenAnswer((_) async => _categories);
         when(() => mockBlockRepo.getBlockedUserIds())
             .thenAnswer((_) async => []);
         when(() => mockAppRepo.getAppliedVideoIds())
@@ -169,7 +161,6 @@ void main() {
       },
       seed: () => FeedLoaded(
         items: [_makeItem(id: 'v1')],
-        categories: _categories,
         filters: const FeedFilters.empty(),
         userRole: 'seeker',
         appliedVideoIds: {},
@@ -201,7 +192,6 @@ void main() {
       },
       seed: () => FeedLoaded(
         items: [_makeItem(id: 'v1')],
-        categories: _categories,
         filters: const FeedFilters.empty(),
         userRole: 'seeker',
         appliedVideoIds: {},
@@ -234,8 +224,6 @@ void main() {
               _makeItem(id: 'v2', userId: 'user-blocked'),
               _makeItem(id: 'v3', userId: 'user-ok-2'),
             ]);
-        when(() => mockFeedRepo.getCategories())
-            .thenAnswer((_) async => _categories);
         when(() => mockBlockRepo.getBlockedUserIds())
             .thenAnswer((_) async => ['user-blocked']);
         when(() => mockAppRepo.getAppliedVideoIds())
@@ -266,7 +254,6 @@ void main() {
       },
       seed: () => FeedLoaded(
         items: [_makeItem(id: 'old')],
-        categories: _categories,
         filters: const FeedFilters.empty(),
         userRole: 'seeker',
       ),
@@ -287,8 +274,6 @@ void main() {
               offset: any(named: 'offset'),
               filters: any(named: 'filters'),
             )).thenAnswer((_) async => [_makeItem(id: 'filtered')]);
-        when(() => mockFeedRepo.getCategories())
-            .thenAnswer((_) async => _categories);
         when(() => mockBlockRepo.getBlockedUserIds())
             .thenAnswer((_) async => []);
         when(() => mockAppRepo.getAppliedVideoIds())
@@ -297,19 +282,18 @@ void main() {
       },
       seed: () => FeedLoaded(
         items: [_makeItem(id: 'old')],
-        categories: _categories,
         filters: const FeedFilters.empty(),
         userRole: 'seeker',
       ),
       act: (bloc) => bloc.add(
         const FeedFiltersChanged(
-          filters: FeedFilters(categoryId: 'cat1'),
+          filters: FeedFilters(sector: 'commerce_vente'),
         ),
       ),
       expect: () => [
         isA<FeedLoading>(),
         isA<FeedLoaded>()
-            .having((s) => s.filters.categoryId, 'categoryId', 'cat1')
+            .having((s) => s.filters.sector, 'sector', 'commerce_vente')
             .having(
                 (s) => s.items.first.video.id, 'filtered item', 'filtered'),
       ],

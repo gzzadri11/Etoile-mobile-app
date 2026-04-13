@@ -54,7 +54,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
       if (role == 'seeker') {
         final profile = await _profileRepository.getSeekerProfile();
-        final categories = await _profileRepository.getCategories();
         final stats = await _statsRepository.getStats();
         Video? presentationVideo;
         try {
@@ -65,7 +64,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           AppRouter.updateProfileComplete(profile.completionPercentage >= 100);
           emit(SeekerProfileLoaded(
             profile: profile,
-            categories: categories,
             isPremium: false,
             stats: stats,
             presentationVideo: presentationVideo,
@@ -99,13 +97,11 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         final updated =
             await _profileRepository.updateSeekerProfile(event.seekerProfile!);
         final prevSeeker = currentState is SeekerProfileLoaded ? currentState : null;
-        final categories = prevSeeker?.categories ?? await _profileRepository.getCategories();
 
         AppRouter.updateProfileComplete(updated.completionPercentage >= 100);
         emit(ProfileSaveSuccess());
         emit(SeekerProfileLoaded(
           profile: updated,
-          categories: categories,
           isPremium: prevSeeker?.isPremium ?? false,
           stats: prevSeeker?.stats ?? VideoStats.empty(),
           presentationVideo: prevSeeker?.presentationVideo,

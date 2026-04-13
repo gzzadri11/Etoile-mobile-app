@@ -28,14 +28,12 @@ class ProfileSaving extends ProfileState {
 /// Seeker profile loaded successfully
 class SeekerProfileLoaded extends ProfileState {
   final SeekerProfile profile;
-  final List<Map<String, dynamic>> categories;
   final bool isPremium;
   final VideoStats stats;
   final Video? presentationVideo;
 
   const SeekerProfileLoaded({
     required this.profile,
-    required this.categories,
     this.isPremium = false,
     this.stats = const VideoStats(
       totalViews: 0,
@@ -48,7 +46,7 @@ class SeekerProfileLoaded extends ProfileState {
   });
 
   @override
-  List<Object?> get props => [profile, categories, isPremium, stats, presentationVideo];
+  List<Object?> get props => [profile, isPremium, stats, presentationVideo];
 }
 
 /// Admin profile loaded - minimal state for admin users

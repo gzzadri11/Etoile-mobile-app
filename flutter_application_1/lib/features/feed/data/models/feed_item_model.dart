@@ -19,13 +19,6 @@ class FeedItem extends Equatable {
   // Filterable fields
   final String? region;
   final String? city;
-  final List<String> categories;
-  final List<String> contractTypes;
-  final String? availability;
-
-  // Role-specific filterable fields
-  final String? experienceLevel;
-  final String? salaryExpectation;
   final String? sector;
   final String? specialty;
   final String? studyLevel;
@@ -40,11 +33,6 @@ class FeedItem extends Equatable {
     this.isVerified = false,
     this.region,
     this.city,
-    this.categories = const [],
-    this.contractTypes = const [],
-    this.availability,
-    this.experienceLevel,
-    this.salaryExpectation,
     this.sector,
     this.specialty,
     this.studyLevel,
@@ -61,11 +49,6 @@ class FeedItem extends Equatable {
         isVerified,
         region,
         city,
-        categories,
-        contractTypes,
-        availability,
-        experienceLevel,
-        salaryExpectation,
         sector,
         specialty,
         studyLevel,
@@ -74,58 +57,30 @@ class FeedItem extends Equatable {
 
 /// Feed filter options
 class FeedFilters extends Equatable {
-  final String? categoryId;
-  final String? categoryName;
   final String? region;
-  final String? contractType;
-  final String? availability;
-
-  // Role-specific filters
   final String? sector;
   final String? specialty;
   final String? city;
   final String? studyLevel;
-  final String? experienceLevel;
-  final String? salaryRange;
 
   const FeedFilters({
-    this.categoryId,
-    this.categoryName,
     this.region,
-    this.contractType,
-    this.availability,
     this.sector,
     this.specialty,
     this.city,
     this.studyLevel,
-    this.experienceLevel,
-    this.salaryRange,
   });
 
   const FeedFilters.empty()
-      : categoryId = null,
-        categoryName = null,
-        region = null,
-        contractType = null,
-        availability = null,
+      : region = null,
         sector = null,
         specialty = null,
         city = null,
-        studyLevel = null,
-        experienceLevel = null,
-        salaryRange = null;
+        studyLevel = null;
 
   FeedFilters copyWith({
-    String? categoryId,
-    bool clearCategoryId = false,
-    String? categoryName,
-    bool clearCategoryName = false,
     String? region,
     bool clearRegion = false,
-    String? contractType,
-    bool clearContractType = false,
-    String? availability,
-    bool clearAvailability = false,
     String? sector,
     bool clearSector = false,
     String? specialty,
@@ -134,53 +89,31 @@ class FeedFilters extends Equatable {
     bool clearCity = false,
     String? studyLevel,
     bool clearStudyLevel = false,
-    String? experienceLevel,
-    bool clearExperienceLevel = false,
-    String? salaryRange,
-    bool clearSalaryRange = false,
   }) {
     return FeedFilters(
-      categoryId: clearCategoryId ? null : (categoryId ?? this.categoryId),
-      categoryName: clearCategoryName ? null : (categoryName ?? this.categoryName),
       region: clearRegion ? null : (region ?? this.region),
-      contractType: clearContractType ? null : (contractType ?? this.contractType),
-      availability: clearAvailability ? null : (availability ?? this.availability),
       sector: clearSector ? null : (sector ?? this.sector),
       specialty: clearSpecialty ? null : (specialty ?? this.specialty),
       city: clearCity ? null : (city ?? this.city),
       studyLevel: clearStudyLevel ? null : (studyLevel ?? this.studyLevel),
-      experienceLevel: clearExperienceLevel ? null : (experienceLevel ?? this.experienceLevel),
-      salaryRange: clearSalaryRange ? null : (salaryRange ?? this.salaryRange),
     );
   }
 
   bool get hasFilters =>
-      categoryId != null ||
-      categoryName != null ||
       region != null ||
-      contractType != null ||
-      availability != null ||
       sector != null ||
       specialty != null ||
       city != null ||
-      studyLevel != null ||
-      experienceLevel != null ||
-      salaryRange != null;
+      studyLevel != null;
 
   FeedFilters clear() => const FeedFilters.empty();
 
   @override
   List<Object?> get props => [
-        categoryId,
-        categoryName,
         region,
-        contractType,
-        availability,
         sector,
         specialty,
         city,
         studyLevel,
-        experienceLevel,
-        salaryRange,
       ];
 }

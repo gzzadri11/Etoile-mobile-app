@@ -54,8 +54,6 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         offset: 0,
       );
 
-      final categories = await _feedRepository.getCategories();
-
       // Load applied video IDs for seekers
       Set<String> appliedVideoIds = {};
       if (event.userRole == 'seeker') {
@@ -68,7 +66,6 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
 
       emit(FeedLoaded(
         items: items,
-        categories: categories,
         hasMore: items.length >= _pageSize,
         filters: const FeedFilters.empty(),
         userRole: event.userRole,
@@ -134,10 +131,6 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         filters: filters,
       );
 
-      final categories = currentState is FeedLoaded
-          ? currentState.categories
-          : await _feedRepository.getCategories();
-
       // Reload applied video IDs for seekers
       Set<String> appliedVideoIds = currentState is FeedLoaded
           ? currentState.appliedVideoIds
@@ -150,7 +143,6 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
 
       emit(FeedLoaded(
         items: items,
-        categories: categories,
         hasMore: items.length >= _pageSize,
         filters: filters,
         userRole: role,
@@ -190,11 +182,8 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         filters: event.filters,
       );
 
-      final categories = await _feedRepository.getCategories();
-
       emit(FeedLoaded(
         items: items,
-        categories: categories,
         hasMore: items.length >= _pageSize,
         filters: event.filters,
         userRole: role,
