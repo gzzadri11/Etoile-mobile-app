@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
 **Date de mise a jour** : 2026-04-13
-**Statut** : Sprint 30 DONE — Nettoyage DB (4 tables + 17 colonnes DROP). App mobile = chercheurs only. SaaS web = recruteurs only. 73/73 tests, 0 issues analyze. 22/22 migrations deployees.
+**Statut** : Sprint 30 DONE + Camera 13.1 DONE (testee Android physique). App mobile = chercheurs only, prete pour store. SaaS web = recruteurs only, a construire. 73/73 tests, 0 issues analyze. 22/22 migrations deployees.
 
 ---
 
@@ -30,8 +30,8 @@
 - Source brainstorming : `saas-etoile/` (47 idees, 4 phases)
 
 ### Prochaines etapes
-1. **App mobile** : tester camera (Story 13.1), preparation store listing
-2. **SaaS web** : init projet Next.js, migrations DB (~5 tables), pages core, integration
+1. **App mobile** : ~~tester camera (Story 13.1)~~ DONE — preparation store listing (screenshots, description)
+2. **SaaS web** : init projet Next.js, migrations DB (~5 tables), pages core, integration ← **EN COURS**
 
 ---
 
@@ -943,6 +943,7 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 | **27** | **Nettoyage codebase — doc FR ~98 fichiers, suppression 725 lignes mortes, reduction debugPrints** | **DONE** |
 | **29** | **Username @pseudo chercheur — migration SQL, modele, formulaire, verification unicite temps reel** | **DONE** |
 | **30** | **Nettoyage DB — DROP 4 tables + 17 colonnes, suppression 3 fichiers orphelins, retrait categories du code** | **DONE** |
+| **13.1** | **Camera in-app — testee et validee sur Android physique** | **DONE** |
 
 ### Prochains sprints
 
@@ -951,7 +952,7 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 - [x] ~~Ajouter champ username (@pseudo) dans le profil chercheur~~
 - [x] ~~Deployer migrations username~~
 - [x] ~~Nettoyage DB : tables/colonnes/fichiers inutilises~~
-- [ ] Story 13.1 : Camera in-app (8 pts, emulateur requis)
+- [x] Story 13.1 : Camera in-app (8 pts) — DONE (testee Android physique 2026-04-13)
 - [ ] Preparation store (screenshots, description, soumission)
 
 **Track 2 : SaaS Web (Recruteur)**
@@ -1013,5 +1014,5 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 
 ---
 
-*Sauvegarde mise a jour le 2026-04-13*
-*Sprint 30 TERMINE. Nettoyage DB post-pivot : 4 tables DROP (purchases, notification_log, admin_secrets, push_tokens), 17 colonnes DROP (10 seeker + 6 recruiter + 1 videos), 3 fichiers orphelins supprimes, categories retire du code Dart. 73/73 tests pass, 0 issues analyze. 22/22 migrations deployees. Next: Camera in-app (Story 13.1) + preparation store.*
+*Sauvegarde mise a jour le 2026-04-14*
+*Sprint 30 TERMINE + Story 13.1 Camera DONE (Android physique). App mobile prete pour store. Next: Init SaaS Next.js (Track 2 recruteurs) + preparation store listing.*
