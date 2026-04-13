@@ -16,7 +16,22 @@
       "Bash(curl:*)",
       "Bash(npx wrangler:*)",
       "Bash(flutter test:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git grep:*)",
+      "Bash(flutter emulators:*)",
+      "Bash(\"C:\\\\Users\\\\gzzad\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\emulator\\\\emulator.exe\" -list-avds)",
+      "Bash(dir:*)",
+      "WebSearch",
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(node --version:*)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(del:*)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm run build:*)",
+      "Bash(git rm:*)"
     ]
   }
 }
