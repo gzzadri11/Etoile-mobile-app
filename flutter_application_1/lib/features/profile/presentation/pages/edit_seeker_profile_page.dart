@@ -27,7 +27,7 @@ import '../../data/models/seeker_profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../bloc/profile_bloc.dart';
 
-/// Page for editing seeker profile (beta: alternance IdF)
+/// Page for editing seeker profile (alternance France)
 class EditSeekerProfilePage extends StatefulWidget {
   const EditSeekerProfilePage({super.key});
 
@@ -48,6 +48,8 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
   String? _selectedDomain;
   String? _selectedSpecialty;
   String? _selectedCity;
+  double? _selectedLatitude;
+  double? _selectedLongitude;
 
   Uint8List? _pickedPhotoBytes;
   String? _pickedPhotoExtension;
@@ -224,6 +226,8 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
         ? profile.specialty
         : null;
     _selectedCity = profile.city;
+    _selectedLatitude = profile.latitude;
+    _selectedLongitude = profile.longitude;
     _existingPhotoUrl = profile.photoUrl;
 
     _isInitialized = true;
@@ -264,6 +268,8 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
       username: _usernameController.text.trim().toLowerCase(),
       age: _selectedAge,
       city: _selectedCity ?? '',
+      latitude: _selectedLatitude,
+      longitude: _selectedLongitude,
       school: _schoolController.text.trim(),
       studyLevel: _selectedStudyLevel,
       domain: _selectedDomain,
@@ -578,21 +584,16 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
 
                   // --- Location section ---
                   _buildSectionTitle('Localisation'),
-                  const SizedBox(height: AppTheme.spaceSm),
-                  Text(
-                    'Île-de-France uniquement',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.greyWarm,
-                        ),
-                  ),
                   const SizedBox(height: AppTheme.spaceMd),
 
                   CityAutocompleteField(
                     initialValue: _selectedCity,
                     label: 'Ville',
-                    onCitySelected: (city) {
+                    onCitySelected: (city, lat, lng) {
                       setState(() {
                         _selectedCity = city;
+                        _selectedLatitude = lat;
+                        _selectedLongitude = lng;
                       });
                     },
                   ),

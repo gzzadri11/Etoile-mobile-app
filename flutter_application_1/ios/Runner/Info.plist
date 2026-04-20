@@ -41,6 +41,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Etoile utilise votre position pour trouver les offres proches de vous.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>ETOILE a besoin d'accéder à votre caméra pour enregistrer votre vidéo de présentation.</string>
 	<key>NSMicrophoneUsageDescription</key>

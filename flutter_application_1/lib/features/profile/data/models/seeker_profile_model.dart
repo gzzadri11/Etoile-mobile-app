@@ -22,6 +22,10 @@ class SeekerProfile extends Equatable {
   final String? domain;
   final String? specialty;
 
+  // Coordinates (from city autocomplete)
+  final double? latitude;
+  final double? longitude;
+
   // Username (@pseudo unique pour identification SaaS)
   final String? username;
 
@@ -42,6 +46,8 @@ class SeekerProfile extends Equatable {
     this.studyLevel,
     this.domain,
     this.specialty,
+    this.latitude,
+    this.longitude,
     this.username,
     this.photoUrl,
     required this.createdAt,
@@ -107,6 +113,8 @@ class SeekerProfile extends Equatable {
       studyLevel: json['study_level'] as String?,
       domain: json['domain'] as String?,
       specialty: json['specialty'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       username: json['username'] as String?,
       photoUrl: json['photo_url'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -126,6 +134,8 @@ class SeekerProfile extends Equatable {
       'study_level': studyLevel,
       'domain': domain,
       'specialty': specialty,
+      'latitude': latitude,
+      'longitude': longitude,
       'username': username,
       'photo_url': photoUrl,
     };
@@ -142,6 +152,8 @@ class SeekerProfile extends Equatable {
     String? studyLevel,
     String? domain,
     String? specialty,
+    double? latitude,
+    double? longitude,
     String? username,
     String? photoUrl,
   }) {
@@ -156,6 +168,8 @@ class SeekerProfile extends Equatable {
       studyLevel: studyLevel ?? this.studyLevel,
       domain: domain ?? this.domain,
       specialty: specialty ?? this.specialty,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       username: username ?? this.username,
       photoUrl: photoUrl ?? this.photoUrl,
       createdAt: createdAt,
@@ -175,6 +189,8 @@ class SeekerProfile extends Equatable {
         studyLevel,
         domain,
         specialty,
+        latitude,
+        longitude,
         username,
         photoUrl,
       ];

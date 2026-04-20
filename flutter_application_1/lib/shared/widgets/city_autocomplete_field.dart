@@ -1,19 +1,19 @@
 library;
 
-/// Champ d'autocompletion de ville filtre sur l'Ile-de-France.
+/// Champ d'autocompletion de ville filtre sur la France metropolitaine.
 ///
-/// Utilise l'API Photon (OpenStreetMap) avec bbox IdF.
+/// Utilise l'API Photon (OpenStreetMap) avec bbox France.
 
 import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
-/// Autocompletion ville IdF via Photon API (debounce 400ms).
-/// Returns the selected city name via [onCitySelected].
+/// Autocompletion ville France via Photon API (debounce 400ms).
+/// Returns the selected city name (+ optional lat/lng) via [onCitySelected].
 class CityAutocompleteField extends StatefulWidget {
   final String? initialValue;
-  final ValueChanged<String> onCitySelected;
+  final void Function(String city, double? lat, double? lng) onCitySelected;
   final String label;
 
   const CityAutocompleteField({
@@ -35,8 +35,8 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
   bool _searching = false;
   bool _hasSelected = false;
 
-  // Île-de-France bounding box (SW lon, SW lat, NE lon, NE lat)
-  static const _idfBbox = '1.44,48.12,3.56,49.24';
+  // France metropolitaine bounding box (SW lon, SW lat, NE lon, NE lat)
+  static const _franceBbox = '-5.14,41.33,9.56,51.09';
 
   @override
   void initState() {
@@ -80,7 +80,7 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
           'q': query,
           'limit': '5',
           'lang': 'fr',
-          'bbox': _idfBbox,
+          'bbox': _franceBbox,
         },
       );
 
@@ -95,7 +95,17 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
         final postcode = props['postcode'] as String?;
         final state = props['state'] as String?;
 
-        // Build display label: "Paris (75001)" or "Creteil (94000)"
+        // Extract coordinates from GeoJSON (lon, lat)
+        final geometry = feature['geometry'] as Map<String, dynamic>?;
+        final coords = geometry?['coordinates'] as List<dynamic>?;
+        final double? lng = coords != null && coords.length >= 2
+            ? (coords[0] as num).toDouble()
+            : null;
+        final double? lat = coords != null && coords.length >= 2
+            ? (coords[1] as num).toDouble()
+            : null;
+
+        // Build display label: "Paris (75001)" or "Lyon (69001)"
         final label = StringBuffer(city);
         if (postcode != null && postcode.isNotEmpty) {
           label.write(' ($postcode)');
@@ -110,6 +120,8 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
           city: city,
           postcode: postcode,
           state: state,
+          latitude: lat,
+          longitude: lng,
         ));
       }
 
@@ -130,7 +142,7 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
       _suggestions = [];
       _hasSelected = true;
     });
-    widget.onCitySelected(suggestion.city);
+    widget.onCitySelected(suggestion.city, suggestion.latitude, suggestion.longitude);
     _focusNode.unfocus();
   }
 
@@ -203,11 +215,15 @@ class _CitySuggestion {
   final String city;
   final String? postcode;
   final String? state;
+  final double? latitude;
+  final double? longitude;
 
   const _CitySuggestion({
     required this.label,
     required this.city,
     this.postcode,
     this.state,
+    this.latitude,
+    this.longitude,
   });
 }

@@ -80,7 +80,7 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
                   ),
                   const SizedBox(height: AppTheme.spaceSm),
                   Text(
-                    'Sélectionnez un secteur pour découvrir les offres en Île-de-France',
+                    'Sélectionnez un secteur pour découvrir les offres',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.greyWarm,
                         ),
@@ -144,60 +144,6 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
                 onChanged: (value) => setState(() => _selectedSpecialty = value),
               ),
             ],
-
-            const SizedBox(height: AppTheme.spaceLg),
-
-            // Location indicator (fixed for beta)
-            Text(
-              'Localisation',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: AppTheme.spaceMd),
-
-            Container(
-              padding: const EdgeInsets.all(AppTheme.spaceMd),
-              decoration: BoxDecoration(
-                color: AppColors.primaryYellow.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                border: Border.all(
-                  color: AppColors.primaryYellow.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const ExcludeSemantics(
-                    child: Icon(
-                      Icons.location_on,
-                      color: AppColors.primaryOrange,
-                    ),
-                  ),
-                  const SizedBox(width: AppTheme.spaceSm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Île-de-France',
-                          style:
-                              Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        Text(
-                          'Zone bêta — bientôt d\'autres régions',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.greyWarm,
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
 
             const SizedBox(height: AppTheme.spaceLg * 2),
 

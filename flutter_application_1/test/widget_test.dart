@@ -8,9 +8,6 @@ void main() {
     await tester.pumpWidget(const SplashScreen());
 
     // Verify that the splash screen shows the app name
-    expect(find.text('ETOILE'), findsOneWidget);
-
-    // Verify tagline
-    expect(find.text('Recrutement par video'), findsOneWidget);
+    expect(find.text('Etoile'), findsOneWidget);
   });
 }

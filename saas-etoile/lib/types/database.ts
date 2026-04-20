@@ -17,6 +17,8 @@ export interface RecruiterProfile {
   description: string | null;
   sector: string | null;
   locations: string[];
+  latitude: number | null;
+  longitude: number | null;
   verification_status: "pending" | "verified" | "rejected";
   verified_at: string | null;
   rejection_reason: string | null;
@@ -36,6 +38,8 @@ export interface SeekerProfile {
   school: string | null;
   study_level: string | null;
   city: string | null;
+  latitude: number | null;
+  longitude: number | null;
   domain: string | null;
   specialty: string | null;
   created_at: string;

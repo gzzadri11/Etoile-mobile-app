@@ -1,7 +1,7 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-04-14
-**Statut** : Sprint 30 DONE + Camera 13.1 DONE + **Sprint SaaS-1 DONE** (init Next.js). App mobile = chercheurs only, prete pour store. SaaS web = fondations posees (auth + layout + dashboard placeholder). 73/73 tests Flutter, 0 issues analyze, build Next.js OK. 22/22 migrations deployees.
+**Date de mise a jour** : 2026-04-20
+**Statut** : Sprint 31 DONE + Sprint 30 DONE + Camera 13.1 DONE + **Sprint SaaS-1 DONE**. App mobile = chercheurs only, ouverte France entiere (plus IdF only). 85/85 tests Flutter, 0 issues analyze, build Next.js OK. 23/23 migrations deployees.
 
 ---
 
@@ -31,7 +31,57 @@
 
 ### Prochaines etapes
 1. **App mobile** : ~~tester camera (Story 13.1)~~ DONE — preparation store listing (screenshots, description)
-2. **SaaS web** : ~~init projet Next.js~~ DONE (Sprint SaaS-1) — **prochaine etape : Migrations DB (~5 tables) + Publication offres (Epic 11)** ← **EN COURS**
+2. **SaaS web** : ~~init projet Next.js~~ DONE (Sprint SaaS-1) — **prochaine etape : Migrations DB (~5 tables) + Publication offres (Epic 11)** ← **PROCHAIN**
+
+---
+
+## Ce qui a ete fait — Sprint 31 : Ouverture France + 15 secteurs + GPS proximite (2026-04-20)
+
+### Objectif
+Passer de la beta IdF (2 secteurs) a la France entiere (15 secteurs) avec filtre de proximite GPS.
+
+### Expansion des secteurs (2 → 15) — DONE
+- `sector_constants.dart` : 15 secteurs + ~55 specialites + labels complets
+- `saas-etoile/lib/constants/sectors.ts` : miroir TypeScript identique (70 codes, parite verifiee)
+- Feed : nouveau **picker secteur searchable** (bottom sheet avec barre de recherche) au lieu de 2 chips
+- Filtres specialites dynamiques : chips s'adaptent au secteur selectionne
+
+### Ouverture geographique IdF → France metropolitaine — DONE
+- `city_autocomplete_field.dart` : bbox `1.44,48.12,3.56,49.24` → `-5.14,41.33,9.56,51.09`
+- `search_page.dart` : suppression bloc "Ile-de-France / Zone beta"
+- `edit_seeker_profile_page.dart` : suppression label "Ile-de-France uniquement"
+- Callback ville enrichi : `onCitySelected(city, lat, lng)` — extrait coords GeoJSON Photon
+
+### Coordonnees GPS sur les profils — DONE
+- Migration SQL `20260419000000_add_coordinates.sql` : `latitude`/`longitude` sur `recruiter_profiles` + `seeker_profiles` + index conditionnel
+- `seeker_profile_model.dart` + `recruiter_profile_model.dart` : +`latitude`/`longitude` (fromJson/toJson/copyWith/props)
+- `database.ts` (SaaS) : miroir TypeScript
+- `edit_seeker_profile_page.dart` : sauvegarde lat/lng au choix de ville
+
+### Filtre de proximite GPS dans le feed — DONE
+- `feed_item_model.dart` : +`latitude`/`longitude` sur `FeedItem`, +`proximityKm`/`userLatitude`/`userLongitude` sur `FeedFilters`
+- `feed_repository.dart` : +`haversineDistance()` (Haversine formula), filtre proximite dans `_applySeekerFilters()`
+- `feed_page.dart` : section "A proximite" dans les filtres (chips 5/10/15/25/50 km)
+- Package `geolocator: ^13.0.2` pour position GPS utilisateur
+- `AndroidManifest.xml` : +`ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`
+- `Info.plist` : +`NSLocationWhenInUseUsageDescription`
+
+### Splash screen redesign — DONE
+- Fond blanc au lieu de gradient sombre, "Etoile" (minuscules) au lieu de "ETOILE"
+- Suppression tagline "Recrutement par video"
+- Animation simplifiee (fade 800ms, loading orange)
+
+### Tests — DONE
+- **Nouveau** : `test/features/feed/data/feed_proximity_test.dart` — 12 tests
+  - Haversine : Paris-Lyon ~392km, Paris-Creteil ~11km, Paris-Marseille ~661km, point identique = 0
+  - FeedFilters : hasFilters, copyWith proximite, clear, empty
+  - FeedItem : coords, null coords, equality
+- `widget_test.dart` : adapte pour "Etoile" au lieu de "ETOILE"
+
+### Resultats
+- **85/85 tests pass** (73 + 12 nouveaux), 0 issues flutter analyze
+- Build Next.js OK
+- Migration deployee (23/23 total)
 
 ---
 
@@ -1008,15 +1058,16 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 | **30** | **Nettoyage DB — DROP 4 tables + 17 colonnes, suppression 3 fichiers orphelins, retrait categories du code** | **DONE** |
 | **13.1** | **Camera in-app — testee et validee sur Android physique** | **DONE** |
 | **SaaS-1** | **Init Next.js recruteurs — auth + layout + dashboard placeholder** | **DONE** |
+| **31** | **Ouverture France + 15 secteurs + GPS proximite + splash redesign** | **DONE** |
 
 ### Prochains sprints
 
 **Track 1 : App Mobile (Chercheur only)**
 - [x] ~~Nettoyer/masquer le code recruteur dans l'app Flutter~~
 - [x] ~~Ajouter champ username (@pseudo) dans le profil chercheur~~
-- [x] ~~Deployer migrations username~~
 - [x] ~~Nettoyage DB : tables/colonnes/fichiers inutilises~~
-- [x] Story 13.1 : Camera in-app (8 pts) — DONE (testee Android physique 2026-04-13)
+- [x] Story 13.1 : Camera in-app DONE
+- [x] Ouverture France + 15 secteurs + GPS proximite (Sprint 31) DONE
 - [ ] Preparation store (screenshots, description, soumission)
 
 **Track 2 : SaaS Web (Recruteur)**
@@ -1031,7 +1082,7 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 - [ ] Beta recruteurs (5-10 invites)
 
 **Infra**
-- ~~Deployer migrations SQL~~ — **FAIT** (22/22 synchronisees)
+- ~~Deployer migrations SQL~~ — **FAIT** (23/23 synchronisees)
 - Stripe : rester en mode test pendant la beta, passage prod avant soumission store (KYC 1-3j)
 - Tous les pre-requis infra sont deployes (migrations, OTP, admin, bucket, Edge Functions, RLS)
 

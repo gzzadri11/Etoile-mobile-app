@@ -5,6 +5,7 @@ library;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
@@ -881,11 +882,58 @@ class _FilterSheet extends StatefulWidget {
 
 class _FilterSheetState extends State<_FilterSheet> {
   late FeedFilters _filters;
+  bool _gpsAvailable = false;
+  bool _gpsChecking = true;
+  Position? _cachedPosition;
 
   @override
   void initState() {
     super.initState();
     _filters = widget.currentFilters;
+    _checkGps();
+  }
+
+  Future<void> _checkGps() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) setState(() => _gpsChecking = false);
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (mounted) setState(() => _gpsChecking = false);
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+        ),
+      );
+      _cachedPosition = position;
+
+      if (mounted) {
+        setState(() {
+          _gpsAvailable = true;
+          _gpsChecking = false;
+          // Pre-fill user coordinates into filters
+          _filters = _filters.copyWith(
+            userLatitude: position.latitude,
+            userLongitude: position.longitude,
+          );
+        });
+      }
+    } catch (e) {
+      debugPrint('GPS error: $e');
+      if (mounted) setState(() => _gpsChecking = false);
+    }
   }
 
   @override
@@ -976,30 +1024,46 @@ class _FilterSheetState extends State<_FilterSheet> {
     );
   }
 
-  /// Seeker filters (beta): Secteur + Spécialité
+  /// Seeker filters: Secteur (searchable) + Spécialité (chips)
   List<Widget> _buildSeekerFilters() {
     final specialties = SectorConstants.getSpecialtiesForSector(_filters.sector);
     return [
-      _FilterSection(
-        title: 'Secteur',
-        options: const [
-          'commerce_vente',
-          'restauration_hotellerie',
+      // Sector picker (ListTile → modal bottom sheet)
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Secteur',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: AppTheme.spaceSm),
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceSm),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              side: BorderSide(color: AppColors.greyMedium.withValues(alpha: 0.5)),
+            ),
+            title: Text(
+              _filters.sector != null
+                  ? SectorConstants.getSectorLabel(_filters.sector)
+                  : 'Tous les secteurs',
+              style: TextStyle(
+                color: _filters.sector != null ? null : AppColors.greyWarm,
+              ),
+            ),
+            trailing: _filters.sector != null
+                ? IconButton(
+                    icon: const Icon(Icons.clear, size: 20),
+                    onPressed: () {
+                      setState(() {
+                        _filters = _filters.copyWith(clearSector: true, clearSpecialty: true);
+                      });
+                    },
+                  )
+                : const Icon(Icons.chevron_right),
+            onTap: () => _showSectorPicker(),
+          ),
         ],
-        optionLabels: const {
-          'commerce_vente': 'Commerce / Vente',
-          'restauration_hotellerie': 'Restauration / Hôtellerie',
-        },
-        selectedValue: _filters.sector,
-        onChanged: (value) {
-          setState(() {
-            if (value == null) {
-              _filters = _filters.copyWith(clearSector: true, clearSpecialty: true);
-            } else {
-              _filters = _filters.copyWith(sector: value, clearSpecialty: true);
-            }
-          });
-        },
       ),
       if (specialties.isNotEmpty) ...[
         const SizedBox(height: AppTheme.spaceMd),
@@ -1021,7 +1085,102 @@ class _FilterSheetState extends State<_FilterSheet> {
           },
         ),
       ],
+      const SizedBox(height: AppTheme.spaceMd),
+      _buildProximitySection(),
     ];
+  }
+
+  /// Build proximity filter section
+  Widget _buildProximitySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'À proximité',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: AppTheme.spaceSm),
+        if (_gpsChecking)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppTheme.spaceSm),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: AppTheme.spaceSm),
+                Text('Localisation en cours...'),
+              ],
+            ),
+          )
+        else if (!_gpsAvailable)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppTheme.spaceSm),
+            child: Row(
+              children: [
+                const Icon(Icons.location_off, size: 18, color: AppColors.greyWarm),
+                const SizedBox(width: AppTheme.spaceSm),
+                Text(
+                  'Activez la localisation pour filtrer',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.greyWarm,
+                      ),
+                ),
+              ],
+            ),
+          )
+        else
+          Wrap(
+            spacing: AppTheme.spaceSm,
+            runSpacing: AppTheme.spaceSm,
+            children: [5.0, 10.0, 15.0, 25.0, 50.0].map((km) {
+              final isSelected = _filters.proximityKm == km;
+              return FilterChip(
+                label: Text('${km.toInt()} km'),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _filters = _filters.copyWith(
+                        proximityKm: km,
+                        userLatitude: _cachedPosition?.latitude,
+                        userLongitude: _cachedPosition?.longitude,
+                      );
+                    } else {
+                      _filters = _filters.copyWith(
+                        clearProximityKm: true,
+                        clearUserLatitude: true,
+                        clearUserLongitude: true,
+                      );
+                    }
+                  });
+                },
+                selectedColor: AppColors.tagBackground,
+                checkmarkColor: AppColors.primaryOrange,
+              );
+            }).toList(),
+          ),
+      ],
+    );
+  }
+
+  /// Show searchable sector picker bottom sheet
+  void _showSectorPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _SectorPickerSheet(
+        selectedSector: _filters.sector,
+        onSectorSelected: (sector) {
+          setState(() {
+            _filters = _filters.copyWith(sector: sector, clearSpecialty: true);
+          });
+          Navigator.pop(context);
+        },
+      ),
+    );
   }
 
 }
@@ -1069,6 +1228,125 @@ class _FilterSection extends StatelessWidget {
           }).toList(),
         ),
       ],
+    );
+  }
+}
+
+/// Searchable sector picker bottom sheet
+class _SectorPickerSheet extends StatefulWidget {
+  final String? selectedSector;
+  final ValueChanged<String> onSectorSelected;
+
+  const _SectorPickerSheet({
+    required this.selectedSector,
+    required this.onSectorSelected,
+  });
+
+  @override
+  State<_SectorPickerSheet> createState() => _SectorPickerSheetState();
+}
+
+class _SectorPickerSheetState extends State<_SectorPickerSheet> {
+  final _searchController = TextEditingController();
+  List<String> _filtered = SectorConstants.sectorOptions;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearch);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearch() {
+    final query = _searchController.text.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filtered = SectorConstants.sectorOptions;
+      } else {
+        _filtered = SectorConstants.sectorOptions.where((code) {
+          final label = SectorConstants.getSectorLabel(code).toLowerCase();
+          return label.contains(query);
+        }).toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.3,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppTheme.radiusXl),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: AppTheme.spaceMd),
+                decoration: BoxDecoration(
+                  color: AppColors.greyMedium,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(AppTheme.spaceMd),
+                child: Text(
+                  'Choisir un secteur',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceMd),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Rechercher un secteur...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: AppTheme.spaceSm),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spaceSm),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemCount: _filtered.length,
+                  itemBuilder: (context, index) {
+                    final code = _filtered[index];
+                    final isSelected = code == widget.selectedSector;
+                    return ListTile(
+                      title: Text(SectorConstants.getSectorLabel(code)),
+                      trailing: isSelected
+                          ? const Icon(Icons.check, color: AppColors.primaryOrange)
+                          : null,
+                      selected: isSelected,
+                      onTap: () => widget.onSectorSelected(code),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

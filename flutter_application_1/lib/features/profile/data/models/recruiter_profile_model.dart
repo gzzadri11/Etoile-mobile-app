@@ -21,6 +21,8 @@ class RecruiterProfile extends Equatable {
   final String? description;
   final String? sector;
   final List<String> locations;
+  final double? latitude;
+  final double? longitude;
   final String verificationStatus;
   final DateTime? verifiedAt;
   final String? rejectionReason;
@@ -42,6 +44,8 @@ class RecruiterProfile extends Equatable {
     this.description,
     this.sector,
     this.locations = const [],
+    this.latitude,
+    this.longitude,
     this.verificationStatus = 'pending',
     this.verifiedAt,
     this.rejectionReason,
@@ -109,6 +113,8 @@ class RecruiterProfile extends Equatable {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       verificationStatus: json['verification_status'] as String? ?? 'pending',
       verifiedAt: json['verified_at'] != null
           ? DateTime.parse(json['verified_at'] as String)
@@ -134,6 +140,8 @@ class RecruiterProfile extends Equatable {
       'description': description,
       'sector': sector,
       'locations': locations,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 
@@ -150,6 +158,8 @@ class RecruiterProfile extends Equatable {
     String? description,
     String? sector,
     List<String>? locations,
+    double? latitude,
+    double? longitude,
     String? verificationStatus,
     int? videoCredits,
     int? posterCredits,
@@ -167,6 +177,8 @@ class RecruiterProfile extends Equatable {
       description: description ?? this.description,
       sector: sector ?? this.sector,
       locations: locations ?? this.locations,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       verificationStatus: verificationStatus ?? this.verificationStatus,
       verifiedAt: verifiedAt,
       rejectionReason: rejectionReason,
@@ -190,6 +202,8 @@ class RecruiterProfile extends Equatable {
         description,
         sector,
         locations,
+        latitude,
+        longitude,
         verificationStatus,
         videoCredits,
         posterCredits,

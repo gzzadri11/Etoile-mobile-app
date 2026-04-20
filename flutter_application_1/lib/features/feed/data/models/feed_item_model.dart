@@ -6,7 +6,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../video/data/models/video_model.dart';
 
-/// Element du feed : video, nom, secteur, photo, ville.
+/// Element du feed : video, nom, secteur, photo, ville, coordonnees.
 class FeedItem extends Equatable {
   final Video video;
   final String userName;
@@ -23,6 +23,10 @@ class FeedItem extends Equatable {
   final String? specialty;
   final String? studyLevel;
 
+  // Coordinates for proximity filter
+  final double? latitude;
+  final double? longitude;
+
   const FeedItem({
     required this.video,
     required this.userName,
@@ -36,6 +40,8 @@ class FeedItem extends Equatable {
     this.sector,
     this.specialty,
     this.studyLevel,
+    this.latitude,
+    this.longitude,
   });
 
   @override
@@ -52,6 +58,8 @@ class FeedItem extends Equatable {
         sector,
         specialty,
         studyLevel,
+        latitude,
+        longitude,
       ];
 }
 
@@ -62,6 +70,9 @@ class FeedFilters extends Equatable {
   final String? specialty;
   final String? city;
   final String? studyLevel;
+  final double? proximityKm;
+  final double? userLatitude;
+  final double? userLongitude;
 
   const FeedFilters({
     this.region,
@@ -69,6 +80,9 @@ class FeedFilters extends Equatable {
     this.specialty,
     this.city,
     this.studyLevel,
+    this.proximityKm,
+    this.userLatitude,
+    this.userLongitude,
   });
 
   const FeedFilters.empty()
@@ -76,7 +90,10 @@ class FeedFilters extends Equatable {
         sector = null,
         specialty = null,
         city = null,
-        studyLevel = null;
+        studyLevel = null,
+        proximityKm = null,
+        userLatitude = null,
+        userLongitude = null;
 
   FeedFilters copyWith({
     String? region,
@@ -89,6 +106,12 @@ class FeedFilters extends Equatable {
     bool clearCity = false,
     String? studyLevel,
     bool clearStudyLevel = false,
+    double? proximityKm,
+    bool clearProximityKm = false,
+    double? userLatitude,
+    bool clearUserLatitude = false,
+    double? userLongitude,
+    bool clearUserLongitude = false,
   }) {
     return FeedFilters(
       region: clearRegion ? null : (region ?? this.region),
@@ -96,6 +119,9 @@ class FeedFilters extends Equatable {
       specialty: clearSpecialty ? null : (specialty ?? this.specialty),
       city: clearCity ? null : (city ?? this.city),
       studyLevel: clearStudyLevel ? null : (studyLevel ?? this.studyLevel),
+      proximityKm: clearProximityKm ? null : (proximityKm ?? this.proximityKm),
+      userLatitude: clearUserLatitude ? null : (userLatitude ?? this.userLatitude),
+      userLongitude: clearUserLongitude ? null : (userLongitude ?? this.userLongitude),
     );
   }
 
@@ -104,7 +130,8 @@ class FeedFilters extends Equatable {
       sector != null ||
       specialty != null ||
       city != null ||
-      studyLevel != null;
+      studyLevel != null ||
+      proximityKm != null;
 
   FeedFilters clear() => const FeedFilters.empty();
 
@@ -115,5 +142,8 @@ class FeedFilters extends Equatable {
         specialty,
         city,
         studyLevel,
+        proximityKm,
+        userLatitude,
+        userLongitude,
       ];
 }

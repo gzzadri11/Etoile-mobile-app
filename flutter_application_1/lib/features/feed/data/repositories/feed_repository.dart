@@ -2,6 +2,9 @@ library;
 
 /// Repository du feed video avec pagination et filtres.
 
+import 'dart:math';
+
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/feed_item_model.dart';
@@ -94,6 +97,8 @@ class FeedRepository {
         isVerified: true,
         region: _getFirstLocation(recruiterProfile['locations'] as List<dynamic>?),
         sector: recruiterProfile['sector'] as String?,
+        latitude: (recruiterProfile['latitude'] as num?)?.toDouble(),
+        longitude: (recruiterProfile['longitude'] as num?)?.toDouble(),
       ));
     }
 
@@ -158,6 +163,8 @@ class FeedRepository {
         isVerified: true,
         region: _getFirstLocation(recruiterProfile['locations'] as List<dynamic>?),
         sector: recruiterProfile['sector'] as String?,
+        latitude: (recruiterProfile['latitude'] as num?)?.toDouble(),
+        longitude: (recruiterProfile['longitude'] as num?)?.toDouble(),
       ));
     }
 
@@ -295,10 +302,16 @@ class FeedRepository {
   /// Apply filters for seeker feed (filtering recruiter videos)
   List<FeedItem> _applySeekerFilters(List<FeedItem> items, FeedFilters filters) {
     return items.where((item) {
-      // Filter by sector
+      // Filter by sector (exact match)
       if (filters.sector != null && filters.sector!.isNotEmpty) {
-        if (item.sector == null ||
-            !item.sector!.toLowerCase().contains(filters.sector!.toLowerCase())) {
+        if (item.sector == null || item.sector != filters.sector) {
+          return false;
+        }
+      }
+
+      // Filter by specialty (exact match)
+      if (filters.specialty != null && filters.specialty!.isNotEmpty) {
+        if (item.specialty == null || item.specialty != filters.specialty) {
           return false;
         }
       }
@@ -312,6 +325,20 @@ class FeedRepository {
             !itemLocation.contains(filterRegion)) {
           return false;
         }
+      }
+
+      // Filter by proximity (Haversine)
+      if (filters.proximityKm != null &&
+          filters.userLatitude != null &&
+          filters.userLongitude != null) {
+        if (item.latitude == null || item.longitude == null) return false;
+        final distance = haversineDistance(
+          filters.userLatitude!,
+          filters.userLongitude!,
+          item.latitude!,
+          item.longitude!,
+        );
+        if (distance > filters.proximityKm!) return false;
       }
 
       return true;
@@ -334,8 +361,7 @@ class FeedRepository {
       }
 
       if (filters.sector != null && filters.sector!.isNotEmpty) {
-        if (item.sector == null ||
-            !item.sector!.toLowerCase().contains(filters.sector!.toLowerCase())) {
+        if (item.sector == null || item.sector != filters.sector) {
           return false;
         }
       }
@@ -380,6 +406,24 @@ class FeedRepository {
     sectors.sort();
     return sectors;
   }
+
+  /// Haversine distance in km between two coordinates.
+  @visibleForTesting
+  static double haversineDistance(
+      double lat1, double lon1, double lat2, double lon2) {
+    const earthRadius = 6371.0; // km
+    final dLat = _toRadians(lat2 - lat1);
+    final dLon = _toRadians(lon2 - lon1);
+    final a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(_toRadians(lat1)) *
+            cos(_toRadians(lat2)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
+    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return earthRadius * c;
+  }
+
+  static double _toRadians(double degrees) => degrees * pi / 180;
 
   /// Record a video view
   Future<void> recordView({
