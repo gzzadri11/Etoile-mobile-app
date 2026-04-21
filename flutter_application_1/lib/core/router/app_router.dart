@@ -311,6 +311,15 @@ class AppRouter {
               initialSpecialty: qp['specialty'],
               initialCity: qp['city'],
               initialStudyLevel: qp['studyLevel'],
+              initialProximityKm: qp['proximityKm'] != null
+                  ? double.tryParse(qp['proximityKm']!)
+                  : null,
+              initialUserLat: qp['userLat'] != null
+                  ? double.tryParse(qp['userLat']!)
+                  : null,
+              initialUserLng: qp['userLng'] != null
+                  ? double.tryParse(qp['userLng']!)
+                  : null,
             ),
           );
         },

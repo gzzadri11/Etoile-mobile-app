@@ -35,6 +35,9 @@ class FeedPage extends StatelessWidget {
   final String? initialSpecialty;
   final String? initialCity;
   final String? initialStudyLevel;
+  final double? initialProximityKm;
+  final double? initialUserLat;
+  final double? initialUserLng;
 
   const FeedPage({
     super.key,
@@ -42,6 +45,9 @@ class FeedPage extends StatelessWidget {
     this.initialSpecialty,
     this.initialCity,
     this.initialStudyLevel,
+    this.initialProximityKm,
+    this.initialUserLat,
+    this.initialUserLng,
   });
 
   @override
@@ -56,7 +62,8 @@ class FeedPage extends StatelessWidget {
         final hasFilters = initialSector != null ||
             initialSpecialty != null ||
             initialCity != null ||
-            initialStudyLevel != null;
+            initialStudyLevel != null ||
+            initialProximityKm != null;
         if (hasFilters) {
           bloc.add(FeedFiltersChanged(
             filters: FeedFilters(
@@ -64,6 +71,9 @@ class FeedPage extends StatelessWidget {
               specialty: initialSpecialty,
               city: initialCity,
               studyLevel: initialStudyLevel,
+              proximityKm: initialProximityKm,
+              userLatitude: initialUserLat,
+              userLongitude: initialUserLng,
             ),
           ));
         }
