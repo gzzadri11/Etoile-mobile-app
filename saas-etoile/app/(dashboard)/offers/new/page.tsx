@@ -66,6 +66,15 @@ export default function NewOfferPage() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Cleanup blob URLs on unmount or when file changes
+  useEffect(() => {
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
   // Check verification status on mount
   useEffect(() => {
     async function checkAccess() {
@@ -105,11 +114,12 @@ export default function NewOfferPage() {
     const videoEl = document.createElement("video");
     videoEl.preload = "metadata";
     videoEl.onloadedmetadata = () => {
-      URL.revokeObjectURL(videoEl.src);
+      // Important: Don't revoke the URL yet - we need it for preview
       if (videoEl.duration > MAX_VIDEO_DURATION) {
         setError(`Oups ! Votre vidéo dure ${Math.round(videoEl.duration)}s, la limite est de ${MAX_VIDEO_DURATION}s. Essayez de la raccourcir un peu.`);
         setFile(null);
         setPreview(null);
+        URL.revokeObjectURL(url); // Only revoke if we reject the file
       } else {
         setVideoDuration(Math.round(videoEl.duration));
       }
@@ -339,6 +349,9 @@ export default function NewOfferPage() {
               <Button
                 variant="outline"
                 onClick={() => {
+                  if (preview) {
+                    URL.revokeObjectURL(preview);
+                  }
                   setFile(null);
                   setPreview(null);
                   setError(null);
