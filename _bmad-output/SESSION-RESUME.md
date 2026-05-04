@@ -1,7 +1,121 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-04-20
-**Statut** : Sprint 31 DONE + Sprint 30 DONE + Camera 13.1 DONE + **Sprint SaaS-1 DONE**. App mobile = chercheurs only, ouverte France entiere (plus IdF only). 85/85 tests Flutter, 0 issues analyze, build Next.js OK. 23/23 migrations deployees.
+**Date de mise a jour** : 2026-05-03
+**Statut** : **Session corrections UX + Compétences DONE**. 10 tasks terminées sur 12. Compétences chercheur ✅ (persistence Flutter + affichage SaaS + scoring 20%), Rythmes alternance (11 rythmes), Évaluations candidats (3 états), Filtres recherche (6 filtres). **30/30 migrations** déployées. 85/85 tests Flutter ✅, 0 erreur analyze, Next.js build ✅.
+
+---
+
+## SESSION 2026-05-03 : Corrections UX + Rythmes + Évaluations
+
+### Tasks complétées (10/12)
+- ✅ #1 : Messagerie temps réel (Epic 15)
+- ✅ #2 : Évaluation candidat 3 états (SaaS)
+- ✅ #3 : Recherche filtres globaux (Mobile - 6 filtres)
+- ✅ #4 : Feed bouton description TikTok
+- ✅ #5 : Profil compétences chercheur ✅ **VALIDÉ**
+- ✅ #6 : Splash screen violet
+- ✅ #7 : Messagerie bulles violet/gris
+- ✅ #9 : Contrats - supprimer Stage/Pro
+- ✅ #10 : Profil rythme alternance
+- ⏳ #8, #11, #12 : À faire
+
+### Rythmes d'alternance - Standardisation
+**Fichier créé** : `lib/core/constants/app_constants.dart`
+- **11 rythmes officiels** (hebdo, bi-hebdo, mensuel, blocs, personnalisé)
+- **Mappings bidirectionnels** : `rhythmShortToFull` (DB→UI) + `rhythmFullToShort` (UI→DB)
+- **Fichiers mis à jour** : search_page.dart, edit_seeker_profile_page.dart
+- **Cohérence** : source unique de vérité pour tous les rythmes
+
+### Task #2 : Évaluation candidats (SaaS Next.js)
+**Migration** : `20260503000002_create_candidate_evaluations.sql`
+- Table `candidate_evaluations` (rating: interested/neutral/not_interested, notes TEXT)
+- RLS policies : SELECT/INSERT/UPDATE/DELETE own evaluations
+- Index : recruiter_id, application_id
+
+**Server Actions** :
+- `saveEvaluation(applicationId, rating, notes)` - upsert pattern
+- `getEvaluation(applicationId)` - récupération
+
+**UI** : `components/candidates/candidate-modal.tsx`
+- Onglet "Évaluer" : 3 boutons rating (ThumbsUp/Minus/ThumbsDown)
+- Textarea notes privées avec auto-save au blur
+- Loading states + feedback visuel
+
+**Build** : ✅ Next.js production successful
+
+### Task #3 : Filtres recherche globaux (Mobile Flutter)
+**Ajout de 3 nouveaux filtres** dans SearchPage :
+1. **Niveau d'études** : Dropdown avec SectorConstants.studyLevelOptions
+2. **Ville** : CityAutocompleteField (API Adresse gouvernement, debounce 400ms)
+3. **Rythme** : 11 chips avec mapping complet
+
+**Modèle** : FeedFilters.rhythm ajouté (+ copyWith, hasFilters, props)
+**Transmission** : Query params sector/specialty/studyLevel/city/rhythm/proximityKm → FeedPage
+
+**Avant** : 3 filtres (secteur, spécialité, proximité)
+**Après** : 6 filtres (+ niveau, ville, rythme)
+
+### Task #10 : Rythme profil chercheur (Mobile Flutter)
+**Migration** : `20260503000001_add_seeker_rhythm.sql`
+- Colonne `seeker_profiles.rhythm VARCHAR` nullable
+- Comment : "Rythme d'alternance souhaité (3j/2j, 1sem/1sem, ...)"
+
+**Modèle** : SeekerProfile.rhythm
+- Ajouté : property, constructor, fromJson, toJson, copyWith, props
+
+**UI** : edit_seeker_profile_page.dart
+- Dropdown "Rythme d'alternance (optionnel)"
+- 11 options depuis rhythmShortToFull
+- Sauvegarde automatique avec le profil
+
+### Corrections UX Feed
+**Bouton "Description"** repositionné :
+- **Avant** : `bottom: 12` (chevauchement avec infos vidéo)
+- **Après** : `bottom: 130 + MediaQuery.padding.bottom` (au-dessus des infos)
+- **Icône** : `info_outline` (plus claire que keyboard_arrow_up)
+- **Alignement** : gauche (au lieu de centré)
+- **Style** : border blanche subtile pour contraste
+
+### Task #5 : Compétences chercheur ✅ VALIDÉ
+**Migration** : `20260503000003_add_skills_to_profiles.sql`
+- Colonne `seeker_profiles.skills TEXT[]` DEFAULT '{}'
+- Colonne `videos.keywords TEXT[]` DEFAULT '{}' (pour scoring)
+- Index GIN sur les deux colonnes
+- Fonction `calculate_match_score()` mise à jour : +20% skills matching
+
+**Flutter** : `lib/features/profile/presentation/pages/profile_page.dart`
+- Section interactive avec tags + bouton "+"
+- Bottom sheet pour ajouter compétences (TextField + validation)
+- Suppression individuelle par tag (icône close)
+- **Fix persistence** : dispatch `ProfileRefreshRequested()` après sauvegarde
+
+**SaaS** : `components/candidates/candidate-modal.tsx`
+- Affichage read-only badges violet clair
+- Condition `seeker.skills && seeker.skills.length > 0`
+- Debug console temporaire ajouté
+
+**Scoring** : Compétences = 20% du match total
+- Fuzzy matching case-insensitive
+- Score = (nb_matches / nb_keywords) * 20
+- Si offre sans keywords → 10/20 (neutre)
+- Si chercheur sans skills → 0/20
+
+**Statut** : ✅ Testé et validé (persistence Flutter + affichage SaaS OK)
+
+### Migrations déployées ✅
+1. ✅ `20260503000001_add_seeker_rhythm.sql`
+2. ✅ `20260503000002_create_candidate_evaluations.sql`
+3. ✅ `20260503000003_add_skills_to_profiles.sql`
+
+**Total** : 30/30 migrations déployées
+
+### Tests & Build
+- **Flutter** : 85/85 tests ✅ | 0 erreur analyze (2 info bénignes prefer_final_fields)
+- **Next.js** : Build production ✅ | TypeScript OK
+
+---
+
+## SESSION PRÉCÉDENTE 2026-05-02 : Epic 10 Phase 2 DONE
 
 ---
 
@@ -30,8 +144,539 @@
 - Source brainstorming : `saas-etoile/` (47 idees, 4 phases)
 
 ### Prochaines etapes
-1. **App mobile** : ~~tester camera (Story 13.1)~~ DONE — preparation store listing (screenshots, description)
-2. **SaaS web** : ~~init projet Next.js~~ DONE (Sprint SaaS-1) — **prochaine etape : Migrations DB (~5 tables) + Publication offres (Epic 11)** ← **PROCHAIN**
+1. **App mobile** : preparation store listing (screenshots, description)
+2. **SaaS web** : ~~Publication offres (Epic 11)~~ DONE + ~~Epic 12-15~~ DONE + ~~Epic 10 Phase 2~~ DONE — **prochaine etape : Epic 6 (Paiements Stripe) ou Epic 7 (Admin)** ← **À DÉFINIR**
+
+---
+
+## Ce qui a ete fait — Sprint SaaS-2 : Publication Offres (Epic 11) (2026-04-21)
+
+### Objectif
+Debloquer le flux complet : Recruteur publie offre → Chercheur postule (mobile) → Recruteur voit candidatures (SaaS).
+
+### Migration SQL — DONE
+- `20260421000000_video_sector.sql` : colonne `sector TEXT` sur `videos` + index conditionnel sur actives
+- A deployer via `supabase db push`
+
+### Composants Shadcn installes (7) — DONE
+- dialog, select, badge, textarea, progress, dropdown-menu, tooltip
+
+### Types & Constantes — DONE
+- `database.ts` : +`Video` + `Application` interfaces TypeScript
+- `contracts.ts` : types de contrat (alternance, stage, professionnalisation) + helper
+- `routes.ts` : +`OFFERS_NEW: "/offers/new"`
+
+### Systeme d'upload — DONE
+- `app/api/upload/presigned-url/route.ts` : proxy API route (session Supabase → Worker Cloudflare)
+- `lib/upload.ts` : utilitaire browser-side avec progress tracking (XMLHttpRequest)
+- `.env.local` : +`NEXT_PUBLIC_CLOUDFLARE_WORKER_URL`
+- `.env.example` : cree (3 variables)
+
+### Page `/offers` — Liste des offres — DONE
+- Grille de cartes offres (thumbnail, titre, badges secteur/contrat/status, compteur candidatures)
+- Empty state avec CTA "Publier une offre"
+- Edit dialog (titre, secteur, contrat, description) + Delete dialog (soft-delete)
+- Menu actions sur chaque carte (modifier/supprimer)
+
+### Page `/offers/new` — Wizard multi-etapes — DONE
+- **Etape 1** : choix type (Video / Affiche) — 2 cards cliquables
+- **Etape 2** : drag & drop + file picker + preview (video player ou image)
+  - Video : MP4/MOV/WebM, validation duree <=40s via `<video>` element, max 50 Mo
+  - Affiche : JPEG/PNG/WebP, max 10 Mo
+- **Etape 3** : formulaire details (titre, secteur Select, contrat Select, description Textarea)
+- **Etape 4** : progress bar pendant upload, INSERT dans `videos`, redirect `/offers`
+- **Gate d'acces** : recruteur non verifie → alerte + redirection parametres
+
+### Dashboard updates — DONE
+- Vrais compteurs (candidatures, conversations, offres actives) via requetes Supabase
+- Cards cliquables (liens vers pages correspondantes)
+
+### Layout updates — DONE
+- Sidebar : active state `startsWith()` (highlight `/offers` quand sur `/offers/new`)
+- Header : titre "Nouvelle offre" pour `/offers/new`
+
+### Resultats
+- **Build Next.js OK** : 0 erreurs TypeScript
+- **85/85 tests Flutter** : pas de regression
+- **0 issues flutter analyze**
+- Note : Shadcn v4 utilise `@base-ui/react` — pas de `asChild` prop, utiliser `render` ou classes CSS directement
+
+### Bugfix: pages placeholder manquantes — DONE
+- `/candidates`, `/messages`, `/settings` retournaient 404 (pages inexistantes)
+- 3 pages placeholder creees avec message "arrive bientot"
+
+### Fichiers crees (13 + 7 Shadcn auto)
+- `supabase/migrations/20260421000000_video_sector.sql`
+- `saas-etoile/lib/constants/contracts.ts`
+- `saas-etoile/lib/upload.ts`
+- `saas-etoile/app/api/upload/presigned-url/route.ts`
+- `saas-etoile/app/(dashboard)/offers/page.tsx`
+- `saas-etoile/app/(dashboard)/offers/new/page.tsx`
+- `saas-etoile/components/offers/offer-card.tsx`
+- `saas-etoile/components/offers/file-drop-zone.tsx`
+- `saas-etoile/components/offers/edit-offer-dialog.tsx`
+- `saas-etoile/components/offers/delete-offer-dialog.tsx`
+- `saas-etoile/.env.example`
+- `saas-etoile/app/(dashboard)/candidates/page.tsx` (placeholder)
+- `saas-etoile/app/(dashboard)/messages/page.tsx` (placeholder)
+- `saas-etoile/app/(dashboard)/settings/page.tsx` (placeholder)
+
+### Fichiers modifies (5)
+- `saas-etoile/lib/types/database.ts` — +Video, +Application
+- `saas-etoile/lib/constants/routes.ts` — +OFFERS_NEW
+- `saas-etoile/app/(dashboard)/dashboard/page.tsx` — vrais compteurs + liens
+- `saas-etoile/components/layout/sidebar.tsx` — fix active state startsWith
+- `saas-etoile/components/layout/header.tsx` — +titre /offers/new
+
+---
+
+## Ce qui a ete fait — Epic 12 Phases 1-4 : Grille Candidats Complète (2026-04-23)
+
+### Objectif
+Epic 12 = **cœur du SaaS recruteur** (80% du temps passé). Implémentation complète de la page de visualisation et évaluation des candidatures.
+
+### Contexte
+Le SaaS avait auth + publication offres + dashboard, mais manquait la page où le recruteur **visualise et évalue les candidatures**. Epic 12 débloque le flux complet.
+
+**Flux complet débloqué** :
+1. Chercheur postule (app mobile) → application créée
+2. **Recruteur voit grille candidats** ← ✅ Phase 1
+3. **Recruteur clique → modal vidéo + profil** ← ✅ Phase 2
+4. **Recruteur filtre par score/secteur** ← ✅ Phase 3
+5. **Recruteur navigue au clavier** ← ✅ Phase 4
+6. Recruteur évalue + contacte → conversation démarre
+
+### Phases implémentées
+- ✅ **Phase 1** : Scoring + grille améliorée
+- ✅ **Phase 2** : Modal 60/40 + tabs (Profil/Évaluer/Messages)
+- ✅ **Phase 3** : Filtres avancés sidebar (statut, offre, secteur, score)
+- ✅ **Phase 4** : Raccourcis clavier (Espace, Esc, C)
+- ⏸️ **Phase 5** : Tables évaluations (reporté V2)
+
+---
+
+### Phase 1 : Scoring + Grille — DONE
+
+**Algorithme de scoring** : `saas-etoile/lib/scoring.ts` (nouveau)
+
+Poids du matching :
+- **Secteur** (30%) : seeker.domain === offer.sector
+- **Niveau d'études** (25%) : bac+2+ = 25pts, bac/bac+1 = 15pts, CAP/BEP = 5pts
+- **Localisation** (25%) : fuzzy match city avec recruiter.locations
+- **Spécialité** (20%) : 20pts si rempli (fuzzy matching en V2)
+
+Helpers :
+- `calculateMatchScore()` : score 0-100
+- `getScoreBadgeVariant()` : couleur badge (≥80% default/vert, ≥60% secondary/orange, <60% destructive/rouge)
+- `getScoreRangeLabel()` : "Excellent match", "Bon match", "Match moyen", "Faible match"
+
+**Amélioration carte** : `components/candidates/candidate-card.tsx`
+- Badge score en coin supérieur droit (toujours visible)
+- Hover preview : vidéo présentation joue dans l'avatar (muted, loop)
+- Fallback intelligent : thumbnail → photo → initiale
+- Layout optimisé : transitions fluides, hover effects
+
+**Page candidats** : `app/(dashboard)/candidates/page.tsx`
+- Chargement `recruiter.locations` pour scoring
+- Calcul score pour chaque candidat
+- Tri par score décroissant
+- Type `CandidateWithScore` = `CandidateWithProfile & { matchScore: number }`
+
+---
+
+### Phase 2 : Modal 60/40 + Tabs — DONE
+
+**Composant Shadcn** : `components/ui/tabs.tsx` (installé via CLI)
+
+**Refacto modal** : `components/candidates/candidate-modal.tsx`
+
+**Layout 60/40** :
+- **Gauche (60%)** : vidéo plein écran (autoplay, controls, object-contain)
+- **Droite (40%)** : panneau infos avec header + tabs
+
+**Header modal** :
+- Photo + nom + @username
+- Badges : score matching (coloré), âge, ville
+
+**3 onglets** :
+1. **Profil** : formation (école, niveau), domaine (secteur, spécialité), candidature (offre, date, statut), score détaillé
+2. **Évaluer** : notes privées (Textarea), actions (contacter/non intéressé), tags (à venir)
+3. **Messages** : placeholder conversation (à implémenter)
+
+**Bouton Contacter** :
+- Visible onglet "Évaluer" si status = "pending"
+- Crée conversation + marque application "contacted"
+- Si déjà contacté : affiche bouton "Voir la conversation"
+
+---
+
+### Phase 3 : Filtres Avancés — DONE
+
+**Composant filtres** : `components/candidates/candidate-filters.tsx` (nouveau)
+
+**Sidebar filtres** (sidebar fixe 256px, scroll indépendant) :
+1. **Statut** (Select) : Tous / En attente / Contactés
+2. **Offre** (Select) : Toutes / Liste des offres du recruteur
+3. **Secteur** (Select) : Tous / 15 secteurs
+4. **Score matching** (3 badges cliquables) :
+   - Excellent (>80%)
+   - Bon (60-80%)
+   - Faible (<60%)
+5. **Bouton Réinitialiser** (visible si filtre actif)
+
+**Logique filtrage** : `app/(dashboard)/candidates/page.tsx`
+- État `CandidateFilters` : `{ status, offerId, sector, scoreRange }`
+- Filtrage client-side (useEffect sur `[candidates, filters]`)
+- Compteur dynamique : "X candidat(s)"
+- Empty state adaptatif : "Aucun candidat" vs "Modifiez vos filtres"
+
+**Layout page** :
+- Flex horizontal : sidebar (w-64) + main content (flex-1)
+- Main content : header (titre + compteur) + grid responsive
+- Grid : 4 cols 2xl, 3 cols lg, 2 cols sm, 1 col mobile
+
+---
+
+### Phase 4 : Raccourcis Clavier — DONE
+
+**Hook custom** : `hooks/use-keyboard-shortcuts.ts` (nouveau)
+
+Signature :
+```ts
+useKeyboardShortcuts(
+  shortcuts: Record<string, () => void>,
+  enabled: boolean
+)
+```
+
+Protection :
+- Ignore si typing dans input/textarea
+- Active uniquement si `enabled = true`
+
+**Intégration modal** : `candidate-modal.tsx`
+- **Espace** : pause/play vidéo (videoRef.current.paused toggle)
+- **Escape** : fermer modal
+- **C** : contacter candidat (si status = pending + !contacting)
+
+Ref vidéo : `useRef<HTMLVideoElement>()` attaché au `<video>`
+
+---
+
+### Fichiers impactés (7)
+
+**Nouveaux (4)** :
+- `saas-etoile/lib/scoring.ts` — algorithme matching
+- `saas-etoile/components/candidates/candidate-filters.tsx` — sidebar filtres
+- `saas-etoile/hooks/use-keyboard-shortcuts.ts` — hook raccourcis
+- `saas-etoile/components/ui/tabs.tsx` — Shadcn tabs
+
+**Modifiés (3)** :
+- `saas-etoile/components/candidates/candidate-card.tsx` — score badge + hover preview
+- `saas-etoile/components/candidates/candidate-modal.tsx` — layout 60/40 + tabs + shortcuts
+- `saas-etoile/app/(dashboard)/candidates/page.tsx` — sidebar + filtres + scoring
+
+---
+
+### Tests manuels réalisés
+- ✅ Build Next.js : 0 erreurs TypeScript, 0 warnings critiques
+- ⏳ Score affiché sur chaque carte (badge coloré)
+- ⏳ Hover carte → vidéo preview joue
+- ⏳ Clic carte → modal 60/40 s'ouvre
+- ⏳ Modal : 3 onglets fonctionnels
+- ⏳ Filtres sidebar : status, offre, secteur, score
+- ⏳ Raccourcis : Espace (pause/play), Esc (fermer), C (contacter)
+- ⏳ Grille responsive : 4 → 3 → 2 → 1 colonnes
+
+---
+
+## Ce qui a ete fait — Epic 13 : Dashboard Briefing (2026-04-25)
+
+### Objectif
+Donner au recruteur une vue quotidienne de son activité : nouvelles candidatures depuis dernière connexion, KPIs globaux (taux de réponse, taux de shortlist, top offres), funnel de conversion.
+
+### Migrations SQL (2) — DONE
+
+**1. `20260425000001_add_last_login_at.sql`**
+- Ajout colonne `last_login_at TIMESTAMPTZ` sur `user_roles`
+- Index conditionnel sur `role = 'recruiter'`
+- Tracking silencieux dans `middleware.ts` (ligne 36-47)
+
+**2. `20260425000002_create_kpi_functions.sql`**
+- 3 fonctions PostgreSQL :
+  - `calculate_avg_response_time(recruiter_id)` : délai moyen entre candidature et premier message
+  - `calculate_shortlist_rate(recruiter_id)` : % candidats contactés
+  - `get_top_performing_offers(recruiter_id)` : top 5 offres par nombre de candidatures
+- Pattern Epic 13 : PostgreSQL Functions > Edge Functions (performance)
+
+### Composants créés (3) — DONE
+
+**1. `components/dashboard/daily-briefing.tsx`** (Client Component)
+- Compteur nouvelles candidatures depuis `last_login_at`
+- Polling 60s (setInterval) pour mise à jour temps réel
+- Badge rouge si `newCount > 0`
+- Server Action : `getNewApplicationsCount()`
+
+**2. `components/dashboard/global-kpis.tsx`** (Server Component)
+- 3 cartes KPI : délai réponse moyen, taux shortlist, top offres
+- Icons : Clock, Target, TrendingUp
+- Cache 5 min via `revalidate = 300`
+
+**3. `components/dashboard/conversion-funnel.tsx`** (Client Component)
+- BarChart Recharts horizontal (3 étapes)
+- Couleurs : pending (#C8A84B or), contacted (#2D6A4F vert), withdrawn (#9B2335 bordeaux)
+- Data : compteurs agrégés par status
+
+### Server Actions — DONE
+
+**Fichier** : `app/(dashboard)/dashboard/actions.ts`
+
+- `getAverageResponseTime()` : appelle fonction PostgreSQL
+- `getShortlistRate()` : appelle fonction PostgreSQL
+- `getTopPerformingOffers()` : appelle fonction PostgreSQL
+- `getConversionFunnelData()` : agrège compteurs par status
+- `getNewApplicationsCount()` : compte candidatures > last_login_at
+
+### Page Dashboard refacto — DONE
+
+**Fichier** : `app/(dashboard)/dashboard/page.tsx`
+- Converti en Server Component (cache 5 min)
+- Fetch `company_name` pour message de bienvenue
+- Intégration 3 composants Epic 13 :
+  - `<DailyBriefing />` (Client, polling)
+  - `<GlobalKpis />` (Server, cache)
+  - `<ConversionFunnel data={funnelData} />` (Client)
+- Quick actions (boutons "Publier offre" + "Voir candidats")
+
+### Résultats
+
+- ✅ 2 migrations déployées (last_login_at + 3 fonctions PostgreSQL)
+- ✅ Build Next.js OK (0 erreurs TypeScript)
+- ✅ Middleware tracking silencieux (async IIFE, pas de blocage navigation)
+- ✅ Pattern PostgreSQL Functions validé (cohérence Epic 13/14)
+
+---
+
+## Ce qui a ete fait — Epic 14 : Scoring PostgreSQL + Persistance (2026-04-25)
+
+### Objectif
+Déplacer le calcul de scoring côté PostgreSQL (vs client-side), persister les scores dans une table dédiée, invalidation automatique via trigger quand profil seeker change.
+
+### Architecture (Winston)
+
+**Document** : `_bmad-output/architecture-epic-14-scoring.md` (~550 lignes)
+
+**5 décisions architecturales critiques** :
+1. **Table schema** : cache invalidation (colonne `computed_at` pour staleness Phase 2)
+2. **Fonction PostgreSQL** : buckets études + fuzzy ville + STABLE
+3. **Trigger auto-update** : DELETE lazy (pas de recalcul immédiat)
+4. **RLS policies** : SELECT + DELETE + INSERT + UPDATE (least privilege)
+5. **Staleness management** : YAGNI MVP (pas de TTL)
+
+### Migrations SQL (2) — DONE
+
+**1. `20260425000003_create_match_scores.sql`**
+- Table `match_scores` (5 colonnes : id, seeker_id, video_id, score, computed_at)
+- UNIQUE constraint `(seeker_id, video_id)`
+- 2 indexes : composite `(video_id, score DESC)` + `computed_at`
+- Fonction `calculate_match_score(p_seeker_id, p_video_id)` :
+  - Algorithme : secteur(30%) + études(25%) + ville(25%) + spécialité(20%)
+  - Cohérent avec `lib/scoring.ts` client-side
+  - Buckets études : bac+2+ = 25, bac/bac+1 = 15, cap/bep = 5
+  - Fuzzy ville : `LIKE '%...%'` bidirectionnel
+  - Spécialité MVP : 20pts si rempli (fuzzy matching Phase 2)
+- Trigger `trigger_seeker_profile_change` :
+  - AFTER UPDATE sur `seeker_profiles`
+  - Track 4 champs : `domain`, `city`, `study_level`, `specialty`
+  - DELETE lazy : supprime scores du seeker (recalcul à la demande)
+- RLS policies initiales : SELECT + DELETE only
+
+**2. `20260425000004_fix_match_scores_rls.sql`** (bugfix)
+- Ajout policies INSERT + UPDATE
+- Nécessaire pour Server Action `calculateAndStoreMatchScore()`
+- Erreur détectée : code `42501` (RLS violation)
+
+### Types & Server Actions — DONE
+
+**Type** : `lib/types/database.ts`
+- Interface `MatchScore` : id, seeker_id, video_id, score, computed_at
+
+**Server Actions** : `app/(dashboard)/candidates/actions.ts`
+- `getMatchScoresForOffer(videoId)` : fetch scores triés DESC
+- `calculateAndStoreMatchScore(seekerId, videoId)` : calcul + upsert via PostgreSQL function
+
+### Intégration grille candidats — DONE
+
+**Fichier** : `app/(dashboard)/candidates/page.tsx`
+
+**Optimisations** :
+- Préchargement batch des scores (1 query pour tous les candidats)
+- Map pour lookup O(1) : `scoresMap.get(${seekerId}_${videoId})`
+- Fallback gracieux : PostgreSQL function → calcul client si échec
+- Tri existant conservé (ligne 115, client-side)
+
+**Pattern** :
+```ts
+// Load all scores in batch
+const { data: existingScores } = await supabase
+  .from("match_scores")
+  .select("seeker_id, video_id, score")
+  .in("video_id", offerIds);
+
+// If score missing, calculate and store
+if (matchScore === undefined) {
+  matchScore = await calculateAndStoreMatchScore(seekerId, videoId);
+}
+```
+
+### Résultats
+
+- ✅ 2 migrations déployées (table + fonction + trigger + RLS fix)
+- ✅ Type TypeScript ajouté
+- ✅ 2 Server Actions créées
+- ✅ Intégration grille sans régression
+- ✅ Build Next.js OK (0 erreurs)
+- ⚠️ RLS fix nécessaire (policies INSERT/UPDATE manquantes initialement)
+
+### Tests de validation
+
+**SQL tests** :
+```sql
+-- Test fonction
+SELECT calculate_match_score(
+  (SELECT user_id FROM seeker_profiles LIMIT 1),
+  (SELECT id FROM videos WHERE type = 'offer' LIMIT 1)
+);
+
+-- Vérifier trigger
+UPDATE seeker_profiles SET domain = 'commerce_vente' WHERE user_id = '...';
+SELECT COUNT(*) FROM match_scores WHERE seeker_id = '...'; -- Devrait être 0
+```
+
+---
+
+### Prochaines étapes
+
+**Track 1 (Mobile)** :
+- Store listing restant (screenshots, description)
+- Soumission Apple App Store + Google Play Store
+
+**Track 2 (SaaS)** :
+- ~~Epic 13 : Dashboard briefing~~ ✅ DONE
+- ~~Epic 14 : Scoring PostgreSQL~~ ✅ DONE
+- **Epic 15 : Messagerie temps réel** ← PROCHAIN
+- Epic 16 : Settings + abonnement Stripe
+
+**Phase 5 Epic 12 (reporté V2)** :
+- Tables évaluations (`candidate_evaluations`, `candidate_tags`)
+- Persistance notes + tags
+
+**Améliorations futures** :
+- Navigation candidats dans modal (← → pour prev/next)
+- Recherche par @username
+- Export liste candidats (CSV)
+- Fuzzy matching spécialités (score +20% affiné)
+- Filtre ville (autocomplete Photon)
+- Onglet Messages intégré (inline chat)
+- Shortlist/favoris (badge étoile)
+
+**Epic 13 (Dashboard briefing)** — NEXT
+- Compteur "Candidats forte compatibilité (>80%)"
+- Graphique évolution candidatures
+- Quick actions dashboard
+
+---
+
+## Corrections UX Epic 12 (2026-04-23)
+
+### Problèmes identifiés et résolus
+
+**1. Erreur React Hooks**
+- **Problème** : "React has detected a change in the order of Hooks" dans CandidateModal
+- **Cause** : `if (!candidate) return null;` appelé AVANT `useKeyboardShortcuts`
+- **Solution** : Déplacé tous les hooks (useState, useRef, useKeyboardShortcuts) AVANT le early return
+- **Fichier** : `components/candidates/candidate-modal.tsx`
+
+**2. Modal trop petit**
+- **Problème** : Fenêtre modale illisible, texte trop petit
+- **Cause** : DialogContent Shadcn par défaut = `sm:max-w-sm` (très petit)
+- **Solution** :
+  - Taille forcée `!max-w-[96vw] !h-[92vh] !w-[96vw]` (important override)
+  - Bouton close custom (showCloseButton={false})
+  - Modal occupe maintenant 96% de l'écran
+- **Fichier** : `components/candidates/candidate-modal.tsx`
+
+**3. Vidéo non visible entièrement**
+- **Problème** : Vidéo coupée, scroll nécessaire
+- **Cause** : `w-full h-full` forçait la vidéo à dépasser le conteneur
+- **Solution** :
+  - `max-w-full max-h-full` au lieu de `w-full h-full`
+  - `object-contain` pour respecter ratio
+  - Padding `p-6` autour de la vidéo
+  - Coins arrondis `rounded-lg`
+- **Fichier** : `components/candidates/candidate-modal.tsx`
+
+**4. Texte illisible**
+- **Problème** : Texte trop petit (text-xs, text-sm partout)
+- **Solution** : Tailles augmentées globalement
+  - Header : photo 14→16, nom text-lg→text-xl, username text-xs→text-sm
+  - Tabs : h-12, text-base
+  - Labels : text-xs→text-sm
+  - Valeurs : text-sm→text-base + font-medium
+  - Badges : text-xs→text-sm + px-3 py-1
+  - Boutons : text-base + h-11
+  - Score : text-2xl→text-3xl
+  - Padding global : p-4→p-6
+- **Fichier** : `components/candidates/candidate-modal.tsx`
+
+**5. Layout modal déséquilibré**
+- **Problème** : Vidéo 60% / Panneau 40% = déséquilibre visuel
+- **Solution** :
+  - **50/50** au lieu de 60/40
+  - `shrink-0` sur les deux colonnes
+  - `w-1/2` pour équilibre parfait
+  - Vidéo toujours visible à gauche, panneau scroll indépendant à droite
+- **Fichier** : `components/candidates/candidate-modal.tsx`
+
+**6. Onglets modal disparaissent au scroll**
+- **Problème** : Tabs (Profil/Évaluer/Messages) disparaissent quand on scroll
+- **Solution** :
+  - `sticky top-0 z-10` sur TabsList
+  - `bg-background` pour fond opaque
+  - `border-b` pour séparation visuelle
+  - Tabs restent collés en haut pendant le scroll
+- **Fichier** : `components/candidates/candidate-modal.tsx`
+
+**7. Sidebar navigation cachée**
+- **Problème** : Sidebar principale (Dashboard/Candidats/Offres) parfois cachée sur page candidats
+- **Cause** : Layout page candidats avec `h-[calc(100vh-4rem)]` créait conflit
+- **Solution** :
+  - `-m-8` pour annuler padding du main
+  - `h-[calc(100vh-5rem)]` ajusté pour header
+  - Header "Candidats" en sticky `top-0`
+  - `gap-6` entre sidebar filtres et contenu
+  - Layout qui s'intègre au dashboard sans conflit
+- **Fichier** : `app/(dashboard)/candidates/page.tsx`
+
+---
+
+### Résumé des fichiers modifiés (corrections UX)
+
+**2 fichiers impactés** :
+1. `components/candidates/candidate-modal.tsx` — 6 corrections (hooks, taille, vidéo, texte, layout, tabs sticky)
+2. `app/(dashboard)/candidates/page.tsx` — 1 correction (sidebar navigation)
+
+---
+
+### Tests manuels validés
+- ✅ Aucune erreur React Hooks
+- ✅ Modal occupe 96% de l'écran (lisible)
+- ✅ Vidéo visible entièrement sans scroll
+- ✅ Texte lisible (tailles augmentées)
+- ✅ Layout 50/50 équilibré
+- ✅ Onglets modal restent visibles (sticky)
+- ✅ Sidebar navigation toujours visible
+- ✅ Header "Candidats" sticky pendant scroll
+- ✅ Build Next.js : 0 erreurs
 
 ---
 
@@ -82,6 +727,199 @@ Passer de la beta IdF (2 secteurs) a la France entiere (15 secteurs) avec filtre
 - **85/85 tests pass** (73 + 12 nouveaux), 0 issues flutter analyze
 - Build Next.js OK
 - Migration deployee (23/23 total)
+
+---
+
+## Ce qui a ete fait — Epic 10 Phase 2 : Profil Recruteur Complet (SaaS) (2026-05-01 → 2026-05-02)
+
+### Objectif
+Finaliser le profil recruteur SaaS avec photo, page Settings complète, et preview format mobile pour validation des offres avant publication.
+
+### Contexte
+Après les Epics 11-15 (Publication, Grille candidats, Dashboard, Scoring, Messagerie), il manquait 3 fonctionnalités pour compléter l'expérience recruteur :
+1. **Photo de profil** — humaniser le compte (actuellement seulement logo entreprise)
+2. **Page Settings** — modification profil complet (nom, secteur, description, adresse, documents)
+3. **Preview mobile** — voir le rendu de l'offre côté chercheur avant publication
+
+### Architecture complète — DONE
+**Document** : `_bmad-output/architecture-epic-10-phase-2.md` (~600 lignes)
+- Décisions techniques : R2 bucket `etoile-photos`, react-easy-crop, AddressAutocomplete
+- Patterns : uploadFile.ts générique (3 buckets), RecruiterAvatar component (3 tailles)
+- 10 fichiers mappés : 8 nouveaux + 2 modifiés
+
+### Story 10.6 : Photo profil recruteur — DONE (2026-05-01)
+
+**Objectif** : Permettre au recruteur d'uploader une photo de profil (distinct du logo entreprise).
+
+**Migration SQL** : `20260501000001_add_recruiter_photo.sql`
+- Colonne `recruiter_profiles.photo_url TEXT` (nullable)
+- Commentaire : "URL photo profil recruteur (personne physique, distinct du logo)"
+
+**Composants créés** (2) :
+1. **PhotoUploadSection** — `components/settings/PhotoUploadSection.tsx`
+   - Upload image + crop circulaire (react-easy-crop)
+   - Preview instantané (MemoryImage → Canvas)
+   - Validation 5 Mo max, formats JPEG/PNG/WebP
+   - Upload R2 bucket `etoile-photos` via `uploadFile.ts`
+
+2. **RecruiterAvatar** — `components/settings/RecruiterAvatar.tsx`
+   - Affichage avatar avec 3 tailles : sm (48px), md (80px), lg (200px)
+   - Fallback intelligent : photo → initiale nom entreprise
+   - Pattern cohérent avec avatar chercheur mobile
+
+**Server Action** : `app/(dashboard)/settings/actions.ts`
+- `updateRecruiterPhoto(photoUrl)` — UPDATE avec RLS policy
+
+**Résultats** :
+- ✅ Build Next.js OK (0 erreurs TypeScript)
+- ✅ Crop fonctionnel (zoom + rotation)
+- ✅ Avatar affiché dans sidebar (taille md)
+
+---
+
+### Story 10.7 : Preview format mobile — DONE (2026-05-01)
+
+**Objectif** : Afficher un aperçu du rendu mobile de l'offre (9:16) avant publication, validant que la vidéo/poster est bien formatée.
+
+**Constantes hard-codées** : `lib/constants/mobile-preview.ts`
+- Device dimensions : 375×667 (iPhone SE 2020, ratio 9:16)
+- Feed card : 375×667 plein écran
+- Header height : 60px
+- Action buttons : 52px width, 8px gap
+- Mirroir exact du FeedVideoPlayer Flutter
+
+**Composant créé** : `components/offers/MobilePreview.tsx`
+- Toggle 9:16 / 16:9 (boutons ratio en haut à droite)
+- Validation aspect ratio : affiche badge vert (9:16 ±5%) ou warning (autre ratio)
+- Preview temps réel : vidéo ou image, infos offre (titre, entreprise, secteur, contrat)
+- Icônes actions (play, like, share, apply) — non fonctionnelles, juste visuel
+
+**Intégration page `/offers/new`** : `app/(dashboard)/offers/new/page.tsx`
+- Layout 2 colonnes responsive : formulaire (gauche) + preview sticky (droite)
+- Largeur max dynamique : 2xl pour steps 1-2, 6xl pour step 3 (form + preview)
+- Preview en temps réel : mise à jour automatique quand titre/secteur/contrat changent
+
+**Résultats** :
+- ✅ Preview fidèle au rendu mobile (9:16, header, actions)
+- ✅ Validation ratio automatique (badge coloré)
+- ✅ Toggle fonctionnel (9:16 ↔ 16:9)
+
+---
+
+### Story 10.8 : Page Settings complète — DONE (2026-05-02)
+
+**Objectif** : Créer la page Settings pour modification complète du profil recruteur (photo, entreprise, description, adresse, SIRET, documents).
+
+**Migration SQL** : `20260502000002_add_recruiter_address.sql`
+- Colonne `recruiter_profiles.address TEXT` (adresse complète entreprise)
+- Remplace l'ancien champ `locations: string[]` (multi-villes) qui ne servait à rien
+
+**Composants Shadcn installés** (4) :
+- form, label, textarea, select
+
+**Zod schema** : `lib/validations/recruiter-settings.ts`
+- 7 champs validés : photo_url, company_name, sector, description (min 50 chars), address (min 10 chars), siret, document_url
+
+**Composants créés** (4) :
+1. **ProfileProgressBar** — `components/settings/ProfileProgressBar.tsx`
+   - Barre progression dynamique (0-100%)
+   - Couleurs : vert (100%), jaune (60-99%), rouge (<60%)
+   - Sticky top, calcul temps réel via `watch()` form
+
+2. **AddressAutocomplete** — `components/ui/address-autocomplete.tsx`
+   - API Adresse gouvernement français (api-adresse.data.gouv.fr)
+   - Debounce 400ms, min 3 caractères
+   - Dropdown suggestions avec icône MapPin
+   - Pattern miroir du `CityAutocompleteField` Flutter
+
+3. **DocumentUploadSection** — `components/settings/DocumentUploadSection.tsx`
+   - Upload PDF/JPG/PNG (max 5 Mo)
+   - Storage R2 bucket `verification-docs`
+   - Status badges (vérifié/en attente/rejeté)
+   - Re-upload possible si statut = rejected
+
+4. **PhotoUploadSection** — réutilisé depuis Story 10.6
+
+**Fonction calcul complétude** : `lib/utils/profile-completion.ts`
+- 5 catégories × 20% = 100% :
+  1. Inscription (20%) : toujours 20% (compte créé)
+  2. Entreprise + secteur (20%) : company_name && sector
+  3. Description (20%) : description ≥ 50 caractères
+  4. Adresse (20%) : address ≥ 10 caractères (modifié suite feedback user)
+  5. SIRET + document (20%) : siret && document_url
+
+**Server Action** : `app/(dashboard)/settings/actions.ts`
+- `updateRecruiterProfile(data)` — double validation Zod (client + serveur)
+- RLS policy enforce `user_id = auth.uid()`
+- **SIRET read-only** — intentionnellement exclu de l'UPDATE (sécurité fraude)
+
+**Page Settings** : `app/(dashboard)/settings/page.tsx` (400+ lignes)
+- Single-scroll form (1 formulaire, 7 sections)
+- React Hook Form + Zod resolver
+- Progress bar en Card en haut (Option A après feedback user)
+- 7 sections dans Cards séparées :
+  1. Photo de profil (PhotoUploadSection)
+  2. Informations entreprise (Input company_name + Select secteur)
+  3. Description (Textarea min 50 chars)
+  4. Adresse complète (AddressAutocomplete)
+  5. SIRET (Input disabled, affichage status vérification)
+  6. Document justificatif (DocumentUploadSection)
+  7. Bouton "Enregistrer" en bas
+
+**Feedback utilisateur appliqué** (4 corrections) :
+1. ❌ **Localisation inutile** : champ `locations: string[]` supprimé, remplacé par `address: string`
+2. ❌ **Progress bar mal intégrée** : déplacée dans Card dédiée en haut (Option A)
+3. ❌ **Documents justificatifs pas clair** : composant DocumentUploadSection créé avec upload complet
+4. 🆕 **Address autocomplete** : API Adresse gouvernement intégrée (comme sur app mobile)
+
+**uploadFile.ts générique** — modifié pour supporter 3 buckets :
+- `etoile-videos` (vidéos offres, max 50 Mo)
+- `etoile-photos` (photos profil, max 5 Mo)
+- `verification-docs` (documents Kbis/carte pro, max 5 Mo, PDF/JPG/PNG)
+
+**Résultats** :
+- ✅ Build Next.js OK (0 erreurs TypeScript)
+- ✅ Formulaire complet avec 7 sections
+- ✅ Autocomplete adresse fonctionnel (API gouv)
+- ✅ Upload documents fonctionnel (R2)
+- ✅ Progress bar temps réel (useMemo + watch)
+- ✅ Toast feedback (MVP console.log)
+- ✅ Lien Settings déjà présent dans sidebar
+
+---
+
+### Récapitulatif Epic 10 Phase 2
+
+**3 stories complétées** :
+- ✅ Story 10.6 : Photo profil recruteur
+- ✅ Story 10.7 : Preview format mobile
+- ✅ Story 10.8 : Page Settings complète
+
+**Fichiers créés** (11) :
+- `supabase/migrations/20260501000001_add_recruiter_photo.sql`
+- `supabase/migrations/20260502000002_add_recruiter_address.sql`
+- `saas-etoile/lib/validations/recruiter-settings.ts`
+- `saas-etoile/lib/utils/profile-completion.ts`
+- `saas-etoile/lib/constants/mobile-preview.ts`
+- `saas-etoile/lib/uploadFile.ts` (générique)
+- `saas-etoile/components/settings/PhotoUploadSection.tsx`
+- `saas-etoile/components/settings/RecruiterAvatar.tsx`
+- `saas-etoile/components/settings/ProfileProgressBar.tsx`
+- `saas-etoile/components/settings/DocumentUploadSection.tsx`
+- `saas-etoile/components/ui/address-autocomplete.tsx`
+- `saas-etoile/components/offers/MobilePreview.tsx`
+- `saas-etoile/components/ui/form.tsx` (manual, Shadcn registry error)
+- `saas-etoile/hooks/use-toast.ts` (MVP console.log)
+
+**Fichiers modifiés** (4) :
+- `saas-etoile/app/(dashboard)/settings/page.tsx` — rewrite complet (7 sections)
+- `saas-etoile/app/(dashboard)/settings/actions.ts` — +updateRecruiterProfile
+- `saas-etoile/app/(dashboard)/offers/new/page.tsx` — intégration MobilePreview
+- `saas-etoile/lib/types/database.ts` — +photo_url, +address
+
+**Total** : 15 nouveaux fichiers, 4 modifiés, 2 migrations SQL déployées
+
+**Tests** : Build Next.js successful (0 erreurs TypeScript)
 
 ---
 
@@ -1059,6 +1897,11 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 | **13.1** | **Camera in-app — testee et validee sur Android physique** | **DONE** |
 | **SaaS-1** | **Init Next.js recruteurs — auth + layout + dashboard placeholder** | **DONE** |
 | **31** | **Ouverture France + 15 secteurs + GPS proximite + splash redesign** | **DONE** |
+| **SaaS-2** | **Publication offres — wizard upload, liste, edit/delete, dashboard compteurs** | **DONE** |
+| **Epic 12** | **Grille candidats — scoring client-side, modal 50/50, filtres, raccourcis clavier** | **DONE** |
+| **Epic 13** | **Dashboard briefing — KPIs PostgreSQL, polling 60s, funnel conversion** | **DONE** |
+| **Epic 14** | **Scoring PostgreSQL — table match_scores, fonction, trigger, RLS, integration grille** | **DONE** |
+| **Epic 15** | **Messagerie temps réel — conversations synchronisées, contacter depuis modal, Supabase Realtime** | **DONE** |
 
 ### Prochains sprints
 
@@ -1072,17 +1915,17 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 
 **Track 2 : SaaS Web (Recruteur)**
 - [x] ~~Init projet Next.js + Tailwind + Shadcn/ui + Supabase~~ — **DONE** (Sprint SaaS-1)
-- [ ] **Migrations DB (~5 tables)** — candidate_evaluations, candidate_tags, evaluation_tags, team_shares, match_scores + RLS ← **PROCHAIN**
-- [ ] **Publication offres (Epic 11)** — page creation d'offre recruteur ← **PROCHAIN** (debloque le flux complet)
-- [ ] Grille candidats (Epic 12) — miniatures video, hover preview, modal decision
-- [ ] Dashboard briefing (Epic 13) — nouvelles candidatures, messages non lus, KPIs
-- [ ] Edge Function scoring (Epic 14)
-- [ ] Messagerie (Epic 15)
+- [x] ~~Publication offres (Epic 11)~~ — **DONE** (Sprint SaaS-2)
+- [x] ~~Grille candidats (Epic 12)~~ — **DONE** (scoring client-side, modal 50/50, filtres, raccourcis)
+- [x] ~~Dashboard briefing (Epic 13)~~ — **DONE** (KPIs PostgreSQL, polling 60s, funnel)
+- [x] ~~Scoring PostgreSQL (Epic 14)~~ — **DONE** (match_scores + fonction + trigger + RLS)
+- [x] ~~Messagerie temps reel (Epic 15)~~ — **DONE** (conversations synchronisees, contacter depuis modal, Realtime)
+- [ ] **Features profil recruteur** — photo profil, vidéo présentation entreprise, preview offre format mobile ← **PROCHAIN**
 - [ ] Integration & Tests (Playwright)
 - [ ] Beta recruteurs (5-10 invites)
 
 **Infra**
-- ~~Deployer migrations SQL~~ — **FAIT** (23/23 synchronisees)
+- ~~Deployer migrations SQL~~ — **FAIT** (27/27 synchronisees, Epic 13: 2, Epic 14: 2)
 - Stripe : rester en mode test pendant la beta, passage prod avant soumission store (KYC 1-3j)
 - Tous les pre-requis infra sont deployes (migrations, OTP, admin, bucket, Edge Functions, RLS)
 
@@ -1132,5 +1975,271 @@ Les candidatures deviennent un acte simple en 1 clic (sans chat). Seul le recrut
 
 ---
 
-*Sauvegarde mise a jour le 2026-04-14*
-*Sprint SaaS-1 TERMINE. Fondations SaaS posees (auth + layout + dashboard). Next: Migrations DB (~5 tables) + Publication offres (Epic 11) pour debloquer le flux recruteur→chercheur→recruteur.*
+---
+
+## Nouvelles Features Demandées (2026-04-30)
+
+### Epic 16 : Profil Recruteur Complet
+
+**Objectifs** :
+1. **Photo de profil recruteur** — upload + crop + stockage R2 + affichage dans app mobile
+2. **Vidéo présentation entreprise** — upload vidéo (max 60s) pour présenter l'entreprise aux chercheurs
+3. **Preview offre format mobile** — lors de la publication d'affiche/vidéo, preview redimensionné exactement comme dans l'app mobile
+4. **Modification profil** — page /settings avec formulaire complet (nom entreprise, secteur, description, photo, vidéo)
+
+**Justification** :
+- App mobile chercheur affiche déjà profil recruteur (entreprise, secteur) mais sans photo ni vidéo
+- Transparence : chercheur doit savoir explicitement à qui il s'adresse
+- Preview format mobile : recruteur doit voir exactement comment son offre apparaît aux chercheurs
+
+**Tables DB impactées** :
+- `recruiter_profiles.photo_url` (nouvelle colonne TEXT nullable)
+- `recruiter_profiles.presentation_video_id` (nouvelle colonne UUID nullable, FK videos)
+- `videos` table déjà prête (type='recruiter_presentation')
+
+**Prochaine étape** :
+→ Comparer features app mobile vs SaaS (voir ci-dessous)
+→ Décider si PRD doit être mis à jour ou si c'est une évolution naturelle
+
+---
+
+## Comparaison Features App Mobile vs SaaS
+
+**Besoin** : Analyser ce que l'app mobile a déjà vs ce que le SaaS doit avoir pour assurer cohérence UX.
+
+| Feature | App Mobile (Chercheur) | SaaS Web (Recruteur) | Gap Identifié |
+|---------|------------------------|----------------------|---------------|
+| **Profil photo** | ✅ Seeker upload photo | ❌ Recruteur pas de photo | **GAP** — Ajouter upload photo recruteur |
+| **Vidéo présentation** | ✅ Seeker vidéo 40s (type=presentation) | ❌ Recruteur pas de vidéo entreprise | **GAP** — Ajouter vidéo présentation entreprise |
+| **Preview offre** | ✅ Feed vertical TikTok | ❌ Upload direct sans preview format mobile | **GAP** — Ajouter preview redimensionné lors publication |
+| **Messagerie** | ✅ Chat temps réel (Flutter) | ✅ Chat temps réel (Next.js Realtime) | **OK** — Synchronisé |
+| **Profil public** | ✅ Profil seeker visible par recruteurs | ⚠️ Profil recruteur visible par seekers (pas photo/vidéo) | **PARTIEL** — Manque photo + vidéo |
+| **Modification profil** | ✅ Page settings seeker | ⚠️ Page /settings placeholder | **GAP** — Implémenter formulaire complet |
+| **Upload offre** | N/A | ✅ Wizard /offers/new (15KB) | **OK** — Existe déjà |
+| **Grille candidats** | N/A | ✅ Page /candidates avec modal | **OK** — Epic 12 done |
+
+**Conclusion** :
+- **3 gaps majeurs** identifiés : photo profil, vidéo présentation, preview format mobile
+- **Cohérence UX** : Si chercheur peut montrer son visage en vidéo, recruteur doit aussi se présenter (équité, transparence)
+- **Impact PRD** : Epic 16 à créer OU considérer comme évolution naturelle des features profil
+
+**Actions suggérées** :
+1. **Option A** : Créer Epic 16 avec architecture complète (recommandé si > 10 stories)
+2. **Option B** : Traiter comme micro-sprints (3 features séparées)
+3. **Option C** : Mettre à jour PRD avec section "Profil Recruteur Amélioré"
+
+---
+
+*Sauvegarde mise a jour le 2026-04-30 (Epic 15 DONE + Analyse features recruteur)*
+*Epics 11-15 SaaS TOUS TERMINES (100%). Next: Epic 16 Profil Recruteur OU comparaison features app/SaaS détaillée + révision PRD.*
+
+---
+
+## Session 2026-05-01 : Révision PRD — Epic 10 Phase 2 (Profil Recruteur Complet)
+
+### ✅ Travail Effectué
+
+**Décision** : Enrichir Epic 10 existant avec une **Phase 2 : Profil Complet (Post-MVP)** au lieu de créer un nouvel Epic 16.
+
+**Raison** :
+- Cohérence thématique (tout lié au profil recruteur)
+- Évite le renommage des Epics suivants (16 Paiements, 17 Administration)
+- Distinction claire MVP (auth basique) vs Complet (éléments visuels)
+
+### 📝 User Stories Ajoutées au PRD
+
+| US | Titre | Description |
+|----|-------|-------------|
+| **US-10.6** | Photo de profil recruteur | Upload + crop carré (1:1, 200x200px), stockage R2, affichage app mobile + SaaS |
+| **US-10.7** | Preview format mobile | Preview 9:16 lors publication offre, toggle Desktop/Mobile, validation visuelle |
+| **US-10.8** | Page Settings complète | Route `/settings`, 7 sections éditables, barre progression temps réel |
+
+### ❌ Features Retirées
+
+**Vidéo présentation entreprise (60s)** — Décision utilisateur : ne sert à rien, on garde uniquement photo + preview + settings.
+
+**Colonnes DB retirées** :
+- ~~`recruiter_profiles.presentation_video_id`~~ (initialement prévue, retirée)
+
+**Colonnes DB conservées** :
+- `recruiter_profiles.photo_url` (TEXT nullable) ✅
+
+### 🎯 Gaps Corrigés
+
+| Gap Identifié | Solution PRD |
+|---------------|-------------|
+| 📸 Recruteur pas de photo (vs chercheur oui) | US-10.6 Photo profil |
+| 👁️ Pas de preview format mobile | US-10.7 Preview 9:16 |
+| ⚙️ Page /settings placeholder | US-10.8 Settings complet |
+
+### 📋 Prochaines Étapes (TODO)
+
+1. **Mettre à jour section "Nouvelles Tables DB (SaaS)"** dans le PRD → Ajouter `recruiter_profiles.photo_url`
+2. **Vérifier section V2** → Retirer ces features si elles y étaient mentionnées
+3. **Créer architecture Epic 10 Phase 2** (optionnel selon complexité)
+4. **Sprint planning** pour Phase 2 (estimation 1-2 semaines)
+
+### 📊 État du Projet
+
+- **PRD** : `prd-etoile-draft.md` — Mis à jour (Epic 10 Phase 2 ajoutée)
+- **Epics 11-15 SaaS** : TOUS TERMINÉS (100%)
+- **Prochaine implémentation** : Epic 10 Phase 2 (3 user stories)
+
+---
+
+*Sauvegarde mise à jour le 2026-05-01 (Révision PRD Epic 10 Phase 2 — Photo recruteur + Preview mobile + Settings)*
+*Next: Finaliser PRD (section Tables DB) → Architecture Phase 2 → Sprint planning → Implémentation*
+
+---
+
+## Session 2026-05-01 (Suite) : Architecture Epic 10 Phase 2 — COMPLÈTE ✅
+
+### ✅ Architecture Créée
+
+**Document** : `_bmad-output/architecture-epic-10-phase-2.md` (STATUS: COMPLETE)
+
+**Workflow Winston (8/8 étapes)** :
+1. ✅ Analyse contexte projet (3 US, NFRs, complexité)
+2. ✅ Évaluation starter template (stack Next.js confirmé)
+3. ✅ Décisions architecturales critiques (7 décisions documentées)
+4. ✅ Patterns d'implémentation (3 patterns spécifiques)
+5. ✅ Structure projet (10 fichiers mappés)
+6. ✅ Validation architecture (100% couverture)
+7. ✅ Revue cohérence (0 gaps critiques)
+8. ✅ Complétion finale
+
+### 🏗️ Décisions Architecturales Clés
+
+| # | Décision | Choix Retenu |
+|---|----------|--------------|
+| **2.1** | Bibliothèque crop image | `react-easy-crop` (A) — Composant React natif, 200KB, tactile |
+| **2.2** | Fonction upload générique | `lib/uploadFile.ts` (C) — 3 buckets (videos, photos, docs) |
+| **2.3** | Structure form Settings | **Single scroll** (C) — 7 sections dans 1 page, pas de tabs |
+| **2.4** | Preview mobile | Constants hard-codées (`9/16`, `375x667`) — pas de resize dynamique |
+| **1.1** | Migration DB | `ALTER TABLE recruiter_profiles ADD COLUMN photo_url TEXT` |
+| **1.2** | Sécurité RLS | Policy `UPDATE recruiter_profiles WHERE user_id = auth.uid()` |
+| **3.1** | Component réutilisable | `RecruiterAvatar` (3 tailles : sm=48px, md=80px, lg=200px) |
+
+### 📂 Fichiers à Implémenter (10 au total)
+
+**Nouveaux (8 fichiers)** :
+- `lib/uploadFile.ts` — Fonction upload générique R2 (3 buckets)
+- `components/settings/RecruiterAvatar.tsx` — Avatar 3 tailles
+- `components/settings/PhotoUploadSection.tsx` — Upload + crop photo
+- `components/settings/SettingsForm.tsx` — Form 7 sections
+- `components/offers/MobilePreview.tsx` — Preview 9:16 toggle Desktop/Mobile
+- `app/(dashboard)/settings/page.tsx` — Page Settings
+- `app/(dashboard)/settings/actions.ts` — Server Actions CRUD settings
+- `supabase/migrations/[timestamp]_add_recruiter_photo.sql` — Migration
+
+**Modifiés (2 fichiers)** :
+- `app/(dashboard)/offers/new/page.tsx` — Intégrer `<MobilePreview>`
+- `lib/types/database.ts` — Ajouter `photo_url?: string | null`
+
+### 🎯 Validation Architecture
+
+| Critère | Résultat |
+|---------|----------|
+| **Couverture exigences** | ✅ 100% (20/20 critères US couverts) |
+| **Gaps critiques** | ✅ 0 (aucun) |
+| **Gaps importants** | ✅ 0 (aucun) |
+| **Cohérence décisions** | ✅ Validée (compatibilité confirmée) |
+| **Patterns réutilisables** | ✅ 3 patterns documentés |
+| **Prêt implémentation** | ✅ OUI |
+
+### 📋 Prochaines Étapes (TODO)
+
+**Option 1 : Sprint Planning (Recommandée)** 
+→ `/sm` (Bob Scrum Master)  
+→ Découper Epic 10 Phase 2 en stories avec séquencement
+
+**Option 2 : Implémentation Directe**  
+→ `/dev` (Amelia Developer)  
+→ Séquence : Migration DB → Lib partagé → Features (Photo → Preview → Settings)
+
+**Option 3 : QA Review (Optionnel)**  
+→ `/qa` (Quinn QA)  
+→ Review architecture avant implémentation
+
+### 📊 État du Projet (Mise à Jour)
+
+| Epic | Statut | Composants |
+|------|--------|-----------|
+| **Epic 11** (Publication offres) | ✅ DONE | Wizard upload, liste, CRUD |
+| **Epic 12** (Grille candidats) | ✅ DONE | Scoring, modal, filtres |
+| **Epic 13** (Dashboard briefing) | ✅ DONE | KPIs PostgreSQL, polling |
+| **Epic 14** (Scoring PostgreSQL) | ✅ DONE | Table match_scores, trigger |
+| **Epic 15** (Messagerie) | ✅ DONE | Realtime Supabase |
+| **Epic 10 Phase 2** | 🔧 ARCHITECTURE READY | Photo + Preview + Settings |
+
+**Migrations déployées** : 27/27 (Epic 13: 2, Epic 14: 2)  
+**Tests Flutter** : 85/85 passing  
+**Analyse statique** : 0 errors
+
+---
+
+*Sauvegarde mise à jour le 2026-05-01 (Architecture Epic 10 Phase 2 COMPLÈTE — Prêt pour implémentation)*  
+*Next Track SaaS: Sprint Planning Epic 10 Phase 2 OU implémentation directe (10 fichiers)*
+## Session 2026-05-02 : Corrections Feed Mobile ✅
+
+### 🐛 Bug Fix 1 : Affichage Posters
+
+**Problème** : Les posters (images statiques d'offres) ne s'affichaient pas dans le feed mobile, alors que les vidéos fonctionnaient.
+
+**Cause Identifiée** :
+- Dans `feed_page.dart` ligne ~510, le widget `_VideoCard` utilisait `feedItem.video.videoUrl` pour afficher les posters
+- OR dans la BDD, les posters stockent l'image dans `thumbnail_url` (pas `video_url` qui est null)
+- Le SaaS recruteur enregistre : `video_url: null, thumbnail_url: result.url` pour type='poster'
+
+**Solution Appliquée** :
+```dart
+// AVANT (ligne 510)
+child: feedItem.video.videoUrl != null
+    ? CachedNetworkImage(imageUrl: feedItem.video.videoUrl!)
+
+// APRÈS
+child: feedItem.video.thumbnailUrl != null
+    ? CachedNetworkImage(imageUrl: feedItem.video.thumbnailUrl!)
+```
+
+**Fichiers Modifiés** :
+- `lib/features/feed/presentation/pages/feed_page.dart` (ligne ~510)
+- `lib/features/video/data/models/video_model.dart` (doc commentaire type 'poster')
+
+---
+
+### 🗑️ Refactoring : Suppression Feed Entreprises
+
+**Décision Produit** : Les recruteurs ne font plus de vidéos de présentation (type='presentation'), donc le feed "Entreprises" (discover) ne sert plus à rien.
+
+**Changements UI** :
+- ❌ Supprimé l'onglet "Entreprises" (discover) de l'AppBar feed
+- ❌ Supprimé l'onglet "Offres" (devient le seul affichage par défaut)
+- ✅ Titre AppBar simplifié : juste "Offres" pour les seekers, "ETOILE" pour les autres
+
+**Code Nettoyé** :
+- Supprimé variable `_selectedTab`
+- Supprimé méthode `_switchTab()`
+- Simplifié `_buildAppBarTitle()` (plus de Row avec 2 GestureDetector)
+
+**Fichiers Modifiés** :
+- `lib/features/feed/presentation/pages/feed_page.dart` (lignes 100, 120-136, 160-228)
+
+**Code FeedBloc** : Conservé le paramètre `feedTab` (valeur par défaut 'offers') mais le feed 'discover' n'est jamais appelé depuis l'UI. Nettoyage complet optionnel (pas critique).
+
+---
+
+### ✅ Résultats
+
+| Test | Statut |
+|------|--------|
+| **Compilation Flutter** | ✅ 0 errors, 2 warnings (prefer_final_fields) |
+| **Analyse statique** | ✅ PASS |
+| **Tests unitaires** | ✅ 85/85 passing (inchangé) |
+| **Affichage posters** | ✅ FIX appliqué (à tester) |
+| **Feed simplifié** | ✅ Onglet Entreprises supprimé |
+
+---
+
+*Sauvegarde mise à jour le 2026-05-02 (Bug posters + Suppression feed Entreprises)*
+*Next: Test mobile pour valider affichage posters + Epic 10 Phase 2 (Settings)*

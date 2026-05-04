@@ -22,6 +22,12 @@ class SeekerProfile extends Equatable {
   final String? domain;
   final String? specialty;
 
+  // Rythme d'alternance (3j/2j, 1sem/1sem, etc.)
+  final String? rhythm;
+
+  // Compétences techniques (texte libre)
+  final List<String> skills;
+
   // Coordinates (from city autocomplete)
   final double? latitude;
   final double? longitude;
@@ -46,6 +52,8 @@ class SeekerProfile extends Equatable {
     this.studyLevel,
     this.domain,
     this.specialty,
+    this.rhythm,
+    this.skills = const [],
     this.latitude,
     this.longitude,
     this.username,
@@ -113,6 +121,8 @@ class SeekerProfile extends Equatable {
       studyLevel: json['study_level'] as String?,
       domain: json['domain'] as String?,
       specialty: json['specialty'] as String?,
+      rhythm: json['rhythm'] as String?,
+      skills: json['skills'] != null ? List<String>.from(json['skills'] as List) : [],
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       username: json['username'] as String?,
@@ -134,6 +144,8 @@ class SeekerProfile extends Equatable {
       'study_level': studyLevel,
       'domain': domain,
       'specialty': specialty,
+      'rhythm': rhythm,
+      'skills': skills,
       'latitude': latitude,
       'longitude': longitude,
       'username': username,
@@ -152,6 +164,8 @@ class SeekerProfile extends Equatable {
     String? studyLevel,
     String? domain,
     String? specialty,
+    String? rhythm,
+    List<String>? skills,
     double? latitude,
     double? longitude,
     String? username,
@@ -168,6 +182,8 @@ class SeekerProfile extends Equatable {
       studyLevel: studyLevel ?? this.studyLevel,
       domain: domain ?? this.domain,
       specialty: specialty ?? this.specialty,
+      rhythm: rhythm ?? this.rhythm,
+      skills: skills ?? this.skills,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       username: username ?? this.username,
@@ -189,6 +205,8 @@ class SeekerProfile extends Equatable {
         studyLevel,
         domain,
         specialty,
+        rhythm,
+        skills,
         latitude,
         longitude,
         username,

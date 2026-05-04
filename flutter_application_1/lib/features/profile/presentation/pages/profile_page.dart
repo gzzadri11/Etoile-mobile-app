@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -64,7 +65,7 @@ class _ProfilePageContent extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                  const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
                   const SizedBox(height: AppTheme.spaceMd),
                   Text(state.message),
                   const SizedBox(height: AppTheme.spaceMd),
@@ -150,7 +151,7 @@ class _SeekerProfileView extends StatelessWidget {
                 Center(
                   child: CircleAvatar(
                     radius: 48,
-                    backgroundColor: AppColors.greyLight,
+                    backgroundColor: AppColors.bgSubtle,
                     backgroundImage: NetworkImage(profile.photoUrl!),
                   ),
                 )
@@ -158,8 +159,8 @@ class _SeekerProfileView extends StatelessWidget {
                 Center(
                   child: CircleAvatar(
                     radius: 48,
-                    backgroundColor: AppColors.greyLight,
-                    child: const Icon(Icons.person, size: 48, color: AppColors.greyMedium),
+                    backgroundColor: AppColors.bgSubtle,
+                    child: const Icon(Icons.person, size: 48, color: AppColors.border),
                   ),
                 ),
 
@@ -174,6 +175,11 @@ class _SeekerProfileView extends StatelessWidget {
                     : 'Non défini',
                 studyInfo: _buildStudyInfo(profile),
               ),
+
+              const SizedBox(height: AppTheme.spaceLg),
+
+              // Skills section
+              _SkillsSection(profile: profile),
 
               const SizedBox(height: AppTheme.spaceLg),
 
@@ -228,10 +234,10 @@ class _SeekerProfileView extends StatelessWidget {
                 onPressed: () {
                   context.read<AuthBloc>().add(const AuthLogoutRequested());
                 },
-                icon: const Icon(Icons.logout, color: AppColors.error),
+                icon: const Icon(Icons.logout, color: AppColors.danger),
                 label: Text(
                   AppStrings.logout,
-                  style: TextStyle(color: AppColors.error),
+                  style: TextStyle(color: AppColors.danger),
                 ),
               ),
 
@@ -288,15 +294,15 @@ class _ProfileCompletionCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppTheme.spaceMd),
       decoration: BoxDecoration(
-        color: AppColors.info.withAlpha(25),
+        color: AppColors.warning.withAlpha(25),
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppColors.info.withAlpha(100)),
+        border: Border.all(color: AppColors.warning.withAlpha(100)),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              const Icon(Icons.info_outline, color: AppColors.info),
+              const Icon(Icons.info_outline, color: AppColors.warning),
               const SizedBox(width: AppTheme.spaceSm),
               Expanded(
                 child: Text(
@@ -310,7 +316,7 @@ class _ProfileCompletionCard extends StatelessWidget {
                 '$percentage%',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primaryOrange,
+                      color: AppColors.accent,
                     ),
               ),
             ],
@@ -320,9 +326,9 @@ class _ProfileCompletionCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: percentage / 100,
-              backgroundColor: AppColors.greyLight,
+              backgroundColor: AppColors.bgSubtle,
               valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.primaryYellow),
+                  AppColors.accent),
               minHeight: 6,
             ),
           ),
@@ -367,7 +373,7 @@ class _VideoPreviewCard extends StatelessWidget {
           width: double.infinity,
           height: 200,
           decoration: BoxDecoration(
-            color: AppColors.black,
+            color: AppColors.textPrimary,
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           ),
           clipBehavior: Clip.antiAlias,
@@ -388,7 +394,7 @@ class _VideoPreviewCard extends StatelessWidget {
             video!.thumbnailUrl!,
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => const ColoredBox(
-              color: AppColors.black,
+              color: AppColors.textPrimary,
               child: Center(
                 child: Icon(Icons.videocam, size: 48, color: Colors.white54),
               ),
@@ -396,7 +402,7 @@ class _VideoPreviewCard extends StatelessWidget {
           )
         else
           const ColoredBox(
-            color: AppColors.black,
+            color: AppColors.textPrimary,
             child: Center(
               child: Icon(Icons.videocam, size: 48, color: Colors.white54),
             ),
@@ -420,13 +426,13 @@ class _VideoPreviewCard extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primaryOrange,
+              color: AppColors.accent,
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
             ),
             child: Text(
               'Visionner',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.white,
+                    color: AppColors.bgPrimary,
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -455,20 +461,20 @@ class _VideoPreviewCard extends StatelessWidget {
         Icon(
           Icons.videocam_outlined,
           size: 48,
-          color: AppColors.white.withAlpha(180),
+          color: AppColors.bgPrimary.withAlpha(180),
         ),
         const SizedBox(height: AppTheme.spaceSm),
         Text(
           'Aucune vidéo',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.white.withAlpha(180),
+                color: AppColors.bgPrimary.withAlpha(180),
               ),
         ),
         const SizedBox(height: AppTheme.spaceSm),
         Text(
           'Appuyez pour enregistrer votre présentation',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.white.withAlpha(120),
+                color: AppColors.bgPrimary.withAlpha(120),
               ),
         ),
       ],
@@ -496,9 +502,9 @@ class _ProfileInfoCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppTheme.spaceMd),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.bgPrimary,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppColors.greyLight),
+        border: Border.all(color: AppColors.bgSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -513,7 +519,7 @@ class _ProfileInfoCard extends StatelessWidget {
           Text(
             domain,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.greyWarm,
+                  color: AppColors.textSecondary,
                 ),
           ),
           const SizedBox(height: AppTheme.spaceMd),
@@ -522,13 +528,13 @@ class _ProfileInfoCard extends StatelessWidget {
               const Icon(
                 Icons.location_on_outlined,
                 size: 16,
-                color: AppColors.greyWarm,
+                color: AppColors.textSecondary,
               ),
               const SizedBox(width: 4),
               Text(
                 location,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.greyWarm,
+                      color: AppColors.textSecondary,
                     ),
               ),
             ],
@@ -539,14 +545,14 @@ class _ProfileInfoCard extends StatelessWidget {
               const Icon(
                 Icons.school_outlined,
                 size: 16,
-                color: AppColors.greyWarm,
+                color: AppColors.textSecondary,
               ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   studyInfo,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.greyWarm,
+                        color: AppColors.textSecondary,
                       ),
                 ),
               ),
@@ -580,9 +586,9 @@ class _PublicationSectionCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppTheme.spaceMd),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.bgPrimary,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppColors.greyLight),
+        border: Border.all(color: AppColors.bgSubtle),
       ),
       child: Row(
         children: [
@@ -590,10 +596,10 @@ class _PublicationSectionCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primaryOrange.withAlpha(25),
+              color: AppColors.accent.withAlpha(25),
               borderRadius: BorderRadius.circular(AppTheme.radiusMd),
             ),
-            child: Icon(icon, color: AppColors.primaryOrange),
+            child: Icon(icon, color: AppColors.accent),
           ),
           const SizedBox(width: AppTheme.spaceMd),
           Expanded(
@@ -610,7 +616,7 @@ class _PublicationSectionCard extends StatelessWidget {
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.greyWarm,
+                        color: AppColors.textSecondary,
                       ),
                 ),
               ],
@@ -620,14 +626,14 @@ class _PublicationSectionCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.tagBackground,
+                color: AppColors.accentBg,
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
               ),
               child: Text(
                 '$count',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primaryOrange,
+                      color: AppColors.accent,
                     ),
               ),
             ),
@@ -636,7 +642,7 @@ class _PublicationSectionCard extends StatelessWidget {
           const Icon(
             Icons.arrow_forward_ios,
             size: 14,
-            color: AppColors.greyWarm,
+            color: AppColors.textSecondary,
           ),
         ],
       ),
@@ -746,7 +752,7 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
                         child: VideoPlayer(_controller),
                       )
                     : const CircularProgressIndicator(
-                        color: AppColors.primaryYellow),
+                        color: AppColors.accent),
               ),
 
               // Top bar (retour + titre) — toujours au-dessus
@@ -828,6 +834,278 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Skills section with add/remove functionality
+class _SkillsSection extends StatefulWidget {
+  final SeekerProfile profile;
+
+  const _SkillsSection({required this.profile});
+
+  @override
+  State<_SkillsSection> createState() => _SkillsSectionState();
+}
+
+class _SkillsSectionState extends State<_SkillsSection> {
+  List<String> _skills = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _skills = List.from(widget.profile.skills);
+    _isLoading = false;
+  }
+
+  Future<void> _saveSkills() async {
+    try {
+      await GetIt.I<SupabaseClient>()
+          .from('seeker_profiles')
+          .update({'skills': _skills})
+          .eq('user_id', widget.profile.userId);
+
+      // Recharger le profil via le BLoC pour synchroniser l'état
+      if (mounted) {
+        context.read<ProfileBloc>().add(const ProfileRefreshRequested());
+      }
+    } catch (e) {
+      debugPrint('Error saving skills: $e');
+    }
+  }
+
+  void _removeSkill(int index) {
+    setState(() => _skills.removeAt(index));
+    _saveSkills();
+  }
+
+  void _addSkill(String skill) {
+    final trimmed = skill.trim();
+    if (trimmed.isEmpty) return;
+    if (_skills.contains(trimmed)) return; // Pas de doublon
+    setState(() => _skills.add(trimmed));
+    _saveSkills();
+  }
+
+  void _showAddSkillSheet() {
+    final controller = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(AppTheme.spaceLg, AppTheme.spaceMd, AppTheme.spaceLg, AppTheme.spaceLg),
+          decoration: const BoxDecoration(
+            color: AppColors.bgPrimary,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spaceMd),
+
+              // Titre
+              Text(
+                'Ajouter une compétence',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Logiciel, outil, langue, méthode, technique…',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: AppTheme.spaceMd),
+
+              // Champ texte libre
+              TextField(
+                controller: controller,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  hintText: 'Ex : Adobe Photoshop, Excel avancé, Anglais B2…',
+                ),
+                onSubmitted: (val) {
+                  _addSkill(val);
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: AppTheme.spaceMd),
+
+              // Bouton ajouter
+              EtoileButton(
+                label: 'Ajouter à mon profil',
+                onPressed: () {
+                  _addSkill(controller.text);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      color: AppColors.bgPrimary,
+      padding: const EdgeInsets.all(AppTheme.spaceLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Compétences',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.textTertiary),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Techniques acquises lors de vos études',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textTertiary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+              GestureDetector(
+                onTap: _showAddSkillSheet,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentBg,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                    border: Border.all(color: AppColors.accent, width: 0.5),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.add_rounded, size: 14, color: AppColors.accent),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Ajouter',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppColors.accent,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: AppTheme.spaceMd),
+
+          // État vide
+          if (_skills.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: AppTheme.spaceMd),
+              decoration: BoxDecoration(
+                color: AppColors.bgSubtle,
+                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                border: Border.all(color: AppColors.border, width: 0.5),
+              ),
+              child: Column(
+                children: [
+                  const Text('🎓', style: TextStyle(fontSize: 24)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Aucune compétence ajoutée.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
+                  ),
+                  Text(
+                    'Logiciels, langues, outils, méthodes…',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.textTertiary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            )
+
+          // Liste des compétences
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _skills.asMap().entries.map((entry) {
+                return _SkillTag(
+                  skill: entry.value,
+                  onDelete: () => _removeSkill(entry.key),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skill tag with delete button
+class _SkillTag extends StatelessWidget {
+  final String skill;
+  final VoidCallback onDelete;
+
+  const _SkillTag({required this.skill, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
+      decoration: BoxDecoration(
+        color: AppColors.accentBg,
+        borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+        border: Border.all(color: AppColors.accent, width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            skill,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.accentDark,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: onDelete,
+            behavior: HitTestBehavior.opaque,
+            child: const Icon(Icons.close_rounded, size: 14, color: AppColors.accent),
+          ),
+        ],
       ),
     );
   }
