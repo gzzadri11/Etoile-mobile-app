@@ -108,7 +108,7 @@ class _ReportSheetState extends State<_ReportSheet> {
       ),
       child: Container(
         decoration: const BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.bgPrimary,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppTheme.radiusXl),
           ),
@@ -122,7 +122,7 @@ class _ReportSheetState extends State<_ReportSheet> {
               height: 4,
               margin: const EdgeInsets.only(top: AppTheme.spaceMd),
               decoration: BoxDecoration(
-                color: AppColors.greyMedium,
+                color: AppColors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

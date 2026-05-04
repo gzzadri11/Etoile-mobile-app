@@ -43,7 +43,7 @@ class SettingsPage extends StatelessWidget {
               context,
               icon: Icons.admin_panel_settings,
               title: 'Administration',
-              iconColor: AppColors.info,
+              iconColor: AppColors.warning,
               onTap: () => context.push('/admin'),
             ),
             const Divider(height: AppTheme.spaceLg),
@@ -117,16 +117,16 @@ class SettingsPage extends StatelessWidget {
             context,
             icon: Icons.logout,
             title: AppStrings.logout,
-            iconColor: AppColors.error,
-            textColor: AppColors.error,
+            iconColor: AppColors.danger,
+            textColor: AppColors.danger,
             onTap: () => _showLogoutDialog(context),
           ),
           _buildTile(
             context,
             icon: Icons.delete_forever,
             title: AppStrings.deleteAccount,
-            iconColor: AppColors.error,
-            textColor: AppColors.error,
+            iconColor: AppColors.danger,
+            textColor: AppColors.danger,
             onTap: () => _showDeleteAccountDialog(context),
           ),
 
@@ -145,7 +145,7 @@ class SettingsPage extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: AppColors.greyWarm,
+              color: AppColors.textSecondary,
             ),
       ),
     );
@@ -161,7 +161,7 @@ class SettingsPage extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: iconColor ?? AppColors.greyWarm),
+      leading: Icon(icon, color: iconColor ?? AppColors.textSecondary),
       title: Text(
         title,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -172,7 +172,7 @@ class SettingsPage extends StatelessWidget {
           ? Text(subtitle, style: Theme.of(context).textTheme.bodySmall)
           : null,
       trailing: onTap != null
-          ? const Icon(Icons.chevron_right, color: AppColors.greyMedium)
+          ? const Icon(Icons.chevron_right, color: AppColors.border)
           : null,
       onTap: onTap,
     );
@@ -354,7 +354,7 @@ class SettingsPage extends StatelessWidget {
                     )
                   : const Text(
                       'Supprimer definitivement',
-                      style: TextStyle(color: AppColors.error),
+                      style: TextStyle(color: AppColors.danger),
                     ),
             ),
           ],
@@ -381,7 +381,7 @@ class SettingsPage extends StatelessWidget {
             },
             child: Text(
               AppStrings.confirm,
-              style: const TextStyle(color: AppColors.error),
+              style: const TextStyle(color: AppColors.danger),
             ),
           ),
         ],

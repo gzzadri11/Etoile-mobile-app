@@ -122,9 +122,9 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
 
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: AppColors.greyLight,
+                          backgroundColor: AppColors.bgSubtle,
                           child: const Icon(Icons.person,
-                              color: AppColors.greyMedium),
+                              color: AppColors.border),
                         ),
                         title: Text(name),
                         subtitle: Text(
@@ -132,7 +132,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
-                              ?.copyWith(color: AppColors.greyWarm),
+                              ?.copyWith(color: AppColors.textSecondary),
                         ),
                         trailing: TextButton(
                           onPressed: () => _unblockUser(
@@ -141,7 +141,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
                           ),
                           child: const Text(
                             'Debloquer',
-                            style: TextStyle(color: AppColors.error),
+                            style: TextStyle(color: AppColors.danger),
                           ),
                         ),
                       );

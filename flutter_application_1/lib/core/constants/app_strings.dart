@@ -209,9 +209,5 @@ abstract class AppStrings {
   // ============================================
   // CONTRACT TYPES
   // ============================================
-  static const String contractCDI = 'CDI';
-  static const String contractCDD = 'CDD';
   static const String contractAlternance = 'Alternance';
-  static const String contractStage = 'Stage';
-  static const String contractInterim = 'Intérim';
 }

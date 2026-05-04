@@ -56,14 +56,14 @@ class EmptyStateWidget extends StatelessWidget {
               Icon(
                 icon,
                 size: 64,
-                color: iconColor ?? AppColors.greyWarm,
+                color: iconColor ?? AppColors.textSecondary,
               ),
             const SizedBox(height: AppTheme.spaceMd),
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: darkMode ? AppColors.white : null,
+                    color: darkMode ? AppColors.bgPrimary : null,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -72,7 +72,7 @@ class EmptyStateWidget extends StatelessWidget {
               Text(
                 subtitle!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: darkMode ? AppColors.greyMedium : AppColors.greyWarm,
+                      color: darkMode ? AppColors.border : AppColors.textSecondary,
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -101,13 +101,13 @@ class EmptyStateWidget extends StatelessWidget {
             Icon(
               icon,
               size: 32,
-              color: iconColor ?? AppColors.greyMedium,
+              color: iconColor ?? AppColors.border,
             ),
           if (icon != null) const SizedBox(height: AppTheme.spaceSm),
           Text(
             title,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.greyWarm,
+                  color: AppColors.textSecondary,
                 ),
             textAlign: TextAlign.center,
           ),
@@ -116,7 +116,7 @@ class EmptyStateWidget extends StatelessWidget {
             Text(
               subtitle!,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.greyMedium,
+                    color: AppColors.border,
                   ),
               textAlign: TextAlign.center,
             ),

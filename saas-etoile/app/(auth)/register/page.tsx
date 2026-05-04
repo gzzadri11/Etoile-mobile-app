@@ -200,16 +200,16 @@ export default function RegisterPage() {
 function mapAuthError(msg: string): string {
   const lower = msg.toLowerCase();
   if (lower.includes("user already registered") || lower.includes("email already exists")) {
-    return "Cet email est déjà utilisé";
+    return "Cet email est déjà utilisé. Essayez de vous connecter ?";
   }
   if (lower.includes("password") && (lower.includes("weak") || lower.includes("short"))) {
-    return "Le mot de passe doit contenir au moins 8 caractères";
+    return "Choisissez un mot de passe plus sécurisé (minimum 8 caractères).";
   }
   if (lower.includes("invalid email")) {
-    return "Veuillez entrer un email valide";
+    return "Vérifiez le format de votre email.";
   }
   if (lower.includes("rate limit") || lower.includes("too many")) {
-    return "Trop de tentatives. Veuillez patienter.";
+    return "Trop de tentatives ! Prenez une petite pause et réessayez dans quelques instants.";
   }
   return msg;
 }

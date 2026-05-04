@@ -108,7 +108,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.danger,
               ),
             );
           }
@@ -129,13 +129,13 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryYellow.withValues(alpha: 0.15),
+                      color: AppColors.accent.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.mark_email_read_outlined,
                       size: 40,
-                      color: AppColors.primaryOrange,
+                      color: AppColors.accent,
                     ),
                   ),
 
@@ -154,7 +154,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                   Text(
                     'Un code a 6 chiffres a ete envoye a',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.greyWarm,
+                          color: AppColors.textSecondary,
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -192,7 +192,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                         hintStyle: TextStyle(
                           fontSize: 28,
                           letterSpacing: 12,
-                          color: AppColors.greyMedium,
+                          color: AppColors.border,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -200,7 +200,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                           borderSide: const BorderSide(
-                            color: AppColors.primaryYellow,
+                            color: AppColors.accent,
                             width: 2,
                           ),
                         ),
@@ -232,7 +232,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                     Text(
                       'Renvoyer dans ${_resendSeconds}s',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.greyWarm,
+                            color: AppColors.textSecondary,
                           ),
                     ),
 

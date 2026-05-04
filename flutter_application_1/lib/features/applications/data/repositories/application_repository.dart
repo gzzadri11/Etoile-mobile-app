@@ -47,11 +47,14 @@ class ApplicationRepository {
     final userId = currentUserId;
     if (userId == null) throw Exception('Utilisateur non connecte');
 
-    await _supabaseClient.from('applications').insert({
+    // Use upsert to handle case where user previously withdrew
+    await _supabaseClient.from('applications').upsert({
       'video_id': videoId,
       'seeker_id': userId,
       'recruiter_id': recruiterId,
-    });
+      'status': 'pending', // Reset to pending if was withdrawn
+      'applied_at': DateTime.now().toIso8601String(),
+    }, onConflict: 'video_id,seeker_id');
   }
 
   /// Get set of video IDs the current seeker has applied to

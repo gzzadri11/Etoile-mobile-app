@@ -1,110 +1,77 @@
 library;
 
 /// Palette de couleurs de l'application Etoile.
-///
-/// Basee sur les specifications UX :
-/// - Primaire : Jaune Etoile (#FFB800) et Orange Etoile (#FF8C00)
-/// - Symbolise l'optimisme et la chaleur.
 
 import 'package:flutter/material.dart';
 
-/// Palette de couleurs Etoile (primaires, neutres, semantiques).
 abstract class AppColors {
   // ============================================
-  // PRIMARY COLORS
+  // ACCENT
   // ============================================
 
-  /// Jaune Etoile - Primary accent color
-  /// Used for: CTA principal, accents, highlights
-  static const Color primaryYellow = Color(0xFFFFB800);
-
-  /// Orange Etoile - Secondary accent color
-  /// Used for: CTA secondaire, gradients, hover states
-  static const Color primaryOrange = Color(0xFFFF8C00);
-
-  /// Primary gradient for buttons and headers
-  static const LinearGradient primaryGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [primaryYellow, primaryOrange],
-  );
+  static const accent      = Color(0xFF635BFF);
+  static const accentLight = Color(0xFFC4C1FF);
+  static const accentDark  = Color(0xFF4F46E5);
+  static const accentBg    = Color(0xFFF0EFFF);
+  static const accentDeep  = Color(0xFF312E81);
 
   // ============================================
-  // NEUTRAL COLORS
+  // SUCCESS
   // ============================================
 
-  /// Pure white - Backgrounds, text on dark
-  static const Color white = Color(0xFFFFFFFF);
-
-  /// Deep black - Primary text, video backgrounds
-  static const Color black = Color(0xFF1A1A1A);
-
-  /// Warm grey - Secondary text, placeholders
-  static const Color greyWarm = Color(0xFF6B6B6B);
-
-  /// Light grey - Separators, secondary backgrounds
-  static const Color greyLight = Color(0xFFF5F5F5);
-
-  /// Medium grey - Borders, disabled states
-  static const Color greyMedium = Color(0xFFE5E5E5);
+  static const success       = Color(0xFF10B981);
+  static const successLight  = Color(0xFF6EE7B7);
+  static const successBg     = Color(0xFFECFDF5);
+  static const successDark   = Color(0xFF059669);
 
   // ============================================
-  // SEMANTIC COLORS
+  // WARNING
   // ============================================
 
-  /// Success green - Validations, confirmations
-  static const Color success = Color(0xFF22C55E);
-
-  /// Error red - Errors, critical alerts
-  static const Color error = Color(0xFFEF4444);
-
-  /// Warning amber - Warnings
-  static const Color warning = Color(0xFFF59E0B);
-
-  /// Info blue - Information, links
-  static const Color info = Color(0xFF3B82F6);
+  static const warning       = Color(0xFFF59E0B);
+  static const warningLight  = Color(0xFFFDE68A);
+  static const warningBg     = Color(0xFFFFFBEB);
+  static const warningDark   = Color(0xFFD97706);
 
   // ============================================
-  // SPECIAL COLORS
+  // DANGER
   // ============================================
 
-  /// Tag background - Semi-transparent yellow
-  static const Color tagBackground = Color(0x26FFB800); // 15% opacity
+  static const danger        = Color(0xFFEF4444);
+  static const dangerLight   = Color(0xFFFECACA);
+  static const dangerBg      = Color(0xFFFEF2F2);
+  static const dangerDark    = Color(0xFFB91C1C);
 
-  /// Tag text color
-  static const Color tagText = Color(0xFFFF8C00);
+  // ============================================
+  // NEUTRALS
+  // ============================================
 
-  /// Overlay gradient for video cards
-  static const LinearGradient videoOverlayGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [
-      Colors.transparent,
-      Color(0xB3000000), // 70% black opacity
-    ],
-  );
-
-  /// Semi-transparent white for icons on dark background
-  static const Color iconOnDark = Color(0x1AFFFFFF); // 10% opacity
+  static const textPrimary   = Color(0xFF0A0A0B);
+  static const textSecondary = Color(0xFF6B7280);
+  static const textTertiary  = Color(0xFF9CA3AF);
+  static const bgPrimary     = Color(0xFFFFFFFF);
+  static const bgSubtle      = Color(0xFFF9FAFB);
+  static const bgMuted       = Color(0xFFF3F4F6);
+  static const border        = Color(0xFFE5E7EB);
+  static const borderLight   = Color(0xFFF3F4F6);
 
   // ============================================
   // MATERIAL COLOR SWATCH
   // ============================================
 
-  /// Material color swatch for primary yellow
   static const MaterialColor primarySwatch = MaterialColor(
-    0xFFFFB800,
+    0xFF635BFF,
     <int, Color>{
-      50: Color(0xFFFFF8E1),
-      100: Color(0xFFFFECB3),
-      200: Color(0xFFFFE082),
-      300: Color(0xFFFFD54F),
-      400: Color(0xFFFFCA28),
-      500: Color(0xFFFFB800),
-      600: Color(0xFFFFB300),
-      700: Color(0xFFFFAB00),
-      800: Color(0xFFFFA000),
-      900: Color(0xFFFF8C00),
+      50: Color(0xFFF0EFFF),
+      100: Color(0xFFE0DEFF),
+      200: Color(0xFFC4C1FF),
+      300: Color(0xFFA8A4FF),
+      400: Color(0xFF8C87FF),
+      500: Color(0xFF635BFF),
+      600: Color(0xFF4F46E5),
+      700: Color(0xFF4338CA),
+      800: Color(0xFF3730A3),
+      900: Color(0xFF312E81),
     },
   );
 
@@ -112,12 +79,10 @@ abstract class AppColors {
   // HELPER METHODS
   // ============================================
 
-  /// Returns appropriate text color for given background
   static Color textColorOn(Color background) {
-    return background.computeLuminance() > 0.5 ? black : white;
+    return background.computeLuminance() > 0.5 ? textPrimary : bgPrimary;
   }
 
-  /// Returns a color with modified opacity
   static Color withOpacity(Color color, double opacity) {
     return color.withValues(alpha: opacity);
   }

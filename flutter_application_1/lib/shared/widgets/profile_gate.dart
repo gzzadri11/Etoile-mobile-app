@@ -35,9 +35,9 @@ Future<bool> checkProfileGate(BuildContext context) async {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: percentage / 100,
-              backgroundColor: AppColors.greyLight,
+              backgroundColor: AppColors.bgSubtle,
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primaryYellow),
+                  const AlwaysStoppedAnimation<Color>(AppColors.accent),
               minHeight: 8,
             ),
           ),
@@ -46,7 +46,7 @@ Future<bool> checkProfileGate(BuildContext context) async {
             '$percentage% complete',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: AppColors.primaryOrange,
+              color: AppColors.accent,
             ),
           ),
           const SizedBox(height: AppTheme.spaceMd),

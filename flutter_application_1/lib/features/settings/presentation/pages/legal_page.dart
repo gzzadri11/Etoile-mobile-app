@@ -33,7 +33,7 @@ class LegalPage extends StatelessWidget {
             Text(
               'Derniere mise a jour : 1er janvier 2026',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.greyWarm,
+                    color: AppColors.textSecondary,
                   ),
             ),
             const SizedBox(height: AppTheme.spaceLg),
@@ -48,7 +48,7 @@ class LegalPage extends StatelessWidget {
               Text(
                 section.body,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.greyWarm,
+                      color: AppColors.textSecondary,
                       height: 1.6,
                     ),
               ),

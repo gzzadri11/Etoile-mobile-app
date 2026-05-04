@@ -78,14 +78,14 @@ class EtoileButton extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: isDisabled
               ? null
-              : AppColors.primaryGradient,
-          color: isDisabled ? AppColors.greyMedium : null,
+              : LinearGradient(colors: [AppColors.accent, AppColors.accentDark]),
+          color: isDisabled ? AppColors.border : null,
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           boxShadow: isDisabled
               ? null
               : [
                   BoxShadow(
-                    color: AppColors.primaryYellow.withValues(alpha: 0.3),
+                    color: AppColors.accent.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -99,7 +99,7 @@ class EtoileButton extends StatelessWidget {
             child: Center(
               child: _buildButtonContent(
                 context,
-                textColor: isDisabled ? AppColors.greyWarm : AppColors.black,
+                textColor: isDisabled ? AppColors.textSecondary : AppColors.textPrimary,
               ),
             ),
           ),
@@ -116,7 +116,7 @@ class EtoileButton extends StatelessWidget {
         onPressed: isDisabled ? null : onPressed,
         style: OutlinedButton.styleFrom(
           side: BorderSide(
-            color: isDisabled ? AppColors.greyMedium : AppColors.primaryYellow,
+            color: isDisabled ? AppColors.border : AppColors.accent,
             width: 2,
           ),
           shape: RoundedRectangleBorder(
@@ -125,7 +125,7 @@ class EtoileButton extends StatelessWidget {
         ),
         child: _buildButtonContent(
           context,
-          textColor: isDisabled ? AppColors.greyWarm : AppColors.primaryYellow,
+          textColor: isDisabled ? AppColors.textSecondary : AppColors.accent,
         ),
       ),
     );
@@ -138,7 +138,7 @@ class EtoileButton extends StatelessWidget {
         onPressed: isDisabled ? null : onPressed,
         child: _buildButtonContent(
           context,
-          textColor: isDisabled ? AppColors.greyWarm : AppColors.greyWarm,
+          textColor: isDisabled ? AppColors.textSecondary : AppColors.textSecondary,
         ),
       ),
     );
@@ -206,7 +206,7 @@ class EtoileIconButton extends StatelessWidget {
       width: size,
       height: size,
       child: Material(
-        color: backgroundColor ?? AppColors.iconOnDark,
+        color: backgroundColor ?? AppColors.textTertiary,
         shape: const CircleBorder(),
         child: InkWell(
           onTap: onPressed,
@@ -214,7 +214,7 @@ class EtoileIconButton extends StatelessWidget {
           child: Center(
             child: Icon(
               icon,
-              color: iconColor ?? AppColors.white,
+              color: iconColor ?? AppColors.bgPrimary,
               size: size * 0.5,
             ),
           ),

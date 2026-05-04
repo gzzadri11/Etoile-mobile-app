@@ -130,3 +130,12 @@ development_status:
   8-2-formulaire-de-contact: backlog
   8-3-mentions-legales-cgu-confidentialite: backlog
   epic-8-retrospective: optional
+
+  # ============================================================
+  # Epic 10 Phase 2: Profil Recruteur Complet (SaaS)
+  # ============================================================
+  epic-10-phase-2: in-progress
+  10-6-photo-profil-recruteur: done
+  10-7-preview-format-mobile: done
+  10-8-page-settings: done
+  epic-10-phase-2-retrospective: optional

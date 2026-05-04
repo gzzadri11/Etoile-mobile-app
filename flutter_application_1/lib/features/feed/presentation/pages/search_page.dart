@@ -7,9 +7,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/sector_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/city_autocomplete_field.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 
 /// Search / landing page — filtres secteur, specialite, proximite pour chercheurs.
@@ -35,6 +37,9 @@ class _SeekerSearchView extends StatefulWidget {
 class _SeekerSearchViewState extends State<_SeekerSearchView> {
   String? _selectedSector;
   String? _selectedSpecialty;
+  String? _selectedStudyLevel; // Task #3
+  String? _selectedCity; // Task #3
+  String? _selectedRhythm; // Task #3
   double? _selectedProximityKm;
   double? _userLatitude;
   double? _userLongitude;
@@ -94,6 +99,16 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
     if (_selectedSpecialty != null) {
       queryParams['specialty'] = _selectedSpecialty!;
     }
+    // Task #3: Nouveaux filtres globaux
+    if (_selectedStudyLevel != null) {
+      queryParams['studyLevel'] = _selectedStudyLevel!;
+    }
+    if (_selectedCity != null && _selectedCity!.isNotEmpty) {
+      queryParams['city'] = _selectedCity!;
+    }
+    if (_selectedRhythm != null) {
+      queryParams['rhythm'] = _selectedRhythm!;
+    }
     if (_selectedProximityKm != null &&
         _userLatitude != null &&
         _userLongitude != null) {
@@ -146,7 +161,7 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
                   const Icon(
                     Icons.search,
                     size: 80,
-                    color: AppColors.primaryYellow,
+                    color: AppColors.accent,
                   ),
                   const SizedBox(height: AppTheme.spaceMd),
                   Text(
@@ -160,7 +175,7 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
                   Text(
                     'Sélectionnez un secteur pour découvrir les offres',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.greyWarm,
+                          color: AppColors.textSecondary,
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -184,14 +199,14 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 side: BorderSide(
-                    color: AppColors.greyMedium.withValues(alpha: 0.5)),
+                    color: AppColors.border.withValues(alpha: 0.5)),
               ),
               title: Text(
                 _selectedSector != null
                     ? SectorConstants.getSectorLabel(_selectedSector)
                     : 'Tous les secteurs',
                 style: TextStyle(
-                  color: _selectedSector != null ? null : AppColors.greyWarm,
+                  color: _selectedSector != null ? null : AppColors.textSecondary,
                 ),
               ),
               trailing: _selectedSector != null
@@ -231,12 +246,134 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
                         _selectedSpecialty = selected ? spec : null;
                       });
                     },
-                    selectedColor: AppColors.tagBackground,
-                    checkmarkColor: AppColors.primaryOrange,
+                    selectedColor: AppColors.accentBg,
+                    checkmarkColor: AppColors.accent,
                   );
                 }).toList(),
               ),
             ],
+
+            // --- Task #3: Study Level filter ---
+            const SizedBox(height: AppTheme.spaceLg),
+            Text(
+              'Niveau d\'études',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: AppTheme.spaceSm),
+            ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: AppTheme.spaceSm),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                side: BorderSide(
+                    color: AppColors.border.withValues(alpha: 0.5)),
+              ),
+              title: Text(
+                _selectedStudyLevel != null
+                    ? SectorConstants.studyLevelLabels[_selectedStudyLevel]!
+                    : 'Tous les niveaux',
+                style: TextStyle(
+                  color: _selectedStudyLevel != null ? null : AppColors.textSecondary,
+                ),
+              ),
+              trailing: _selectedStudyLevel != null
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 20),
+                      onPressed: () {
+                        setState(() {
+                          _selectedStudyLevel = null;
+                        });
+                      },
+                    )
+                  : const Icon(Icons.chevron_right),
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (_) => Container(
+                    padding: const EdgeInsets.all(AppTheme.spaceMd),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Niveau d\'études',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: AppTheme.spaceMd),
+                        ...SectorConstants.studyLevelOptions.map((level) {
+                          return ListTile(
+                            title: Text(SectorConstants.studyLevelLabels[level]!),
+                            trailing: _selectedStudyLevel == level
+                                ? const Icon(Icons.check, color: AppColors.accent)
+                                : null,
+                            onTap: () {
+                              setState(() {
+                                _selectedStudyLevel = level;
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        }),
+                        const SizedBox(height: AppTheme.spaceSm),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // --- Task #3: City filter ---
+            const SizedBox(height: AppTheme.spaceLg),
+            Text(
+              'Ville',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: AppTheme.spaceSm),
+            CityAutocompleteField(
+              initialValue: _selectedCity,
+              onCitySelected: (cityName, lat, lng) {
+                setState(() {
+                  _selectedCity = cityName;
+                });
+              },
+              label: 'Rechercher une ville',
+            ),
+
+            // --- Task #3: Rhythm filter ---
+            const SizedBox(height: AppTheme.spaceLg),
+            Text(
+              'Rythme d\'alternance',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: AppTheme.spaceSm),
+            Wrap(
+              spacing: AppTheme.spaceSm,
+              runSpacing: AppTheme.spaceSm,
+              children: rhythmShortToFull.entries.map((entry) {
+                final code = entry.key;
+                final label = entry.value;
+                final isSelected = _selectedRhythm == code;
+                return FilterChip(
+                  label: Text(label),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      _selectedRhythm = selected ? code : null;
+                    });
+                  },
+                  selectedColor: AppColors.accentBg,
+                  checkmarkColor: AppColors.accent,
+                );
+              }).toList(),
+            ),
 
             // --- Proximity section (same as feed filters) ---
             const SizedBox(height: AppTheme.spaceLg),
@@ -269,12 +406,12 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
                 child: Row(
                   children: [
                     const Icon(Icons.location_off,
-                        size: 18, color: AppColors.greyWarm),
+                        size: 18, color: AppColors.textSecondary),
                     const SizedBox(width: AppTheme.spaceSm),
                     Text(
                       'Activez la localisation pour filtrer',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.greyWarm,
+                            color: AppColors.textSecondary,
                           ),
                     ),
                   ],
@@ -294,8 +431,8 @@ class _SeekerSearchViewState extends State<_SeekerSearchView> {
                         _selectedProximityKm = selected ? km : null;
                       });
                     },
-                    selectedColor: AppColors.tagBackground,
-                    checkmarkColor: AppColors.primaryOrange,
+                    selectedColor: AppColors.accentBg,
+                    checkmarkColor: AppColors.accent,
                   );
                 }).toList(),
               ),
@@ -382,7 +519,7 @@ class _SectorPickerSheetState extends State<_SectorPickerSheet> {
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.bgPrimary,
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(AppTheme.radiusXl),
             ),
@@ -394,7 +531,7 @@ class _SectorPickerSheetState extends State<_SectorPickerSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(top: AppTheme.spaceMd),
                 decoration: BoxDecoration(
-                  color: AppColors.greyMedium,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -435,7 +572,7 @@ class _SectorPickerSheetState extends State<_SectorPickerSheet> {
                       title: Text(SectorConstants.getSectorLabel(code)),
                       trailing: isSelected
                           ? const Icon(Icons.check,
-                              color: AppColors.primaryOrange)
+                              color: AppColors.accent)
                           : null,
                       selected: isSelected,
                       onTap: () => widget.onSectorSelected(code),

@@ -52,17 +52,17 @@ class _VideoRecordPageState extends State<VideoRecordPage>
     _VideoPhase(
       prompt: AppStrings.phase1Prompt,
       duration: AppConfig.videoPhases[0],
-      color: AppColors.primaryYellow,
+      color: AppColors.accent,
     ),
     _VideoPhase(
       prompt: AppStrings.phase2Prompt,
       duration: AppConfig.videoPhases[1],
-      color: AppColors.primaryOrange,
+      color: AppColors.accent,
     ),
     _VideoPhase(
       prompt: AppStrings.phase3Prompt,
       duration: AppConfig.videoPhases[2],
-      color: AppColors.primaryOrange,
+      color: AppColors.accent,
     ),
   ];
 
@@ -263,7 +263,7 @@ class _VideoRecordPageState extends State<VideoRecordPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: AppColors.textPrimary,
       body: SafeArea(
         child: BlocListener<VideoBloc, VideoState>(
           listener: (context, state) {
@@ -364,7 +364,7 @@ class _CameraPreviewWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (controller == null || !controller!.value.isInitialized) {
-      return Container(color: AppColors.black);
+      return Container(color: AppColors.textPrimary);
     }
     // Remplir l'ecran avec crop au centre
     return SizedBox.expand(
@@ -415,7 +415,7 @@ class _PreparationView extends StatelessWidget {
           )
         else
           const Center(
-            child: CircularProgressIndicator(color: AppColors.primaryYellow),
+            child: CircularProgressIndicator(color: AppColors.accent),
           ),
 
         // Bouton fermer
@@ -423,7 +423,7 @@ class _PreparationView extends StatelessWidget {
           top: AppTheme.spaceMd,
           left: AppTheme.spaceMd,
           child: IconButton(
-            icon: const Icon(Icons.close, color: AppColors.white),
+            icon: const Icon(Icons.close, color: AppColors.bgPrimary),
             onPressed: onClose,
           ),
         ),
@@ -434,7 +434,7 @@ class _PreparationView extends StatelessWidget {
             top: AppTheme.spaceMd,
             right: AppTheme.spaceMd,
             child: IconButton(
-              icon: const Icon(Icons.cameraswitch, color: AppColors.white),
+              icon: const Icon(Icons.cameraswitch, color: AppColors.bgPrimary),
               onPressed: onSwitchCamera,
             ),
           ),
@@ -451,14 +451,14 @@ class _PreparationView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppTheme.spaceMd),
                 decoration: BoxDecoration(
-                  color: AppColors.white.withValues(alpha: 0.1),
+                  color: AppColors.bgPrimary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 ),
                 child: Row(
                   children: [
                     const Icon(
                       Icons.lightbulb_outline,
-                      color: AppColors.primaryYellow,
+                      color: AppColors.accent,
                     ),
                     const SizedBox(width: AppTheme.spaceSm),
                     Expanded(
@@ -466,7 +466,7 @@ class _PreparationView extends StatelessWidget {
                         AppStrings.videoTip,
                         style:
                             Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.white,
+                                  color: AppColors.bgPrimary,
                                 ),
                       ),
                     ),
@@ -503,7 +503,7 @@ class _CameraErrorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.black,
+      color: AppColors.textPrimary,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppTheme.spaceLg),
@@ -513,13 +513,13 @@ class _CameraErrorWidget extends StatelessWidget {
               Icon(
                 Icons.videocam_off,
                 size: 64,
-                color: AppColors.white.withValues(alpha: 0.5),
+                color: AppColors.bgPrimary.withValues(alpha: 0.5),
               ),
               const SizedBox(height: AppTheme.spaceMd),
               Text(
                 error,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.white,
+                      color: AppColors.bgPrimary,
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -571,10 +571,10 @@ class _RecordingView extends StatelessWidget {
           left: AppTheme.spaceMd,
           child: TextButton.icon(
             onPressed: onCancel,
-            icon: const Icon(Icons.close, color: AppColors.white),
+            icon: const Icon(Icons.close, color: AppColors.bgPrimary),
             label: const Text(
               'Annuler',
-              style: TextStyle(color: AppColors.white),
+              style: TextStyle(color: AppColors.bgPrimary),
             ),
           ),
         ),
@@ -589,7 +589,7 @@ class _RecordingView extends StatelessWidget {
               vertical: AppTheme.spaceXs,
             ),
             decoration: BoxDecoration(
-              color: AppColors.error,
+              color: AppColors.danger,
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
             ),
             child: Row(
@@ -599,7 +599,7 @@ class _RecordingView extends StatelessWidget {
                   width: 8,
                   height: 8,
                   decoration: const BoxDecoration(
-                    color: AppColors.white,
+                    color: AppColors.bgPrimary,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -607,7 +607,7 @@ class _RecordingView extends StatelessWidget {
                 const Text(
                   'REC',
                   style: TextStyle(
-                    color: AppColors.white,
+                    color: AppColors.bgPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -629,13 +629,13 @@ class _RecordingView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppTheme.spaceMd),
                 decoration: BoxDecoration(
-                  color: AppColors.white.withValues(alpha: 0.1),
+                  color: AppColors.bgPrimary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 ),
                 child: Text(
                   phase.prompt,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.white,
+                        color: AppColors.bgPrimary,
                       ),
                   textAlign: TextAlign.center,
                 ),
@@ -654,8 +654,8 @@ class _RecordingView extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: index <= phaseIndex
-                          ? AppColors.primaryYellow
-                          : AppColors.white.withValues(alpha: 0.3),
+                          ? AppColors.accent
+                          : AppColors.bgPrimary.withValues(alpha: 0.3),
                     ),
                   );
                 }),
@@ -666,7 +666,7 @@ class _RecordingView extends StatelessWidget {
               Text(
                 'Phase ${phaseIndex + 1}/$totalPhases',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.white.withValues(alpha: 0.7),
+                      color: AppColors.bgPrimary.withValues(alpha: 0.7),
                     ),
               ),
 
@@ -677,7 +677,7 @@ class _RecordingView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
                 child: LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: AppColors.white.withValues(alpha: 0.3),
+                  backgroundColor: AppColors.bgPrimary.withValues(alpha: 0.3),
                   valueColor: AlwaysStoppedAnimation<Color>(phase.color),
                   minHeight: 4,
                 ),
@@ -689,7 +689,7 @@ class _RecordingView extends StatelessWidget {
               Text(
                 secondsRemaining.toString().padLeft(2, '0'),
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: AppColors.white,
+                      color: AppColors.bgPrimary,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -734,10 +734,10 @@ class _PreviewView extends StatelessWidget {
           )
         else
           Container(
-            color: AppColors.black,
+            color: AppColors.textPrimary,
             child: const Center(
               child:
-                  CircularProgressIndicator(color: AppColors.primaryYellow),
+                  CircularProgressIndicator(color: AppColors.accent),
             ),
           ),
 
@@ -778,7 +778,7 @@ class _UploadingView extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: ColoredBox(
-        color: AppColors.black,
+        color: AppColors.textPrimary,
         child: Padding(
           padding: const EdgeInsets.all(AppTheme.spaceLg),
           child: Column(
@@ -789,7 +789,7 @@ class _UploadingView extends StatelessWidget {
                 height: 80,
                 child: CircularProgressIndicator(
                   value: progress > 0 ? progress / 100 : null,
-                  color: AppColors.primaryYellow,
+                  color: AppColors.accent,
                   strokeWidth: 6,
                 ),
               ),
@@ -797,14 +797,14 @@ class _UploadingView extends StatelessWidget {
               Text(
                 'Publication en cours...',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.white,
+                      color: AppColors.bgPrimary,
                     ),
               ),
               const SizedBox(height: AppTheme.spaceSm),
               Text(
                 '$progress%',
                 style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: AppColors.primaryYellow,
+                      color: AppColors.accent,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -829,7 +829,7 @@ class _SuccessView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.black,
+      color: AppColors.textPrimary,
       padding: const EdgeInsets.all(AppTheme.spaceLg),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -838,12 +838,12 @@ class _SuccessView extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: const BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              gradient: LinearGradient(colors: [AppColors.accent, AppColors.accentDark]),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.check,
-              color: AppColors.black,
+              color: AppColors.textPrimary,
               size: 40,
             ),
           ),
@@ -851,14 +851,14 @@ class _SuccessView extends StatelessWidget {
           Text(
             'Bravo !',
             style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  color: AppColors.white,
+                  color: AppColors.bgPrimary,
                 ),
           ),
           const SizedBox(height: AppTheme.spaceSm),
           Text(
             AppStrings.successVideoPublished,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.white.withValues(alpha: 0.8),
+                  color: AppColors.bgPrimary.withValues(alpha: 0.8),
                 ),
             textAlign: TextAlign.center,
           ),
@@ -873,7 +873,7 @@ class _SuccessView extends StatelessWidget {
             child: Text(
               'Explorer le feed',
               style:
-                  TextStyle(color: AppColors.white.withValues(alpha: 0.7)),
+                  TextStyle(color: AppColors.bgPrimary.withValues(alpha: 0.7)),
             ),
           ),
         ],

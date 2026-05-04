@@ -96,7 +96,7 @@ class _PublicSeekerProfilePageState extends State<PublicSeekerProfilePage> {
               color: Colors.black26,
               child: const Center(
                 child:
-                    CircularProgressIndicator(color: AppColors.primaryYellow),
+                    CircularProgressIndicator(color: AppColors.accent),
               ),
             ),
         ],
@@ -107,7 +107,7 @@ class _PublicSeekerProfilePageState extends State<PublicSeekerProfilePage> {
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.primaryYellow),
+        child: CircularProgressIndicator(color: AppColors.accent),
       );
     }
 
@@ -116,7 +116,7 @@ class _PublicSeekerProfilePageState extends State<PublicSeekerProfilePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
             const SizedBox(height: AppTheme.spaceMd),
             Text(
               _error ?? 'Profil introuvable',
@@ -178,7 +178,7 @@ class _PublicSeekerProfilePageState extends State<PublicSeekerProfilePage> {
                   Row(
                     children: [
                       const Icon(Icons.videocam_outlined,
-                          color: AppColors.primaryOrange, size: 20),
+                          color: AppColors.accent, size: 20),
                       const SizedBox(width: AppTheme.spaceXs),
                       Text(
                         'Vidéos',
@@ -260,7 +260,7 @@ class _PublicSeekerProfilePageState extends State<PublicSeekerProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vous ne pouvez pas vous envoyer un message'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.danger,
         ),
       );
       return;
@@ -288,7 +288,7 @@ class _PublicSeekerProfilePageState extends State<PublicSeekerProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.danger,
           duration: const Duration(seconds: 3),
         ),
       );
@@ -319,7 +319,7 @@ class _SeekerHeader extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.primaryYellow.withValues(alpha: 0.15),
+            AppColors.accent.withValues(alpha: 0.15),
             Colors.transparent,
           ],
         ),
@@ -328,10 +328,10 @@ class _SeekerHeader extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 56,
-            backgroundColor: AppColors.greyLight,
+            backgroundColor: AppColors.bgSubtle,
             backgroundImage: hasPhoto ? NetworkImage(photoUrl!) : null,
             child: !hasPhoto
-                ? const Icon(Icons.person, size: 56, color: AppColors.greyMedium)
+                ? const Icon(Icons.person, size: 56, color: AppColors.border)
                 : null,
           ),
           const SizedBox(height: AppTheme.spaceMd),
@@ -346,7 +346,7 @@ class _SeekerHeader extends StatelessWidget {
             Text(
               '$age ans',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.greyWarm,
+                    color: AppColors.textSecondary,
                   ),
             ),
         ],
@@ -365,7 +365,7 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: AppColors.primaryOrange),
+        Icon(icon, size: 20, color: AppColors.accent),
         const SizedBox(width: AppTheme.spaceSm),
         Expanded(
           child: Text(
@@ -390,7 +390,7 @@ class _VideoThumbnailCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.greyLight),
+        border: Border.all(color: AppColors.bgSubtle),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -399,23 +399,23 @@ class _VideoThumbnailCard extends StatelessWidget {
           Expanded(
             child: Container(
               width: double.infinity,
-              color: AppColors.greyLight,
+              color: AppColors.bgSubtle,
               child: thumbnailUrl != null
                   ? CachedNetworkImage(
                       imageUrl: thumbnailUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, _) => const Center(
                         child: Icon(Icons.play_circle_outline,
-                            size: 32, color: AppColors.greyMedium),
+                            size: 32, color: AppColors.border),
                       ),
                       errorWidget: (_, _, _) => const Center(
                         child: Icon(Icons.play_circle_outline,
-                            size: 32, color: AppColors.greyMedium),
+                            size: 32, color: AppColors.border),
                       ),
                     )
                   : const Center(
                       child: Icon(Icons.play_circle_outline,
-                          size: 32, color: AppColors.greyMedium),
+                          size: 32, color: AppColors.border),
                     ),
             ),
           ),
@@ -461,8 +461,8 @@ class _ContactButton extends StatelessWidget {
         icon: const Icon(Icons.message_outlined),
         label: const Text('Envoyer un message'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryOrange,
-          foregroundColor: AppColors.white,
+          backgroundColor: AppColors.accent,
+          foregroundColor: AppColors.bgPrimary,
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusMd),

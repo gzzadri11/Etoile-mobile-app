@@ -168,6 +168,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         'first_name': event.firstName,
       };
 
+      // Inscription sans confirmation email (désactivée dans Supabase dashboard)
       final response = await _supabaseClient.auth.signUp(
         email: event.email,
         password: event.password,
@@ -179,7 +180,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
-      // Verification email desactivee pour la beta — authentification immediate
+      // Authentification immediate (pas de confirmation email)
       _registerPushToken();
       emit(AuthAuthenticated(
         userId: response.user!.id,

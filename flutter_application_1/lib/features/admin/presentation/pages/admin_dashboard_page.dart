@@ -67,7 +67,7 @@ class AdminDashboardPage extends StatelessWidget {
                 Text(
                   'Gerez la plateforme Etoile',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.greyWarm,
+                        color: AppColors.textSecondary,
                       ),
                 ),
                 const SizedBox(height: AppTheme.spaceLg),
@@ -75,7 +75,7 @@ class AdminDashboardPage extends StatelessWidget {
                 // Verifications card
                 _DashboardCard(
                   icon: Icons.verified_user_outlined,
-                  iconColor: AppColors.primaryOrange,
+                  iconColor: AppColors.accent,
                   title: 'Verifications',
                   subtitle: 'Recruteurs en attente de validation',
                   badgeCount: pendingRecruiters,
@@ -86,7 +86,7 @@ class AdminDashboardPage extends StatelessWidget {
                 // Reports card
                 _DashboardCard(
                   icon: Icons.flag_outlined,
-                  iconColor: AppColors.error,
+                  iconColor: AppColors.danger,
                   title: 'Signalements',
                   subtitle: 'Contenus signales a moderer',
                   badgeCount: pendingReports,
@@ -120,13 +120,13 @@ class AdminDashboardPage extends StatelessWidget {
             const Icon(
               Icons.error_outline,
               size: 48,
-              color: AppColors.error,
+              color: AppColors.danger,
             ),
             const SizedBox(height: AppTheme.spaceMd),
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyWarm,
+                    color: AppColors.textSecondary,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -169,7 +169,7 @@ class _DashboardCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.greyMedium.withAlpha(60)),
+        side: BorderSide(color: AppColors.border.withAlpha(60)),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -207,7 +207,7 @@ class _DashboardCard extends StatelessWidget {
                       subtitle,
                       style:
                           Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.greyWarm,
+                                color: AppColors.textSecondary,
                               ),
                     ),
                   ],
@@ -239,7 +239,7 @@ class _DashboardCard extends StatelessWidget {
 
               const Icon(
                 Icons.chevron_right,
-                color: AppColors.greyMedium,
+                color: AppColors.border,
               ),
             ],
           ),

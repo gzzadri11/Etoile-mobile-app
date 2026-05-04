@@ -2,15 +2,15 @@ library;
 
 /// Champ d'autocompletion de ville filtre sur la France metropolitaine.
 ///
-/// Utilise l'API Photon (OpenStreetMap) avec bbox France.
+/// Utilise l'API Adresse du gouvernement francais (api-adresse.data.gouv.fr).
 
 import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
-/// Autocompletion ville France via Photon API (debounce 400ms).
-/// Returns the selected city name (+ optional lat/lng) via [onCitySelected].
+/// Autocompletion ville France via API Adresse gouv.fr (debounce 400ms).
+/// Returns the selected city display label (+ optional lat/lng) via [onCitySelected].
 class CityAutocompleteField extends StatefulWidget {
   final String? initialValue;
   final void Function(String city, double? lat, double? lng) onCitySelected;
@@ -35,9 +35,6 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
   bool _searching = false;
   bool _hasSelected = false;
 
-  // France metropolitaine bounding box (SW lon, SW lat, NE lon, NE lat)
-  static const _franceBbox = '-5.14,41.33,9.56,51.09';
-
   @override
   void initState() {
     super.initState();
@@ -59,7 +56,7 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
     _hasSelected = false;
     _debounce?.cancel();
 
-    if (query.trim().length < 3) {
+    if (query.trim().length < 2) {
       setState(() => _suggestions = []);
       return;
     }
@@ -75,12 +72,11 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
     try {
       final dio = Dio();
       final response = await dio.get(
-        'https://photon.komoot.io/api/',
+        'https://api-adresse.data.gouv.fr/search/',
         queryParameters: {
           'q': query,
+          'type': 'municipality',
           'limit': '5',
-          'lang': 'fr',
-          'bbox': _franceBbox,
         },
       );
 
@@ -93,7 +89,7 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
         if (city == null || city.isEmpty) continue;
 
         final postcode = props['postcode'] as String?;
-        final state = props['state'] as String?;
+        final ctx = props['context'] as String?;
 
         // Extract coordinates from GeoJSON (lon, lat)
         final geometry = feature['geometry'] as Map<String, dynamic>?;
@@ -105,7 +101,7 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
             ? (coords[1] as num).toDouble()
             : null;
 
-        // Build display label: "Paris (75001)" or "Lyon (69001)"
+        // Build display label: "Créteil (94000)"
         final label = StringBuffer(city);
         if (postcode != null && postcode.isNotEmpty) {
           label.write(' ($postcode)');
@@ -119,7 +115,7 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
           label: labelStr,
           city: city,
           postcode: postcode,
-          state: state,
+          context: ctx,
           latitude: lat,
           longitude: lng,
         ));
@@ -131,7 +127,8 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
           _searching = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('City search error: $e');
       if (mounted) setState(() => _searching = false);
     }
   }
@@ -142,7 +139,8 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
       _suggestions = [];
       _hasSelected = true;
     });
-    widget.onCitySelected(suggestion.city, suggestion.latitude, suggestion.longitude);
+    widget.onCitySelected(
+        suggestion.label, suggestion.latitude, suggestion.longitude);
     _focusNode.unfocus();
   }
 
@@ -158,6 +156,8 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
           decoration: InputDecoration(
             labelText: widget.label,
             hintText: 'Tapez pour rechercher...',
+            prefixIcon:
+                const Icon(Icons.location_on_outlined, color: Colors.grey),
             suffixIcon: _searching
                 ? const Padding(
                     padding: EdgeInsets.all(12),
@@ -174,7 +174,7 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
           onChanged: _onTextChanged,
           validator: (value) {
             if (value == null || value.isEmpty || !_hasSelected) {
-              return 'Selectionnez une ville';
+              return 'Sélectionnez une ville';
             }
             return null;
           },
@@ -200,6 +200,7 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
                   dense: true,
                   leading: const Icon(Icons.location_on_outlined, size: 20),
                   title: Text(s.label),
+                  subtitle: s.context != null ? Text(s.context!) : null,
                   onTap: () => _selectSuggestion(s),
                 );
               }).toList(),
@@ -214,7 +215,7 @@ class _CitySuggestion {
   final String label;
   final String city;
   final String? postcode;
-  final String? state;
+  final String? context;
   final double? latitude;
   final double? longitude;
 
@@ -222,7 +223,7 @@ class _CitySuggestion {
     required this.label,
     required this.city,
     this.postcode,
-    this.state,
+    this.context,
     this.latitude,
     this.longitude,
   });

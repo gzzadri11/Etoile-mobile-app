@@ -1,13 +1,13 @@
 # Session BMAD - Etoile Mobile App
 
 **Date de mise a jour** : 2026-05-03
-**Statut** : **Session corrections UX + Compétences DONE**. 10 tasks terminées sur 12. Compétences chercheur ✅ (persistence Flutter + affichage SaaS + scoring 20%), Rythmes alternance (11 rythmes), Évaluations candidats (3 états), Filtres recherche (6 filtres). **30/30 migrations** déployées. 85/85 tests Flutter ✅, 0 erreur analyze, Next.js build ✅.
+**Statut** : **Session corrections UX + Compétences + Formulaire DONE**. 11 tasks terminées sur 12. Compétences chercheur ✅, Formulaire offre (boutons Annuler) ✅, Rythmes alternance, Évaluations candidats, Filtres recherche. **30/30 migrations** déployées. 85/85 tests Flutter ✅, Next.js build ✅.
 
 ---
 
 ## SESSION 2026-05-03 : Corrections UX + Rythmes + Évaluations
 
-### Tasks complétées (10/12)
+### Tasks complétées (11/12)
 - ✅ #1 : Messagerie temps réel (Epic 15)
 - ✅ #2 : Évaluation candidat 3 états (SaaS)
 - ✅ #3 : Recherche filtres globaux (Mobile - 6 filtres)
@@ -17,7 +17,8 @@
 - ✅ #7 : Messagerie bulles violet/gris
 - ✅ #9 : Contrats - supprimer Stage/Pro
 - ✅ #10 : Profil rythme alternance
-- ⏳ #8, #11, #12 : À faire
+- ✅ #11 : Formulaire offre - boutons Annuler ✅ **DONE**
+- ⏳ #8, #12 : À faire
 
 ### Rythmes d'alternance - Standardisation
 **Fichier créé** : `lib/core/constants/app_constants.dart`
@@ -101,6 +102,29 @@
 - Si chercheur sans skills → 0/20
 
 **Statut** : ✅ Testé et validé (persistence Flutter + affichage SaaS OK)
+
+### Task #11 : Formulaire offre - Boutons Annuler ✅ DONE
+**Fichier** : `saas-etoile/app/(dashboard)/offers/new/page.tsx`
+
+**Contexte** : Le wizard de création d'offre (3 étapes : type → upload → details) ne permettait pas de quitter le formulaire une fois commencé.
+
+**Modifications** :
+- Étape "type" : Ajout bouton "Annuler" (outline) → redirect `/offers`
+- Étape "upload" : Ajout bouton "Annuler" (ghost) + "Retour"
+- Étape "details" : Ajout bouton "Annuler" (ghost) + "Retour"
+
+**Navigation** :
+- Avant : Impossible de quitter sans finir le wizard
+- Après : Bouton "Annuler" sur chaque étape → sortie rapide vers /offers
+
+**Build** : ✅ Compiled successfully in 12.6s
+**Commit** : `b37cb4d` (1 fichier, 471 insertions)
+
+**Bug Fix - Navigation entre étapes** :
+- **Problème** : URL blob révoquée trop tôt → erreur "type MIME non géré" au retour arrière
+- **Solution** : Cleanup automatique via useEffect, pas de revoke pendant navigation
+- **Commit** : `0fb52da` (14 insertions, 1 suppression)
+- **Tests** : ✅ Navigation type→upload→details→upload→details fluide
 
 ### Migrations déployées ✅
 1. ✅ `20260503000001_add_seeker_rhythm.sql`

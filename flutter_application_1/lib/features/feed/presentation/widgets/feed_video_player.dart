@@ -250,7 +250,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
     return GestureDetector(
       onTap: _togglePlayPause,
       child: Container(
-        color: AppColors.black,
+        color: AppColors.textPrimary,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -271,7 +271,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
             if (_isInitialized && _isBuffering)
               const Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.primaryYellow,
+                  color: AppColors.accent,
                   strokeWidth: 3,
                 ),
               ),
@@ -309,13 +309,13 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const CircularProgressIndicator(
-                color: AppColors.primaryYellow,
+                color: AppColors.accent,
               ),
               const SizedBox(height: 12),
               Text(
                 'Chargement...',
                 style: TextStyle(
-                  color: AppColors.white.withValues(alpha: 0.7),
+                  color: AppColors.bgPrimary.withValues(alpha: 0.7),
                   fontSize: 13,
                 ),
               ),
@@ -334,10 +334,10 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
           CachedNetworkImage(
             imageUrl: widget.thumbnailUrl!,
             fit: BoxFit.cover,
-            errorWidget: (_, _, _) => Container(color: AppColors.black),
+            errorWidget: (_, _, _) => Container(color: AppColors.textPrimary),
           )
         else
-          Container(color: AppColors.black),
+          Container(color: AppColors.textPrimary),
         Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -345,13 +345,13 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
               Icon(
                 Icons.error_outline,
                 size: 48,
-                color: AppColors.white.withValues(alpha: 0.7),
+                color: AppColors.bgPrimary.withValues(alpha: 0.7),
               ),
               const SizedBox(height: 8),
               Text(
                 'Impossible de lire la vidéo',
                 style: TextStyle(
-                  color: AppColors.white.withValues(alpha: 0.7),
+                  color: AppColors.bgPrimary.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 16),
@@ -360,10 +360,10 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
                   setState(() => _hasError = false);
                   _initializeOwnVideo();
                 },
-                icon: const Icon(Icons.refresh, color: AppColors.white),
+                icon: const Icon(Icons.refresh, color: AppColors.bgPrimary),
                 label: const Text(
                   'Réessayer',
-                  style: TextStyle(color: AppColors.white),
+                  style: TextStyle(color: AppColors.bgPrimary),
                 ),
               ),
             ],
@@ -382,13 +382,13 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
           width: 72,
           height: 72,
           decoration: BoxDecoration(
-            color: AppColors.black.withValues(alpha: 0.5),
+            color: AppColors.textPrimary.withValues(alpha: 0.5),
             shape: BoxShape.circle,
           ),
           child: Icon(
             _isPlaying ? Icons.pause : Icons.play_arrow,
             size: 48,
-            color: AppColors.white,
+            color: AppColors.bgPrimary,
           ),
         ),
       ),
@@ -400,9 +400,9 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
       _controller!,
       allowScrubbing: true,
       colors: VideoProgressColors(
-        playedColor: AppColors.primaryYellow,
-        bufferedColor: AppColors.greyMedium,
-        backgroundColor: AppColors.black.withValues(alpha: 0.5),
+        playedColor: AppColors.accent,
+        bufferedColor: AppColors.border,
+        backgroundColor: AppColors.textPrimary.withValues(alpha: 0.5),
       ),
       padding: EdgeInsets.zero,
     );

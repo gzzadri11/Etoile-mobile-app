@@ -55,7 +55,7 @@ class ReportsPage extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.danger,
               ),
             );
           }
@@ -136,7 +136,7 @@ class ReportsPage extends StatelessWidget {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.greyMedium,
+                        color: AppColors.border,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -157,7 +157,7 @@ class ReportsPage extends StatelessWidget {
                     icon: Icons.flag,
                     label: 'Motif',
                     value: report.reason,
-                    color: AppColors.error,
+                    color: AppColors.danger,
                   ),
                   if (report.description != null &&
                       report.description!.isNotEmpty) ...[
@@ -237,7 +237,7 @@ class ReportsPage extends StatelessWidget {
                           content:
                               'Le signalement sera marque comme non pertinent.',
                           confirmLabel: 'Ignorer',
-                          confirmColor: AppColors.greyWarm,
+                          confirmColor: AppColors.textSecondary,
                           onConfirm: () {
                             bloc.add(AdminReportDismissRequested(
                               reportId: report.id,
@@ -248,8 +248,8 @@ class ReportsPage extends StatelessWidget {
                       icon: const Icon(Icons.close),
                       label: const Text('Ignorer'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.greyWarm,
-                        side: const BorderSide(color: AppColors.greyMedium),
+                        foregroundColor: AppColors.textSecondary,
+                        side: const BorderSide(color: AppColors.border),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
@@ -311,7 +311,7 @@ class ReportsPage extends StatelessWidget {
                             content:
                                 'L\'utilisateur ne pourra plus acceder a la plateforme.',
                             confirmLabel: 'Suspendre',
-                            confirmColor: AppColors.error,
+                            confirmColor: AppColors.danger,
                             onConfirm: () {
                               bloc.add(AdminReportActionRequested(
                                 reportId: report.id,
@@ -327,7 +327,7 @@ class ReportsPage extends StatelessWidget {
                         icon: const Icon(Icons.person_off),
                         label: const Text('Suspendre l\'utilisateur'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.error,
+                          backgroundColor: AppColors.danger,
                           foregroundColor: Colors.white,
                           padding:
                               const EdgeInsets.symmetric(vertical: 14),
@@ -395,12 +395,12 @@ class ReportsPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
             const SizedBox(height: AppTheme.spaceMd),
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyWarm,
+                    color: AppColors.textSecondary,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -452,7 +452,7 @@ class _ReportTile extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.greyMedium.withAlpha(60)),
+        side: BorderSide(color: AppColors.border.withAlpha(60)),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -489,7 +489,7 @@ class _ReportTile extends StatelessWidget {
                         report.description!,
                         style:
                             Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.greyWarm,
+                                  color: AppColors.textSecondary,
                                 ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -522,13 +522,13 @@ class _ReportTile extends StatelessWidget {
                         ),
                         const SizedBox(width: AppTheme.spaceSm),
                         Icon(Icons.schedule,
-                            size: 14, color: AppColors.greyWarm),
+                            size: 14, color: AppColors.textSecondary),
                         const SizedBox(width: 4),
                         Text(
                           _formatDate(report.createdAt),
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.greyWarm,
+                                    color: AppColors.textSecondary,
                                   ),
                         ),
                       ],
@@ -542,7 +542,7 @@ class _ReportTile extends StatelessWidget {
               // Chevron
               const Icon(
                 Icons.chevron_right,
-                color: AppColors.greyMedium,
+                color: AppColors.border,
               ),
             ],
           ),
@@ -585,11 +585,11 @@ class _ReportTile extends StatelessWidget {
       case 'video':
         return AppColors.warning;
       case 'message':
-        return AppColors.info;
+        return AppColors.warning;
       case 'utilisateur':
-        return AppColors.error;
+        return AppColors.danger;
       default:
-        return AppColors.greyWarm;
+        return AppColors.textSecondary;
     }
   }
 
@@ -632,14 +632,14 @@ class _DetailRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: color ?? AppColors.greyWarm),
+        Icon(icon, size: 18, color: color ?? AppColors.textSecondary),
         const SizedBox(width: AppTheme.spaceSm),
         SizedBox(
           width: 100,
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.greyWarm,
+                  color: AppColors.textSecondary,
                 ),
           ),
         ),

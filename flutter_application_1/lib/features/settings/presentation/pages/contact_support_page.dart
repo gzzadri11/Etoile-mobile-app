@@ -73,7 +73,7 @@ class _ContactSupportPageState extends State<ContactSupportPage> {
             Text(
               'Decrivez votre demande et nous reviendrons vers vous rapidement.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.greyWarm,
+                    color: AppColors.textSecondary,
                   ),
             ),
 
@@ -180,7 +180,7 @@ class _ContactSupportPageState extends State<ContactSupportPage> {
               'Merci de nous avoir contactes. '
               'Notre equipe vous repondra sous 48h.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyWarm,
+                    color: AppColors.textSecondary,
                   ),
               textAlign: TextAlign.center,
             ),

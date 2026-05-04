@@ -73,7 +73,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.danger,
               ),
             );
           }
@@ -97,7 +97,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     Text(
                       AppStrings.createAccountSubtitle,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.greyWarm,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: AppTheme.spaceLg),
@@ -183,7 +183,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         Text(
                           AppStrings.alreadyHaveAccount,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.greyWarm,
+                            color: AppColors.textSecondary,
                           ),
                         ),
                         TextButton(
@@ -193,7 +193,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           child: Text(
                             AppStrings.login,
                             style: TextStyle(
-                              color: AppColors.primaryYellow,
+                              color: AppColors.accent,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

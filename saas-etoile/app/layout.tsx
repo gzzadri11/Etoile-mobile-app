@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Sora } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-sans",
+const sora = Sora({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
-  title: "Etoile Recruteurs",
+  title: "Étoile Recruteurs",
   description:
-    "Plateforme de recrutement par video courte pour l'alternance en Ile-de-France",
+    "Plateforme de recrutement par vidéo courte pour l'alternance en France",
 };
 
 export default function RootLayout({
@@ -20,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
+    <html lang="fr" className={sora.variable}>
+      <body className="min-h-screen antialiased" style={{ fontFamily: 'var(--font-sans)' }}>
         {children}
         <Toaster />
       </body>

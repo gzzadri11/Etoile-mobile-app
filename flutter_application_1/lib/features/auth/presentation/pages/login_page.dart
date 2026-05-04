@@ -66,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.danger,
               ),
             );
           }
@@ -91,7 +91,7 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       'Content de vous revoir !',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.greyWarm,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: AppTheme.space2Xl),
@@ -154,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                         Text(
                           AppStrings.noAccount,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.greyWarm,
+                            color: AppColors.textSecondary,
                           ),
                         ),
                         TextButton(
@@ -164,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Text(
                             AppStrings.register,
                             style: TextStyle(
-                              color: AppColors.primaryYellow,
+                              color: AppColors.accent,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

@@ -4,11 +4,11 @@ library;
 
 import 'package:equatable/equatable.dart';
 
-/// Video : presentation (40s) ou offre d'emploi.
+/// Video : presentation (40s), offre video, ou poster (image statique).
 class Video extends Equatable {
   final String id;
   final String userId;
-  final String type; // 'presentation' or 'offer'
+  final String type; // 'presentation', 'offer', or 'poster'
   final String? categoryId;
   final String? title;
   final String? description;

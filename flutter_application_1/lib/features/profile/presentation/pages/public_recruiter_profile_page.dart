@@ -22,12 +22,7 @@ import '../../data/models/recruiter_profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 
 const _contractTypeLabels = {
-  'cdi': 'CDI',
-  'cdd': 'CDD',
-  'interim': 'Intérim',
-  'freelance': 'Freelance',
   'alternance': 'Alternance',
-  'stage': 'Stage',
 };
 
 /// Public read-only recruiter profile page (viewed by seekers from the feed).
@@ -116,7 +111,7 @@ class _PublicRecruiterProfilePageState
             Container(
               color: Colors.black26,
               child: const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryYellow),
+                child: CircularProgressIndicator(color: AppColors.accent),
               ),
             ),
         ],
@@ -127,7 +122,7 @@ class _PublicRecruiterProfilePageState
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.primaryYellow),
+        child: CircularProgressIndicator(color: AppColors.accent),
       );
     }
 
@@ -136,7 +131,7 @@ class _PublicRecruiterProfilePageState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
             const SizedBox(height: AppTheme.spaceMd),
             Text(
               _error ?? 'Profil introuvable',
@@ -194,9 +189,9 @@ class _PublicRecruiterProfilePageState
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppTheme.spaceMd),
                     decoration: BoxDecoration(
-                      color: AppColors.white,
+                      color: AppColors.bgPrimary,
                       borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                      border: Border.all(color: AppColors.greyLight),
+                      border: Border.all(color: AppColors.bgSubtle),
                     ),
                     child: Text(
                       profile.description!,
@@ -211,7 +206,7 @@ class _PublicRecruiterProfilePageState
                   Row(
                     children: [
                       const Icon(Icons.location_on,
-                          color: AppColors.primaryOrange, size: 20),
+                          color: AppColors.accent, size: 20),
                       const SizedBox(width: AppTheme.spaceXs),
                       Text(
                         'Localisation',
@@ -235,7 +230,7 @@ class _PublicRecruiterProfilePageState
                   Row(
                     children: [
                       const Icon(Icons.business,
-                          color: AppColors.primaryOrange, size: 20),
+                          color: AppColors.accent, size: 20),
                       const SizedBox(width: AppTheme.spaceXs),
                       Text(
                         'Présentations entreprise',
@@ -266,7 +261,7 @@ class _PublicRecruiterProfilePageState
                   Row(
                     children: [
                       const Icon(Icons.work_outline,
-                          color: AppColors.primaryOrange, size: 20),
+                          color: AppColors.accent, size: 20),
                       const SizedBox(width: AppTheme.spaceXs),
                       Text(
                         'Offres',
@@ -288,7 +283,7 @@ class _PublicRecruiterProfilePageState
                             .textTheme
                             .titleSmall
                             ?.copyWith(
-                              color: AppColors.primaryOrange,
+                              color: AppColors.accent,
                               fontWeight: FontWeight.w600,
                             ),
                       ),
@@ -343,7 +338,7 @@ class _PublicRecruiterProfilePageState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vous ne pouvez pas vous envoyer un message'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.danger,
         ),
       );
       return;
@@ -372,7 +367,7 @@ class _PublicRecruiterProfilePageState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.danger,
           duration: const Duration(seconds: 3),
         ),
       );
@@ -404,13 +399,13 @@ class _PublicRecruiterHeader extends StatelessWidget {
             height: 160,
             width: double.infinity,
             decoration: const BoxDecoration(
-              color: AppColors.greyLight,
+              color: AppColors.bgSubtle,
             ),
             child: const Center(
               child: Icon(
                 Icons.business_outlined,
                 size: 40,
-                color: AppColors.greyMedium,
+                color: AppColors.border,
               ),
             ),
           ),
@@ -446,7 +441,7 @@ class _PublicRecruiterHeader extends StatelessWidget {
                         style:
                             Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.white,
+                                  color: AppColors.bgPrimary,
                                 ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -456,7 +451,7 @@ class _PublicRecruiterHeader extends StatelessWidget {
                       const Icon(
                         Icons.check_circle,
                         size: 18,
-                        color: AppColors.primaryYellow,
+                        color: AppColors.accent,
                       ),
                     ],
                   ],
@@ -464,7 +459,7 @@ class _PublicRecruiterHeader extends StatelessWidget {
                 Text(
                   sector,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.white.withAlpha(200),
+                        color: AppColors.bgPrimary.withAlpha(200),
                       ),
                 ),
               ],
@@ -489,7 +484,7 @@ class _VideoThumbnailCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.greyLight),
+        border: Border.all(color: AppColors.bgSubtle),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -498,23 +493,23 @@ class _VideoThumbnailCard extends StatelessWidget {
           Expanded(
             child: Container(
               width: double.infinity,
-              color: AppColors.greyLight,
+              color: AppColors.bgSubtle,
               child: thumbnailUrl != null
                   ? CachedNetworkImage(
                       imageUrl: thumbnailUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, _) => const Center(
                         child: Icon(Icons.play_circle_outline,
-                            size: 32, color: AppColors.greyMedium),
+                            size: 32, color: AppColors.border),
                       ),
                       errorWidget: (_, _, _) => const Center(
                         child: Icon(Icons.play_circle_outline,
-                            size: 32, color: AppColors.greyMedium),
+                            size: 32, color: AppColors.border),
                       ),
                     )
                   : const Center(
                       child: Icon(Icons.play_circle_outline,
-                          size: 32, color: AppColors.greyMedium),
+                          size: 32, color: AppColors.border),
                     ),
             ),
           ),
@@ -552,7 +547,7 @@ class _OfferThumbnailCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.greyLight),
+        border: Border.all(color: AppColors.bgSubtle),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -561,23 +556,23 @@ class _OfferThumbnailCard extends StatelessWidget {
           Expanded(
             child: Container(
               width: double.infinity,
-              color: AppColors.greyLight,
+              color: AppColors.bgSubtle,
               child: thumbnailUrl != null
                   ? CachedNetworkImage(
                       imageUrl: thumbnailUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, _) => const Center(
                         child: Icon(Icons.play_circle_outline,
-                            size: 32, color: AppColors.greyMedium),
+                            size: 32, color: AppColors.border),
                       ),
                       errorWidget: (_, _, _) => const Center(
                         child: Icon(Icons.play_circle_outline,
-                            size: 32, color: AppColors.greyMedium),
+                            size: 32, color: AppColors.border),
                       ),
                     )
                   : const Center(
                       child: Icon(Icons.play_circle_outline,
-                          size: 32, color: AppColors.greyMedium),
+                          size: 32, color: AppColors.border),
                     ),
             ),
           ),
@@ -607,8 +602,8 @@ class _OfferThumbnailCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: onContact,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryOrange,
-                  foregroundColor: AppColors.white,
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.bgPrimary,
                   padding: EdgeInsets.zero,
                   textStyle: const TextStyle(fontSize: 12),
                   shape: RoundedRectangleBorder(

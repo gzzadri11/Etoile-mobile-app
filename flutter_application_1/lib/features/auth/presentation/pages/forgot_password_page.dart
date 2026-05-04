@@ -64,7 +64,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.danger,
               ),
             );
           }
@@ -95,7 +95,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     Text(
                       'Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe.',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: AppColors.greyWarm,
+                            color: AppColors.textSecondary,
                           ),
                     ),
 
@@ -173,7 +173,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             Text(
               'Vérifiez votre boîte de réception et suivez le lien pour réinitialiser votre mot de passe.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.greyWarm,
+                    color: AppColors.textSecondary,
                   ),
               textAlign: TextAlign.center,
             ),

@@ -103,13 +103,13 @@ export default function LoginPage() {
 function mapAuthError(msg: string): string {
   const lower = msg.toLowerCase();
   if (lower.includes("invalid login credentials") || lower.includes("invalid password")) {
-    return "Email ou mot de passe incorrect";
+    return "Oups ! Email ou mot de passe incorrect. Vérifiez vos identifiants.";
   }
   if (lower.includes("email not confirmed")) {
-    return "Veuillez confirmer votre email";
+    return "Merci de confirmer votre email avant de vous connecter.";
   }
   if (lower.includes("rate limit") || lower.includes("too many")) {
-    return "Trop de tentatives. Veuillez patienter.";
+    return "Trop de tentatives ! Prenez une petite pause et réessayez dans quelques instants.";
   }
   return msg;
 }

@@ -32,6 +32,21 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Track last login time for authenticated users (US-13.1 Briefing)
+  if (user) {
+    // Silent update - don't block navigation if it fails
+    (async () => {
+      try {
+        await supabase
+          .from("user_roles")
+          .update({ last_login_at: new Date().toISOString() })
+          .eq("id", user.id);
+      } catch {
+        // Ignore errors
+      }
+    })();
+  }
+
   const pathname = request.nextUrl.pathname;
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith("/auth/")
@@ -44,10 +59,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Authenticated and trying to access auth pages → redirect to dashboard
+  // Authenticated and trying to access auth pages → redirect to home
   if (user && (pathname === "/login" || pathname === "/register")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/home";
     return NextResponse.redirect(url);
   }
 

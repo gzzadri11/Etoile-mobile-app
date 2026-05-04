@@ -75,7 +75,7 @@ class EtoileTextField extends StatelessWidget {
           Text(
             label!,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.greyWarm,
+                  color: AppColors.textSecondary,
                 ),
           ),
           const SizedBox(height: AppTheme.spaceSm),
@@ -99,13 +99,13 @@ class EtoileTextField extends StatelessWidget {
           inputFormatters: inputFormatters,
           focusNode: focusNode,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: enabled ? AppColors.black : AppColors.greyWarm,
+                color: enabled ? AppColors.textPrimary : AppColors.textSecondary,
               ),
           decoration: InputDecoration(
             hintText: hintText,
             errorText: errorText,
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, color: AppColors.greyWarm, size: 20)
+                ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
                 : null,
             suffixIcon: suffixIcon,
             counterText: '', // Hide character counter
@@ -156,7 +156,7 @@ class EtoileTextArea extends StatelessWidget {
               Text(
                 label!,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppColors.greyWarm,
+                      color: AppColors.textSecondary,
                     ),
               ),
               if (maxLength != null)
@@ -166,7 +166,7 @@ class EtoileTextArea extends StatelessWidget {
                     return Text(
                       '${value.text.length}/$maxLength',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.greyWarm,
+                            color: AppColors.textSecondary,
                           ),
                     );
                   },
@@ -185,7 +185,7 @@ class EtoileTextArea extends StatelessWidget {
           onChanged: onChanged,
           textCapitalization: TextCapitalization.sentences,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: enabled ? AppColors.black : AppColors.greyWarm,
+                color: enabled ? AppColors.textPrimary : AppColors.textSecondary,
               ),
           decoration: InputDecoration(
             hintText: hintText,
@@ -228,14 +228,14 @@ class EtoileSearchField extends StatelessWidget {
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
         hintText: hintText,
-        prefixIcon: const Icon(Icons.search, color: AppColors.greyWarm),
+        prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
         suffixIcon: controller != null
             ? ValueListenableBuilder<TextEditingValue>(
                 valueListenable: controller!,
                 builder: (context, value, child) {
                   if (value.text.isEmpty) return const SizedBox.shrink();
                   return IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.greyWarm),
+                    icon: const Icon(Icons.close, color: AppColors.textSecondary),
                     onPressed: () {
                       controller!.clear();
                       onClear?.call();
@@ -245,7 +245,7 @@ class EtoileSearchField extends StatelessWidget {
               )
             : null,
         filled: true,
-        fillColor: AppColors.greyLight,
+        fillColor: AppColors.bgSubtle,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusFull),
           borderSide: BorderSide.none,

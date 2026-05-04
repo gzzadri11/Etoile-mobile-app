@@ -90,7 +90,7 @@ class _EtoileBottomNavBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.bgPrimary,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -142,7 +142,7 @@ class _MessageIcon extends StatelessWidget {
               width: 10,
               height: 10,
               decoration: const BoxDecoration(
-                color: AppColors.error,
+                color: AppColors.danger,
                 shape: BoxShape.circle,
               ),
             ),

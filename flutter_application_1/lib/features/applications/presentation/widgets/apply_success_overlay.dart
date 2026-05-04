@@ -115,7 +115,7 @@ class _ApplySuccessAnimationState extends State<_ApplySuccessAnimation>
           child: Opacity(
             opacity: globalFade,
             child: Container(
-              color: AppColors.black.withValues(alpha: 0.4 * _backgroundOpacity.value),
+              color: AppColors.textPrimary.withValues(alpha: 0.4 * _backgroundOpacity.value),
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -127,7 +127,7 @@ class _ApplySuccessAnimationState extends State<_ApplySuccessAnimation>
                         width: 80,
                         height: 80,
                         decoration: const BoxDecoration(
-                          color: AppColors.white,
+                          color: AppColors.bgPrimary,
                           shape: BoxShape.circle,
                         ),
                         child: Opacity(
@@ -147,7 +147,7 @@ class _ApplySuccessAnimationState extends State<_ApplySuccessAnimation>
                       child: const Text(
                         'Candidature envoyée !',
                         style: TextStyle(
-                          color: AppColors.white,
+                          color: AppColors.bgPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           decoration: TextDecoration.none,

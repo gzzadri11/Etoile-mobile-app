@@ -44,7 +44,7 @@ class RecruiterVerificationPage extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.danger,
               ),
             );
           }
@@ -136,7 +136,7 @@ class RecruiterVerificationPage extends StatelessWidget {
                   Text(
                     profile.description!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.greyWarm,
+                          color: AppColors.textSecondary,
                           height: 1.5,
                         ),
                   ),
@@ -205,13 +205,13 @@ class RecruiterVerificationPage extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryOrange.withAlpha(25),
+                  color: AppColors.accent.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   'En attente de vérification',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.primaryOrange,
+                        color: AppColors.accent,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
@@ -228,10 +228,10 @@ class RecruiterVerificationPage extends StatelessWidget {
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: AppColors.primaryOrange.withAlpha(25),
+        color: AppColors.accent.withAlpha(25),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Icon(Icons.business, color: AppColors.primaryOrange, size: 32),
+      child: const Icon(Icons.business, color: AppColors.accent, size: 32),
     );
   }
 
@@ -258,7 +258,7 @@ class RecruiterVerificationPage extends StatelessWidget {
                   child: Text(
                     row.label,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.greyWarm,
+                          color: AppColors.textSecondary,
                         ),
                   ),
                 ),
@@ -325,7 +325,7 @@ class RecruiterVerificationPage extends StatelessWidget {
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
-                                  ?.copyWith(color: AppColors.greyWarm),
+                                  ?.copyWith(color: AppColors.textSecondary),
                             ),
                           Text(
                             signedUrl != null
@@ -336,8 +336,8 @@ class RecruiterVerificationPage extends StatelessWidget {
                                 .bodySmall
                                 ?.copyWith(
                                   color: signedUrl != null
-                                      ? AppColors.primaryOrange
-                                      : AppColors.error,
+                                      ? AppColors.accent
+                                      : AppColors.danger,
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
@@ -345,7 +345,7 @@ class RecruiterVerificationPage extends StatelessWidget {
                       ),
                     ),
                     const Icon(Icons.open_in_new,
-                        size: 20, color: AppColors.primaryOrange),
+                        size: 20, color: AppColors.accent),
                   ],
                 ),
               ),
@@ -367,13 +367,13 @@ class RecruiterVerificationPage extends StatelessWidget {
                   if (loadingProgress == null) return child;
                   return Container(
                     height: 250,
-                    color: AppColors.greyLight,
+                    color: AppColors.bgSubtle,
                     child: const Center(child: CircularProgressIndicator()),
                   );
                 },
                 errorBuilder: (_, _, _) => Container(
                   height: 100,
-                  color: AppColors.greyLight,
+                  color: AppColors.bgSubtle,
                   child: const Center(
                     child: Text('Impossible de charger l\'aperçu'),
                   ),
@@ -386,21 +386,21 @@ class RecruiterVerificationPage extends StatelessWidget {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: AppColors.error.withAlpha(80)),
+              side: BorderSide(color: AppColors.danger.withAlpha(80)),
             ),
-            color: AppColors.error.withAlpha(10),
+            color: AppColors.danger.withAlpha(10),
             child: Padding(
               padding: const EdgeInsets.all(AppTheme.spaceMd),
               child: Row(
                 children: [
                   const Icon(Icons.warning_amber,
-                      color: AppColors.error),
+                      color: AppColors.danger),
                   const SizedBox(width: AppTheme.spaceSm),
                   Expanded(
                     child: Text(
                       'Aucun document justificatif uploadé',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.error,
+                            color: AppColors.danger,
                           ),
                     ),
                   ),
@@ -483,11 +483,11 @@ class RecruiterVerificationPage extends StatelessWidget {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: () => _showRejectDialog(context),
-                icon: const Icon(Icons.close, color: AppColors.error),
+                icon: const Icon(Icons.close, color: AppColors.danger),
                 label: const Text('Rejeter'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
-                  side: const BorderSide(color: AppColors.error),
+                  foregroundColor: AppColors.danger,
+                  side: const BorderSide(color: AppColors.danger),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
@@ -585,7 +585,7 @@ class RecruiterVerificationPage extends StatelessWidget {
                   );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.danger,
               foregroundColor: Colors.white,
             ),
             child: const Text('Rejeter'),
@@ -602,7 +602,7 @@ class RecruiterVerificationPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
             const SizedBox(height: AppTheme.spaceMd),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: AppTheme.spaceLg),

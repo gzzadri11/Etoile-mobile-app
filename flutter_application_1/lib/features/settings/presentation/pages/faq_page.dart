@@ -100,7 +100,7 @@ class _FaqPageState extends State<FaqPage> {
                           'Vous n\'avez pas trouve votre reponse ?',
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.greyWarm,
+                                    color: AppColors.textSecondary,
                                   ),
                         ),
                       ),
@@ -163,12 +163,12 @@ class _SectionHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primaryOrange, size: 20),
+          Icon(icon, color: AppColors.accent, size: 20),
           const SizedBox(width: AppTheme.spaceSm),
           Text(
             title,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.primaryOrange,
+                  color: AppColors.accent,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -208,7 +208,7 @@ class _FaqTile extends StatelessWidget {
           Text(
             answer,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.greyWarm,
+                  color: AppColors.textSecondary,
                   height: 1.6,
                 ),
           ),

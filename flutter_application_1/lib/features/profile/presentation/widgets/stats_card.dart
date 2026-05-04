@@ -26,16 +26,16 @@ class StatsCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppTheme.spaceMd),
       decoration: BoxDecoration(
-        color: AppColors.tagBackground,
+        color: AppColors.accentBg,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppColors.primaryYellow.withAlpha(75)),
+        border: Border.all(color: AppColors.accent.withAlpha(75)),
       ),
       child: Column(
         children: [
           // Header
           Row(
             children: [
-              const Icon(Icons.bar_chart, color: AppColors.primaryOrange),
+              const Icon(Icons.bar_chart, color: AppColors.accent),
               const SizedBox(width: AppTheme.spaceSm),
               Text(
                 AppStrings.statistics,
@@ -68,7 +68,7 @@ class _PremiumStatsContent extends StatelessWidget {
       return Text(
         'Aucune vue pour le moment. Partagez votre profil !',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.greyWarm,
+              color: AppColors.textSecondary,
             ),
         textAlign: TextAlign.center,
       );
@@ -125,7 +125,7 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: AppColors.primaryOrange, size: 28),
+        Icon(icon, color: AppColors.accent, size: 28),
         const SizedBox(height: AppTheme.spaceXs),
         Text(
           value,
@@ -136,7 +136,7 @@ class _StatItem extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.greyWarm,
+                color: AppColors.textSecondary,
               ),
           textAlign: TextAlign.center,
         ),
@@ -162,8 +162,8 @@ class _TrendIndicator extends StatelessWidget {
     final color = isPositive
         ? AppColors.success
         : isNegative
-            ? AppColors.error
-            : AppColors.greyWarm;
+            ? AppColors.danger
+            : AppColors.textSecondary;
     final icon = isPositive
         ? Icons.trending_up
         : isNegative

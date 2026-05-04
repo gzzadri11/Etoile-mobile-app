@@ -35,12 +35,12 @@ class WelcomePage extends StatelessWidget {
                 width: 64,
                 height: 64,
                 decoration: const BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  gradient: LinearGradient(colors: [AppColors.accent, AppColors.accentDark]),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.star_rounded,
-                  color: AppColors.black,
+                  color: AppColors.textPrimary,
                   size: 36,
                 ),
               ),
@@ -49,13 +49,13 @@ class WelcomePage extends StatelessWidget {
 
               ShaderMask(
                 shaderCallback: (bounds) =>
-                    AppColors.primaryGradient.createShader(bounds),
+                    LinearGradient(colors: [AppColors.accent, AppColors.accentDark]).createShader(bounds),
                 child: const Text(
                   'ETOILE',
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.white,
+                    color: AppColors.bgPrimary,
                     letterSpacing: 6,
                   ),
                 ),
@@ -66,7 +66,7 @@ class WelcomePage extends StatelessWidget {
               Text(
                 '40 secondes pour briller',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.greyWarm,
+                      color: AppColors.textSecondary,
                     ),
               ),
 

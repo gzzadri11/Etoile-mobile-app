@@ -682,6 +682,53 @@ Criteres d'acceptation :
 
 ---
 
+#### Phase 2 : Profil Complet (Post-MVP)
+
+> **Contexte** : Pour assurer la coherence UX entre l'app mobile et le SaaS, et permettre aux recruteurs de mieux controler leur presentation, cette phase ajoute les elements visuels et fonctionnels manquants au profil recruteur.
+
+**US-10.6 : Photo de profil recruteur**
+> En tant que recruteur, je veux ajouter une photo de profil pour humaniser mon compte.
+
+Criteres d'acceptation :
+- [ ] Upload photo depuis ordinateur (JPG, PNG, max 5MB)
+- [ ] Crop carre obligatoire (ratio 1:1, min 200x200px)
+- [ ] Stockage Cloudflare R2 bucket `etoile-photos` (meme bucket que chercheurs)
+- [ ] Colonne `recruiter_profiles.photo_url` (TEXT nullable)
+- [ ] Affichage dans l'app mobile : photo ronde (48px) a cote du nom entreprise
+- [ ] Affichage dans le SaaS : photo ronde (80px) dans la sidebar + /settings
+- [ ] Photo optionnelle (pas requise pour completude 100%)
+
+**US-10.7 : Preview format mobile lors publication**
+> En tant que recruteur, je veux voir exactement comment mon offre (video ou affiche) apparaitra dans l'app mobile chercheur avant de publier.
+
+Criteres d'acceptation :
+- [ ] Lors de l'upload video/affiche : preview redimensionne en 9:16 (format mobile)
+- [ ] Cadre "iPhone" ou "Android" stylise autour du preview
+- [ ] Affichage du titre du poste + nom entreprise + secteur comme dans le feed mobile
+- [ ] Toggle "Desktop / Mobile" pour basculer entre les deux previews
+- [ ] Preview temps reel : modifications du titre ou secteur se refletent instantanement
+- [ ] Bouton "Publier" desactive si video > 40s ou affiche ratio incorrect
+
+**US-10.8 : Page Settings — Modification profil complet**
+> En tant que recruteur, je veux modifier toutes les informations de mon profil depuis une page dediee.
+
+Criteres d'acceptation :
+- [ ] Route `/settings` accessible depuis la sidebar
+- [ ] Sections editables :
+  - [ ] Photo de profil (upload + crop)
+  - [ ] Nom de l'entreprise
+  - [ ] Secteur d'activite (dropdown 15 secteurs)
+  - [ ] Description entreprise (textarea, min 50 caracteres)
+  - [ ] Ville(s) de localisation (autocomplete Photon API France entiere)
+  - [ ] SIRET (affiche seulement, non modifiable apres verification)
+  - [ ] Document justificatif (re-upload si rejete)
+- [ ] Bouton "Enregistrer" → Supabase UPDATE recruiter_profiles
+- [ ] Validation client + serveur (RLS policies)
+- [ ] Message de succes apres sauvegarde
+- [ ] Barre de progression completude mise a jour en temps reel
+
+---
+
 ### Epic 11 : Publication Offres (SaaS)
 
 **US-11.1 : Publier une offre video**
@@ -1069,7 +1116,9 @@ Criteres d'acceptation :
 | `recruiter_activity_log` | Journal d'activite recruteur |
 | `match_scores` | Scores de matching pre-calcules (offre ↔ chercheur) |
 
-Colonne a ajouter : `seeker_profiles.username` (VARCHAR UNIQUE, index)
+**Colonnes a ajouter** :
+- `seeker_profiles.username` (VARCHAR(10) UNIQUE, index) — Identifiant unique chercheur
+- `recruiter_profiles.photo_url` (TEXT nullable) — Photo de profil recruteur (Epic 10 Phase 2)
 
 ---
 

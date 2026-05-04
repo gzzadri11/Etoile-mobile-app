@@ -70,7 +70,7 @@ class _SeekerApplicationsPageState extends State<SeekerApplicationsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Retirer'),
           ),
         ],
@@ -95,7 +95,7 @@ class _SeekerApplicationsPageState extends State<SeekerApplicationsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur : ${e.toString()}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.danger,
           ),
         );
       }
@@ -115,7 +115,7 @@ class _SeekerApplicationsPageState extends State<SeekerApplicationsPage> {
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.primaryYellow),
+        child: CircularProgressIndicator(color: AppColors.accent),
       );
     }
 
@@ -126,10 +126,10 @@ class _SeekerApplicationsPageState extends State<SeekerApplicationsPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
               const SizedBox(height: AppTheme.spaceMd),
               Text(_error!, textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.greyWarm)),
+                  style: const TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: AppTheme.spaceLg),
               ElevatedButton.icon(
                 onPressed: _loadApplications,
@@ -152,7 +152,7 @@ class _SeekerApplicationsPageState extends State<SeekerApplicationsPage> {
 
     return RefreshIndicator(
       onRefresh: _loadApplications,
-      color: AppColors.primaryYellow,
+      color: AppColors.accent,
       child: ListView.separated(
         padding: const EdgeInsets.all(AppTheme.spaceMd),
         itemCount: _applications.length,
@@ -182,9 +182,9 @@ class _ApplicationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.bgPrimary,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppColors.greyLight),
+        border: Border.all(color: AppColors.bgSubtle),
       ),
       padding: const EdgeInsets.all(AppTheme.spaceMd),
       child: Column(
@@ -212,13 +212,13 @@ class _ApplicationCard extends StatelessWidget {
           // Company name
           Row(
             children: [
-              const Icon(Icons.business, size: 14, color: AppColors.greyWarm),
+              const Icon(Icons.business, size: 14, color: AppColors.textSecondary),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   application.companyName,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.greyWarm,
+                        color: AppColors.textSecondary,
                       ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -233,12 +233,12 @@ class _ApplicationCard extends StatelessWidget {
             Row(
               children: [
                 const Icon(Icons.work_outline, size: 14,
-                    color: AppColors.primaryOrange),
+                    color: AppColors.accent),
                 const SizedBox(width: 4),
                 Text(
                   application.contractType!,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.primaryOrange,
+                        color: AppColors.accent,
                         fontWeight: FontWeight.w500,
                       ),
                 ),
@@ -252,12 +252,12 @@ class _ApplicationCard extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.calendar_today, size: 12,
-                  color: AppColors.greyWarm),
+                  color: AppColors.textSecondary),
               const SizedBox(width: 4),
               Text(
                 _formatDate(application.appliedAt),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.greyWarm,
+                      color: AppColors.textSecondary,
                     ),
               ),
               const Spacer(),
@@ -267,7 +267,7 @@ class _ApplicationCard extends StatelessWidget {
                   icon: const Icon(Icons.close, size: 16),
                   label: const Text('Retirer'),
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.error,
+                    foregroundColor: AppColors.danger,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -299,8 +299,8 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
       'contacted' => ('Contacté', AppColors.success),
-      'withdrawn' => ('Retirée', AppColors.greyWarm),
-      _ => ('En attente', AppColors.primaryOrange),
+      'withdrawn' => ('Retirée', AppColors.textSecondary),
+      _ => ('En attente', AppColors.accent),
     };
 
     return Container(

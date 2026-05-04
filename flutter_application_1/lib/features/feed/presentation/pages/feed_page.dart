@@ -15,6 +15,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/sector_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_widgets.dart';
 import '../../../applications/presentation/widgets/apply_success_overlay.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../messages/data/repositories/conversation_repository.dart';
@@ -92,12 +93,11 @@ class _FeedView extends StatefulWidget {
 }
 
 class _FeedViewState extends State<_FeedView> {
-  PageController _pageController = PageController();
-  VideoPreloadManager _preloadManager = VideoPreloadManager();
+  final PageController _pageController = PageController();
+  final VideoPreloadManager _preloadManager = VideoPreloadManager();
   int _currentPage = 0;
   bool _isRefreshing = false;
   List<String?> _videoUrls = [];
-  String _selectedTab = 'offers';
 
   @override
   void initState() {
@@ -118,23 +118,6 @@ class _FeedViewState extends State<_FeedView> {
     super.dispose();
   }
 
-  void _switchTab(String tab) {
-    if (tab == _selectedTab) return;
-    _pageController.dispose();
-    _preloadManager.removeListener(_onPreloadChanged);
-    _preloadManager.dispose();
-    setState(() {
-      _selectedTab = tab;
-      _currentPage = 0;
-      _videoUrls = [];
-      _pageController = PageController();
-      _preloadManager = VideoPreloadManager();
-      _preloadManager.addListener(_onPreloadChanged);
-    });
-    final authState = context.read<AuthBloc>().state;
-    final role = authState is AuthAuthenticated ? authState.role : 'seeker';
-    context.read<FeedBloc>().add(FeedLoadRequested(userRole: role, feedTab: tab));
-  }
 
   /// Notify preload manager of page change
   void _onPageChangedPreload(int currentIndex) {
@@ -182,67 +165,17 @@ class _FeedViewState extends State<_FeedView> {
     if (userRole != 'seeker') {
       return const Text(
         'ETOILE',
-        style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.white),
+        style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.bgPrimary),
       );
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onTap: () => _switchTab('discover'),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Entreprises',
-                style: TextStyle(
-                  fontWeight: _selectedTab == 'discover' ? FontWeight.bold : FontWeight.normal,
-                  color: _selectedTab == 'discover'
-                      ? AppColors.white
-                      : AppColors.white.withValues(alpha: 0.6),
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Container(
-                height: 2,
-                width: 60,
-                color: _selectedTab == 'discover'
-                    ? AppColors.primaryYellow
-                    : Colors.transparent,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 24),
-        GestureDetector(
-          onTap: () => _switchTab('offers'),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Offres',
-                style: TextStyle(
-                  fontWeight: _selectedTab == 'offers' ? FontWeight.bold : FontWeight.normal,
-                  color: _selectedTab == 'offers'
-                      ? AppColors.white
-                      : AppColors.white.withValues(alpha: 0.6),
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Container(
-                height: 2,
-                width: 40,
-                color: _selectedTab == 'offers'
-                    ? AppColors.primaryYellow
-                    : Colors.transparent,
-              ),
-            ],
-          ),
-        ),
-      ],
+    return const Text(
+      'Offres',
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: AppColors.bgPrimary,
+        fontSize: 16,
+      ),
     );
   }
 
@@ -259,7 +192,7 @@ class _FeedViewState extends State<_FeedView> {
         return Scaffold(
           extendBodyBehindAppBar: hasContent,
           appBar: AppBar(
-            backgroundColor: hasContent ? Colors.transparent : AppColors.black,
+            backgroundColor: hasContent ? Colors.transparent : AppColors.textPrimary,
             elevation: 0,
             title: _buildAppBarTitle(state),
             actions: [
@@ -272,17 +205,17 @@ class _FeedViewState extends State<_FeedView> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColors.white,
+                            color: AppColors.bgPrimary,
                           ),
                         )
-                      : const Icon(Icons.refresh, color: AppColors.white),
+                      : const Icon(Icons.refresh, color: AppColors.bgPrimary),
                   onPressed: _isRefreshing ? null : _onRefresh,
                 ),
               if (state is FeedLoaded)
                 Stack(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.tune, color: AppColors.white),
+                      icon: const Icon(Icons.tune, color: AppColors.bgPrimary),
                       onPressed: () => _showFilters(context, state),
                     ),
                     if (state.hasActiveFilters)
@@ -293,7 +226,7 @@ class _FeedViewState extends State<_FeedView> {
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: AppColors.primaryOrange,
+                            color: AppColors.accent,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -311,10 +244,10 @@ class _FeedViewState extends State<_FeedView> {
   Widget _buildBody(BuildContext context, FeedState state) {
     if (state is FeedLoading) {
       return Container(
-        color: AppColors.black,
+        color: AppColors.textPrimary,
         child: const Center(
           child: CircularProgressIndicator(
-            color: AppColors.primaryYellow,
+            color: AppColors.accent,
           ),
         ),
       );
@@ -322,7 +255,7 @@ class _FeedViewState extends State<_FeedView> {
 
     if (state is FeedError) {
       return Container(
-        color: AppColors.black,
+        color: AppColors.textPrimary,
         child: _buildErrorState(context, state.message),
       );
     }
@@ -374,7 +307,7 @@ class _FeedViewState extends State<_FeedView> {
           if (index >= state.items.length) {
             return const Center(
               child: CircularProgressIndicator(
-                color: AppColors.primaryYellow,
+                color: AppColors.accent,
               ),
             );
           }
@@ -407,11 +340,11 @@ class _FeedViewState extends State<_FeedView> {
 
   Widget _buildEmptyState(BuildContext context, FeedLoaded state) {
     return Container(
-      color: AppColors.black,
+      color: AppColors.textPrimary,
       child: state.hasActiveFilters
           ? EmptyStateWidget(
               icon: Icons.videocam_off_outlined,
-              iconColor: AppColors.greyWarm,
+              iconColor: AppColors.textSecondary,
               title: 'Aucun résultat pour ces filtres',
               subtitle: 'Essayez de modifier vos critères de recherche',
               actionLabel: 'Effacer les filtres',
@@ -422,7 +355,7 @@ class _FeedViewState extends State<_FeedView> {
             )
           : const EmptyStateWidget(
               icon: Icons.videocam_off_outlined,
-              iconColor: AppColors.greyWarm,
+              iconColor: AppColors.textSecondary,
               title: 'Aucune vidéo disponible',
               subtitle: 'Les vidéos apparaîtront ici une fois publiées',
               showMascotte: true,
@@ -441,13 +374,13 @@ class _FeedViewState extends State<_FeedView> {
             const Icon(
               Icons.error_outline,
               size: 64,
-              color: AppColors.error,
+              color: AppColors.danger,
             ),
             const SizedBox(height: AppTheme.spaceMd),
             Text(
               'Oups\u00A0! Une erreur est survenue',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.white,
+                    color: AppColors.bgPrimary,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -455,7 +388,7 @@ class _FeedViewState extends State<_FeedView> {
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyWarm,
+                    color: AppColors.textSecondary,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -506,11 +439,12 @@ class _VideoCard extends StatelessWidget {
         // Poster: full-screen image; Video: video player or thumbnail fallback
         if (_isPoster)
           Container(
-            color: AppColors.black,
-            child: feedItem.video.videoUrl != null
+            color: AppColors.textPrimary,
+            child: feedItem.video.thumbnailUrl != null
                 ? CachedNetworkImage(
-                    imageUrl: feedItem.video.videoUrl!,
-                    fit: BoxFit.cover,
+                    imageUrl: feedItem.video.thumbnailUrl!,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
                     placeholder: (_, _) => _buildPlaceholder(),
                     errorWidget: (_, _, _) => _buildPlaceholder(),
                   )
@@ -527,11 +461,12 @@ class _VideoCard extends StatelessWidget {
           )
         else
           Container(
-            color: AppColors.black,
+            color: AppColors.textPrimary,
             child: feedItem.video.thumbnailUrl != null
                 ? CachedNetworkImage(
                     imageUrl: feedItem.video.thumbnailUrl!,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
                     placeholder: (_, _) => _buildPlaceholder(),
                     errorWidget: (_, _, _) => _buildPlaceholder(),
                   )
@@ -546,7 +481,14 @@ class _VideoCard extends StatelessWidget {
           height: 200,
           child: Container(
             decoration: const BoxDecoration(
-              gradient: AppColors.videoOverlayGradient,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Color(0xB3000000),
+                ],
+              ),
             ),
           ),
         ),
@@ -567,7 +509,7 @@ class _VideoCard extends StatelessWidget {
                     child: Text(
                       feedItem.userName,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: AppColors.white,
+                            color: AppColors.bgPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                       maxLines: 1,
@@ -579,8 +521,8 @@ class _VideoCard extends StatelessWidget {
                     const EtoileBadge(
                       label: 'Vérifié',
                       icon: Icons.check_circle,
-                      backgroundColor: AppColors.primaryYellow,
-                      textColor: AppColors.black,
+                      backgroundColor: AppColors.accent,
+                      textColor: AppColors.textPrimary,
                       compact: true,
                     ),
                   ],
@@ -589,13 +531,42 @@ class _VideoCard extends StatelessWidget {
                     const EtoileBadge(
                       label: 'Entreprise',
                       icon: Icons.business,
-                      backgroundColor: AppColors.primaryOrange,
-                      textColor: AppColors.white,
+                      backgroundColor: AppColors.accent,
+                      textColor: AppColors.bgPrimary,
                       compact: true,
                     ),
                   ],
                 ],
               ),
+
+              // Description button (inline, not overlay)
+              if (feedItem.video.description != null && feedItem.video.description!.isNotEmpty) ...[
+                const SizedBox(height: AppTheme.spaceXs),
+                GestureDetector(
+                  onTap: () => _showDescription(context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 14,
+                        color: AppColors.bgPrimary.withValues(alpha: 0.8),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Voir la description',
+                        style: AppTextStyles.caption().copyWith(
+                          color: AppColors.bgPrimary.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: AppTheme.spaceXs),
 
               // Title or bio
@@ -603,7 +574,7 @@ class _VideoCard extends StatelessWidget {
                 Text(
                   feedItem.userTitle!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.white.withValues(alpha: 0.9),
+                        color: AppColors.bgPrimary.withValues(alpha: 0.9),
                       ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -617,13 +588,13 @@ class _VideoCard extends StatelessWidget {
                     Icon(
                       Icons.location_on_outlined,
                       size: 16,
-                      color: AppColors.white.withValues(alpha: 0.7),
+                      color: AppColors.bgPrimary.withValues(alpha: 0.7),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       feedItem.userLocation!,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.white.withValues(alpha: 0.7),
+                            color: AppColors.bgPrimary.withValues(alpha: 0.7),
                           ),
                     ),
                   ],
@@ -686,9 +657,9 @@ class _VideoCard extends StatelessWidget {
             bottom: 0,
             child: LinearProgressIndicator(
               value: isActive ? null : 0,
-              backgroundColor: AppColors.white.withValues(alpha: 0.2),
+              backgroundColor: AppColors.bgPrimary.withValues(alpha: 0.2),
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primaryYellow),
+                  const AlwaysStoppedAnimation<Color>(AppColors.accent),
               minHeight: 3,
             ),
           ),
@@ -742,7 +713,7 @@ class _VideoCard extends StatelessWidget {
       scaffoldMessenger.showSnackBar(
         const SnackBar(
           content: Text('Vous ne pouvez pas vous envoyer un message'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.danger,
         ),
       );
       return;
@@ -753,7 +724,7 @@ class _VideoCard extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (_) => const Center(
-        child: CircularProgressIndicator(color: AppColors.primaryYellow),
+        child: CircularProgressIndicator(color: AppColors.accent),
       ),
     );
 
@@ -784,11 +755,130 @@ class _VideoCard extends StatelessWidget {
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(errorMessage),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.danger,
           duration: const Duration(seconds: 3),
         ),
       );
     }
+  }
+
+  /// Affiche un bottom sheet avec la description complete de l'offre
+  void _showDescription(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl + MediaQuery.of(context).padding.bottom,
+        ),
+        decoration: const BoxDecoration(
+          color: AppColors.bgPrimary,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Title
+            Text(
+              feedItem.video.title ?? 'Offre d\'alternance',
+              style: AppTextStyles.h2(),
+            ),
+            const SizedBox(height: 4),
+
+            // Company name
+            Text(
+              feedItem.userName,
+              style: AppTextStyles.caption().copyWith(
+                color: AppColors.accent,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Badges (sector, city, contract)
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                if (feedItem.sector != null)
+                  AppChip(
+                    label: feedItem.sector!,
+                    bg: AppColors.accentBg,
+                    textColor: AppColors.accentDark,
+                  ),
+                if (feedItem.city != null)
+                  AppChip(
+                    label: feedItem.city!,
+                    bg: AppColors.bgMuted,
+                    textColor: AppColors.textSecondary,
+                  ),
+                if (feedItem.video.contractType != null)
+                  AppChip(
+                    label: feedItem.video.contractType!,
+                    bg: AppColors.bgMuted,
+                    textColor: AppColors.textSecondary,
+                  ),
+              ],
+            ),
+
+            if (feedItem.video.description != null &&
+                feedItem.video.description!.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                'Description du poste',
+                style: AppTextStyles.label().copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                feedItem.video.description!,
+                style: AppTextStyles.body(),
+              ),
+            ],
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // Apply button (seeker only)
+            if (userRole == 'seeker')
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: isApplied ? null : () {
+                    Navigator.pop(context);
+                    _onApplyTap(context);
+                  },
+                  child: Text(
+                    isApplied ? 'Déjà postulé' : 'Postuler',
+                    style: AppTextStyles.button().copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildPlaceholder() {
@@ -804,13 +894,13 @@ class _VideoCard extends StatelessWidget {
           Icon(
             Icons.play_circle_outline,
             size: 64,
-            color: AppColors.white.withValues(alpha: 0.5),
+            color: AppColors.bgPrimary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: AppTheme.spaceSm),
           Text(
             'Video $videoIdPreview...',
             style: TextStyle(
-              color: AppColors.white.withValues(alpha: 0.5),
+              color: AppColors.bgPrimary.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -851,13 +941,13 @@ class _ActionButton extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: disabled
-                      ? AppColors.white.withValues(alpha: 0.08)
-                      : AppColors.white.withValues(alpha: 0.15),
+                      ? AppColors.bgPrimary.withValues(alpha: 0.08)
+                      : AppColors.bgPrimary.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   icon,
-                  color: AppColors.white,
+                  color: AppColors.bgPrimary,
                   size: 24,
                 ),
               ),
@@ -865,7 +955,7 @@ class _ActionButton extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.white,
+                      color: AppColors.bgPrimary,
                     ),
               ),
             ],
@@ -956,7 +1046,7 @@ class _FilterSheetState extends State<_FilterSheet> {
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.bgPrimary,
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(AppTheme.radiusXl),
             ),
@@ -969,7 +1059,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(top: AppTheme.spaceMd),
                 decoration: BoxDecoration(
-                  color: AppColors.greyMedium,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1051,14 +1141,14 @@ class _FilterSheetState extends State<_FilterSheet> {
             contentPadding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceSm),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-              side: BorderSide(color: AppColors.greyMedium.withValues(alpha: 0.5)),
+              side: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
             ),
             title: Text(
               _filters.sector != null
                   ? SectorConstants.getSectorLabel(_filters.sector)
                   : 'Tous les secteurs',
               style: TextStyle(
-                color: _filters.sector != null ? null : AppColors.greyWarm,
+                color: _filters.sector != null ? null : AppColors.textSecondary,
               ),
             ),
             trailing: _filters.sector != null
@@ -1130,12 +1220,12 @@ class _FilterSheetState extends State<_FilterSheet> {
             padding: const EdgeInsets.symmetric(vertical: AppTheme.spaceSm),
             child: Row(
               children: [
-                const Icon(Icons.location_off, size: 18, color: AppColors.greyWarm),
+                const Icon(Icons.location_off, size: 18, color: AppColors.textSecondary),
                 const SizedBox(width: AppTheme.spaceSm),
                 Text(
                   'Activez la localisation pour filtrer',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.greyWarm,
+                        color: AppColors.textSecondary,
                       ),
                 ),
               ],
@@ -1167,8 +1257,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                     }
                   });
                 },
-                selectedColor: AppColors.tagBackground,
-                checkmarkColor: AppColors.primaryOrange,
+                selectedColor: AppColors.accentBg,
+                checkmarkColor: AppColors.accent,
               );
             }).toList(),
           ),
@@ -1232,8 +1322,8 @@ class _FilterSection extends StatelessWidget {
               onSelected: (selected) {
                 onChanged(selected ? option : null);
               },
-              selectedColor: AppColors.tagBackground,
-              checkmarkColor: AppColors.primaryOrange,
+              selectedColor: AppColors.accentBg,
+              checkmarkColor: AppColors.accent,
             );
           }).toList(),
         ),
@@ -1296,7 +1386,7 @@ class _SectorPickerSheetState extends State<_SectorPickerSheet> {
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.bgPrimary,
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(AppTheme.radiusXl),
             ),
@@ -1308,7 +1398,7 @@ class _SectorPickerSheetState extends State<_SectorPickerSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(top: AppTheme.spaceMd),
                 decoration: BoxDecoration(
-                  color: AppColors.greyMedium,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1345,7 +1435,7 @@ class _SectorPickerSheetState extends State<_SectorPickerSheet> {
                     return ListTile(
                       title: Text(SectorConstants.getSectorLabel(code)),
                       trailing: isSelected
-                          ? const Icon(Icons.check, color: AppColors.primaryOrange)
+                          ? const Icon(Icons.check, color: AppColors.accent)
                           : null,
                       selected: isSelected,
                       onTap: () => widget.onSectorSelected(code),

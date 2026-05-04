@@ -31,19 +31,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
   int _currentPage = 0;
 
   List<_OnboardingSlide> get _slides => [
-        const _OnboardingSlide(
-          title: 'Enregistrez votre vidéo en 40 secondes',
-          subtitle: 'Présentez-vous aux recruteurs avec une vidéo courte et percutante.',
-        ),
-        const _OnboardingSlide(
-          title: 'Découvrez des offres dans votre secteur',
-          subtitle: 'Parcourez les offres des recruteurs et trouvez le poste idéal.',
-        ),
-        const _OnboardingSlide(
-          title: 'Contactez directement par messagerie',
-          subtitle: 'Échangez avec les recruteurs en temps réel, sans intermédiaire.',
-        ),
-      ];
+    const _OnboardingSlide(
+      title: 'Enregistrez votre vidéo en 40 secondes',
+      subtitle:
+          'Présentez-vous aux recruteurs avec une vidéo courte et percutante.',
+    ),
+    const _OnboardingSlide(
+      title: 'Découvrez des offres dans votre secteur',
+      subtitle:
+          'Parcourez les offres des recruteurs et trouvez le poste idéal.',
+    ),
+    const _OnboardingSlide(
+      title: 'Soyez contacté par messagerie',
+      subtitle:
+          'Échangez avec les recruteurs en temps réel, sans intermédiaire.',
+    ),
+  ];
 
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
@@ -98,12 +101,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         // Title
                         Text(
                           slide.title,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
 
@@ -112,10 +111,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         // Subtitle
                         Text(
                           slide.subtitle,
-                          style:
-                              Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: AppColors.greyWarm,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(color: AppColors.textSecondary),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -139,8 +136,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     height: 8,
                     decoration: BoxDecoration(
                       color: _currentPage == index
-                          ? AppColors.primaryYellow
-                          : AppColors.greyLight,
+                          ? AppColors.accent
+                          : AppColors.bgSubtle,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -185,8 +182,5 @@ class _OnboardingSlide {
   final String title;
   final String subtitle;
 
-  const _OnboardingSlide({
-    required this.title,
-    required this.subtitle,
-  });
+  const _OnboardingSlide({required this.title, required this.subtitle});
 }

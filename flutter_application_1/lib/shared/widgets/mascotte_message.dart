@@ -31,22 +31,22 @@ class MascotteMessage extends StatelessWidget {
   Color get _backgroundColor {
     switch (variant) {
       case MascotteVariant.info:
-        return AppColors.info.withAlpha(25);
+        return AppColors.warning.withAlpha(25);
       case MascotteVariant.success:
         return AppColors.success.withAlpha(25);
       case MascotteVariant.encouragement:
-        return AppColors.primaryYellow.withAlpha(40);
+        return AppColors.accent.withAlpha(40);
     }
   }
 
   Color get _borderColor {
     switch (variant) {
       case MascotteVariant.info:
-        return AppColors.info.withAlpha(80);
+        return AppColors.warning.withAlpha(80);
       case MascotteVariant.success:
         return AppColors.success.withAlpha(80);
       case MascotteVariant.encouragement:
-        return AppColors.primaryYellow.withAlpha(100);
+        return AppColors.accent.withAlpha(100);
     }
   }
 
@@ -66,12 +66,12 @@ class MascotteMessage extends StatelessWidget {
               height: 48,
               width: 48,
               decoration: BoxDecoration(
-                color: AppColors.primaryYellow.withAlpha(40),
+                color: AppColors.accent.withAlpha(40),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.star_rounded,
-                color: AppColors.primaryYellow,
+                color: AppColors.accent,
                 size: 28,
               ),
             ),
@@ -104,7 +104,7 @@ class MascotteMessage extends StatelessWidget {
                           message,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.greyWarm,
+                                    color: AppColors.textSecondary,
                                   ),
                         ),
                       ],
@@ -118,7 +118,7 @@ class MascotteMessage extends StatelessWidget {
                         child: Icon(
                           Icons.close,
                           size: 16,
-                          color: AppColors.greyWarm,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ),

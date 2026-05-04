@@ -169,7 +169,7 @@ Ce projet utilise le **BMAD Method** (Business-Market Alignment Development) pou
 
 ```bash
 # === App Mobile (Flutter) ===
-cd C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app\flutter_application_1
+cd D:\gzzad\Documents\IDEES\Etoile\Etoile-mobile-app\flutter_application_1
 
 # Test rapide sur Edge (le plus rapide, pas d'emulateur)
 flutter run -d edge
@@ -182,7 +182,7 @@ flutter run -d emulator-5554
 flutter analyze
 
 # === SaaS Web (Next.js) ===
-cd C:\Users\gzzad\Documents\IDEES\ETOILE\Etoile-mobile-app\saas-etoile
+cd D:\gzzad\Documents\IDEES\Etoile\Etoile-mobile-app\saas-etoile
 
 # Dev server
 npm run dev
@@ -230,7 +230,10 @@ npx --prefix supabase supabase <cmd> --project-ref ojslqytmuifaofojutgb
 
 ## Known Issues & Lessons
 
-- **D: drive** : problemes de permissions .git — toujours utiliser C:\Users\gzzad\
+- **D: drive** : projet migré sur D:\ (2026-05-04) — chemins projet = `D:\gzzad\Documents\IDEES\Etoile\Etoile-mobile-app\`; Flutter SDK + Android SDK + Pub Cache restent sur `C:\Users\gzzad\`
+- **Gradle cache après migration C:→D:** : le premier `flutter run` sur téléphone peut échouer avec erreur "different roots" sur `wakelock_plus` — solution : `flutter clean` puis relancer. Erreur liée aux caches Kotlin incremental build qui ont des chemins C:\ obsolètes
+- **Next.js Turbopack cache corrompu** : si erreur "Module factory not available" sur globals.css → supprimer `.next/` + tuer le process + relancer `npm run dev`
+- **ADB unauthorized** : si téléphone en "unauthorized" → désactiver/réactiver le débogage USB sur le téléphone pour forcer une nouvelle popup d'autorisation
 - **Android emulateur API 36** : erreurs "Can't find service" au premier boot — cold boot + attente
 - **Firebase web** : lazy-init obligatoire (`kIsWeb` guard) — JS interop crash sinon
 - **DropdownButtonFormField** : toujours guard contre valeurs inconnues de la BDD (fallback null)

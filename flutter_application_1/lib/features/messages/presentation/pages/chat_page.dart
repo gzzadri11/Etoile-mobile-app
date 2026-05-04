@@ -138,13 +138,13 @@ class _ChatViewState extends State<_ChatView> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Erreur: $e'),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: AppColors.danger,
                     ),
                   );
                 }
               }
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Bloquer'),
           ),
         ],
@@ -221,9 +221,9 @@ class _ChatViewState extends State<_ChatView> {
                 value: 'block',
                 child: Row(
                   children: [
-                    Icon(Icons.block, size: 20, color: AppColors.error),
+                    Icon(Icons.block, size: 20, color: AppColors.danger),
                     SizedBox(width: 8),
-                    Text('Bloquer', style: TextStyle(color: AppColors.error)),
+                    Text('Bloquer', style: TextStyle(color: AppColors.danger)),
                   ],
                 ),
               ),
@@ -251,7 +251,7 @@ class _ChatViewState extends State<_ChatView> {
                   const Icon(
                     Icons.check_circle,
                     size: 14,
-                    color: AppColors.primaryYellow,
+                    color: AppColors.accent,
                   ),
                 ],
               ],
@@ -260,7 +260,7 @@ class _ChatViewState extends State<_ChatView> {
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.greyWarm,
+                      color: AppColors.textSecondary,
                     ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -276,7 +276,7 @@ class _ChatViewState extends State<_ChatView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: AppColors.primaryYellow),
+            CircularProgressIndicator(color: AppColors.accent),
             SizedBox(height: AppTheme.spaceMd),
             Text('Chargement...'),
           ],
@@ -291,7 +291,7 @@ class _ChatViewState extends State<_ChatView> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+              const Icon(Icons.error_outline, size: 64, color: AppColors.danger),
               const SizedBox(height: AppTheme.spaceMd),
               const Text(
                 'Erreur',
@@ -301,7 +301,7 @@ class _ChatViewState extends State<_ChatView> {
               Text(
                 state.message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.greyWarm),
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppTheme.spaceLg),
               ElevatedButton.icon(
@@ -372,69 +372,60 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTemp = message.id.startsWith('temp_');
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppTheme.spaceSm),
-      child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          if (isMe) const Spacer(flex: 1),
-          Flexible(
-            flex: 3,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppTheme.spaceMd,
-                vertical: AppTheme.spaceSm,
+          Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.72,
+            ),
+            margin: const EdgeInsets.only(bottom: AppTheme.spaceSm),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
+            decoration: BoxDecoration(
+              color: isMe ? AppColors.accent : AppColors.bgMuted,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(14),
+                topRight: const Radius.circular(14),
+                bottomLeft: Radius.circular(isMe ? 14 : 3),
+                bottomRight: Radius.circular(isMe ? 3 : 14),
               ),
-              decoration: BoxDecoration(
-                gradient: isMe ? AppColors.primaryGradient : null,
-                color: isMe ? null : AppColors.greyLight,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(AppTheme.radiusLg),
-                  topRight: const Radius.circular(AppTheme.radiusLg),
-                  bottomLeft: Radius.circular(
-                    isMe ? AppTheme.radiusLg : AppTheme.radiusSm,
-                  ),
-                  bottomRight: Radius.circular(
-                    isMe ? AppTheme.radiusSm : AppTheme.radiusLg,
-                  ),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    message.content,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isMe ? AppColors.white : AppColors.black,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _formatTime(message.createdAt),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: isMe
-                                  ? AppColors.white.withValues(alpha: 0.7)
-                                  : AppColors.greyWarm,
-                            ),
-                      ),
-                      if (isMe) ...[
-                        const SizedBox(width: 4),
-                        Icon(
-                          isTemp ? Icons.access_time : Icons.done_all,
-                          size: 14,
-                          color: AppColors.white.withValues(alpha: 0.7),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
+            ),
+            child: Text(
+              message.content,
+              style: AppTextStyles.body().copyWith(
+                color: isMe ? Colors.white : AppColors.textPrimary,
+                fontSize: 14,
               ),
             ),
           ),
-          if (!isMe) const Spacer(flex: 1),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _formatTime(message.createdAt),
+                  style: AppTextStyles.label().copyWith(
+                    color: AppColors.textTertiary,
+                    fontSize: 10,
+                  ),
+                ),
+                if (isMe) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    isTemp ? Icons.access_time : Icons.done_all,
+                    size: 12,
+                    color: AppColors.textTertiary,
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -462,7 +453,7 @@ class _MessageInput extends StatelessWidget {
         AppTheme.spaceSm + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.bgPrimary,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -476,7 +467,7 @@ class _MessageInput extends StatelessWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.greyLight,
+                color: AppColors.bgSubtle,
                 borderRadius: BorderRadius.circular(AppTheme.radiusLg),
               ),
               child: TextField(
@@ -507,14 +498,14 @@ class _MessageInput extends StatelessWidget {
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.primaryYellow,
+                          color: AppColors.accent,
                         ),
                       )
                     : Icon(
                         Icons.send,
                         color: hasText
-                            ? AppColors.primaryYellow
-                            : AppColors.greyMedium,
+                            ? AppColors.accent
+                            : AppColors.border,
                       ),
                 onPressed: hasText && !isSending ? onSend : null,
               );

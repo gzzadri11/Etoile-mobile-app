@@ -15,6 +15,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart' show AppRoutes, AppRouter;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/circle_crop_dialog.dart';
@@ -43,10 +44,17 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
   late TextEditingController _usernameController;
   late TextEditingController _schoolController;
 
+  // Rythme personnalisé controllers
+  late TextEditingController _rhythmDaysCompanyController;
+  late TextEditingController _rhythmDaysSchoolController;
+  late TextEditingController _rhythmWeeksCompanyController;
+  late TextEditingController _rhythmWeeksSchoolController;
+
   String? _selectedAge;
   String? _selectedStudyLevel;
   String? _selectedDomain;
   String? _selectedSpecialty;
+  String? _selectedRhythm;
   String? _selectedCity;
   double? _selectedLatitude;
   double? _selectedLongitude;
@@ -99,6 +107,12 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
     _lastNameController = TextEditingController();
     _usernameController = TextEditingController();
     _schoolController = TextEditingController();
+
+    // Rythme personnalisé controllers
+    _rhythmDaysCompanyController = TextEditingController();
+    _rhythmDaysSchoolController = TextEditingController();
+    _rhythmWeeksCompanyController = TextEditingController();
+    _rhythmWeeksSchoolController = TextEditingController();
 
     // Listeners to recalculate completion % in real-time
     _firstNameController.addListener(_onFieldChanged);
@@ -166,6 +180,13 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
     _lastNameController.dispose();
     _usernameController.dispose();
     _schoolController.dispose();
+
+    // Rythme personnalisé controllers
+    _rhythmDaysCompanyController.dispose();
+    _rhythmDaysSchoolController.dispose();
+    _rhythmWeeksCompanyController.dispose();
+    _rhythmWeeksSchoolController.dispose();
+
     super.dispose();
   }
 
@@ -225,10 +246,36 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
             SectorConstants.getSpecialtiesForSector(_selectedDomain).contains(profile.specialty))
         ? profile.specialty
         : null;
+    _selectedRhythm = profile.rhythm;
     _selectedCity = profile.city;
     _selectedLatitude = profile.latitude;
     _selectedLongitude = profile.longitude;
     _existingPhotoUrl = profile.photoUrl;
+
+    // Parse custom rhythm if present (format: personnalise:dc=3,ds=2,wc=1,ws=1)
+    if (profile.rhythm != null && profile.rhythm!.startsWith('personnalise:')) {
+      final details = profile.rhythm!.substring('personnalise:'.length);
+      final parts = details.split(',');
+      for (final part in parts) {
+        if (part.contains('=')) {
+          final kv = part.split('=');
+          if (kv.length == 2) {
+            final key = kv[0];
+            final value = kv[1];
+            if (key == 'dc') {
+              _rhythmDaysCompanyController.text = value;
+            } else if (key == 'ds') {
+              _rhythmDaysSchoolController.text = value;
+            } else if (key == 'wc') {
+              _rhythmWeeksCompanyController.text = value;
+            } else if (key == 'ws') {
+              _rhythmWeeksSchoolController.text = value;
+            }
+          }
+        }
+      }
+      _selectedRhythm = 'personnalise';
+    }
 
     _isInitialized = true;
   }
@@ -252,7 +299,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Erreur upload photo: $e'),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.danger,
             ),
           );
         }
@@ -261,6 +308,28 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
     }
 
     if (!mounted) return;
+
+    // Build custom rhythm string if personnalise selected
+    String? finalRhythm = _selectedRhythm;
+    if (_selectedRhythm == 'personnalise') {
+      final dc = _rhythmDaysCompanyController.text.trim();
+      final ds = _rhythmDaysSchoolController.text.trim();
+      final wc = _rhythmWeeksCompanyController.text.trim();
+      final ws = _rhythmWeeksSchoolController.text.trim();
+
+      final parts = <String>[];
+      if (dc.isNotEmpty) parts.add('dc=$dc');
+      if (ds.isNotEmpty) parts.add('ds=$ds');
+      if (wc.isNotEmpty) parts.add('wc=$wc');
+      if (ws.isNotEmpty) parts.add('ws=$ws');
+
+      if (parts.isNotEmpty) {
+        finalRhythm = 'personnalise:${parts.join(',')}';
+      } else {
+        // User selected personnalise but entered nothing — keep as 'personnalise'
+        finalRhythm = 'personnalise';
+      }
+    }
 
     final updatedProfile = currentProfile.copyWith(
       firstName: _firstNameController.text.trim(),
@@ -274,6 +343,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
       studyLevel: _selectedStudyLevel,
       domain: _selectedDomain,
       specialty: _selectedSpecialty,
+      rhythm: finalRhythm,
       photoUrl: photoUrl,
     );
 
@@ -295,10 +365,16 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
       body: BlocConsumer<ProfileBloc, ProfileState>(
         listener: (context, state) {
           if (state is ProfileSaveSuccess) {
+            // Show specific message if custom rhythm was saved
+            final message = _selectedRhythm == 'personnalise'
+                ? 'Rythme personnalisé enregistré ✅'
+                : 'Profil mis à jour ✅';
+
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profil mis à jour'),
+              SnackBar(
+                content: Text(message),
                 backgroundColor: AppColors.success,
+                duration: const Duration(seconds: 3),
               ),
             );
             // Gate is updated by ProfileBloc._onUpdateRequested.
@@ -314,7 +390,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.danger,
               ),
             );
           }
@@ -346,9 +422,9 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                         borderRadius: BorderRadius.circular(2),
                         child: LinearProgressIndicator(
                           value: _completionPercentage / 100,
-                          backgroundColor: AppColors.greyLight,
+                          backgroundColor: AppColors.bgSubtle,
                           valueColor: const AlwaysStoppedAnimation<Color>(
-                              AppColors.primaryYellow),
+                              AppColors.accent),
                           minHeight: 4,
                         ),
                       ),
@@ -357,7 +433,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                     Text(
                       '$_completionPercentage% complet',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.greyWarm,
+                            color: AppColors.textSecondary,
                             fontWeight: FontWeight.w500,
                           ),
                     ),
@@ -393,7 +469,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                             children: [
                               CircleAvatar(
                                 radius: 56,
-                                backgroundColor: AppColors.greyLight,
+                                backgroundColor: AppColors.bgSubtle,
                                 backgroundImage: _pickedPhotoBytes != null
                                     ? MemoryImage(_pickedPhotoBytes!)
                                     : (_existingPhotoUrl != null && _existingPhotoUrl!.isNotEmpty
@@ -401,7 +477,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                                         : null),
                                 child: (_pickedPhotoBytes == null &&
                                         (_existingPhotoUrl == null || _existingPhotoUrl!.isEmpty))
-                                    ? const Icon(Icons.person, size: 56, color: AppColors.greyMedium)
+                                    ? const Icon(Icons.person, size: 56, color: AppColors.border)
                                     : null,
                               ),
                               Positioned(
@@ -410,13 +486,13 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: const BoxDecoration(
-                                    color: AppColors.primaryYellow,
+                                    color: AppColors.accent,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
                                     Icons.camera_alt,
                                     size: 18,
-                                    color: AppColors.white,
+                                    color: AppColors.bgPrimary,
                                   ),
                                 ),
                               ),
@@ -435,7 +511,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                           Text(
                             'Obligatoire pour compléter votre profil',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.primaryOrange,
+                                  color: AppColors.accent,
                                 ),
                           ),
                       ],
@@ -475,7 +551,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                       Text(
                         "Nom d'utilisateur",
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: AppColors.greyWarm,
+                              color: AppColors.textSecondary,
                             ),
                       ),
                       const SizedBox(height: AppTheme.spaceSm),
@@ -484,7 +560,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                         enabled: !isSaving,
                         textCapitalization: TextCapitalization.none,
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.alternate_email, color: AppColors.greyWarm, size: 20),
+                          prefixIcon: const Icon(Icons.alternate_email, color: AppColors.textSecondary, size: 20),
                           hintText: 'pseudo',
                           helperText: '3-10 caractères, lettres minuscules et chiffres',
                           suffixIcon: _usernameChecking
@@ -499,7 +575,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                               : _usernameAvailable != null
                                   ? Icon(
                                       _usernameAvailable! ? Icons.check_circle : Icons.cancel,
-                                      color: _usernameAvailable! ? AppColors.success : AppColors.error,
+                                      color: _usernameAvailable! ? AppColors.success : AppColors.danger,
                                     )
                                   : null,
                         ),
@@ -650,6 +726,127 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                       onChanged: isSaving
                           ? null
                           : (value) => setState(() => _selectedSpecialty = value),
+                    ),
+                  ],
+
+                  const SizedBox(height: AppTheme.spaceLg),
+
+                  // --- Rhythm section ---
+                  _buildSectionTitle('Rythme d\'alternance'),
+                  const SizedBox(height: AppTheme.spaceMd),
+
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedRhythm,
+                    decoration: InputDecoration(
+                      labelText: 'Rythme souhaité (optionnel)',
+                      prefixIcon: const Icon(Icons.schedule_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      ),
+                    ),
+                    items: rhythmShortToFull.entries.map((entry) {
+                      return DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      );
+                    }).toList(),
+                    onChanged: isSaving
+                        ? null
+                        : (value) => setState(() => _selectedRhythm = value),
+                  ),
+
+                  // Détails rythme personnalisé
+                  if (_selectedRhythm == 'personnalise') ...[
+                    const SizedBox(height: AppTheme.spaceMd),
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spaceMd),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentBg.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                        border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Décrivez votre rythme personnalisé',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: AppTheme.spaceSm),
+                          Text(
+                            'Par semaine ou par période, précisez le nombre de jours/semaines en entreprise et à l\'école.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: AppTheme.spaceMd),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: EtoileTextField(
+                                  controller: _rhythmDaysCompanyController,
+                                  label: 'Jours entreprise',
+                                  keyboardType: TextInputType.number,
+                                  prefixIcon: Icons.business_outlined,
+                                  hintText: 'Ex: 3',
+                                  enabled: !isSaving,
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spaceSm),
+                              Expanded(
+                                child: EtoileTextField(
+                                  controller: _rhythmDaysSchoolController,
+                                  label: 'Jours école',
+                                  keyboardType: TextInputType.number,
+                                  prefixIcon: Icons.school_outlined,
+                                  hintText: 'Ex: 2',
+                                  enabled: !isSaving,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppTheme.spaceSm),
+                          Text(
+                            'OU',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textTertiary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: AppTheme.spaceSm),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: EtoileTextField(
+                                  controller: _rhythmWeeksCompanyController,
+                                  label: 'Semaines entreprise',
+                                  keyboardType: TextInputType.number,
+                                  prefixIcon: Icons.business_outlined,
+                                  hintText: 'Ex: 1',
+                                  enabled: !isSaving,
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spaceSm),
+                              Expanded(
+                                child: EtoileTextField(
+                                  controller: _rhythmWeeksSchoolController,
+                                  label: 'Semaines école',
+                                  keyboardType: TextInputType.number,
+                                  prefixIcon: Icons.school_outlined,
+                                  hintText: 'Ex: 1',
+                                  enabled: !isSaving,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
 

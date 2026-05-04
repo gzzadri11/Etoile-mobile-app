@@ -70,6 +70,7 @@ class FeedFilters extends Equatable {
   final String? specialty;
   final String? city;
   final String? studyLevel;
+  final String? rhythm; // Task #3
   final double? proximityKm;
   final double? userLatitude;
   final double? userLongitude;
@@ -80,6 +81,7 @@ class FeedFilters extends Equatable {
     this.specialty,
     this.city,
     this.studyLevel,
+    this.rhythm,
     this.proximityKm,
     this.userLatitude,
     this.userLongitude,
@@ -91,6 +93,7 @@ class FeedFilters extends Equatable {
         specialty = null,
         city = null,
         studyLevel = null,
+        rhythm = null,
         proximityKm = null,
         userLatitude = null,
         userLongitude = null;
@@ -106,6 +109,8 @@ class FeedFilters extends Equatable {
     bool clearCity = false,
     String? studyLevel,
     bool clearStudyLevel = false,
+    String? rhythm,
+    bool clearRhythm = false,
     double? proximityKm,
     bool clearProximityKm = false,
     double? userLatitude,
@@ -119,6 +124,7 @@ class FeedFilters extends Equatable {
       specialty: clearSpecialty ? null : (specialty ?? this.specialty),
       city: clearCity ? null : (city ?? this.city),
       studyLevel: clearStudyLevel ? null : (studyLevel ?? this.studyLevel),
+      rhythm: clearRhythm ? null : (rhythm ?? this.rhythm),
       proximityKm: clearProximityKm ? null : (proximityKm ?? this.proximityKm),
       userLatitude: clearUserLatitude ? null : (userLatitude ?? this.userLatitude),
       userLongitude: clearUserLongitude ? null : (userLongitude ?? this.userLongitude),
@@ -131,6 +137,7 @@ class FeedFilters extends Equatable {
       specialty != null ||
       city != null ||
       studyLevel != null ||
+      rhythm != null ||
       proximityKm != null;
 
   FeedFilters clear() => const FeedFilters.empty();
@@ -142,6 +149,7 @@ class FeedFilters extends Equatable {
         specialty,
         city,
         studyLevel,
+        rhythm,
         proximityKm,
         userLatitude,
         userLongitude,

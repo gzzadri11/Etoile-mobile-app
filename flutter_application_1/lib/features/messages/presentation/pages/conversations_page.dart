@@ -145,7 +145,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: AppColors.primaryYellow),
+            CircularProgressIndicator(color: AppColors.accent),
             SizedBox(height: AppTheme.spaceMd),
             Text('Chargement des conversations...'),
           ],
@@ -160,7 +160,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
               const SizedBox(height: AppTheme.spaceMd),
               const Text(
                 'Erreur de chargement',
@@ -170,7 +170,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
               Text(
                 _error!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.greyWarm),
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppTheme.spaceLg),
               ElevatedButton.icon(
@@ -190,7 +190,7 @@ class _ConversationsPageState extends State<ConversationsPage> {
 
     return RefreshIndicator(
       onRefresh: _loadConversations,
-      color: AppColors.primaryYellow,
+      color: AppColors.accent,
       child: _buildConversationsList(),
     );
   }
@@ -281,7 +281,7 @@ class _ConversationTile extends StatelessWidget {
         label: 'Avatar de $name',
         child: CircleAvatar(
           radius: 28,
-          backgroundColor: AppColors.primaryYellow,
+          backgroundColor: AppColors.accent,
           backgroundImage: conversation.otherUserAvatar != null
               ? NetworkImage(conversation.otherUserAvatar!)
               : null,
@@ -291,7 +291,7 @@ class _ConversationTile extends StatelessWidget {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
-                    color: AppColors.white,
+                    color: AppColors.bgPrimary,
                   ),
                 )
               : null,
@@ -315,14 +315,14 @@ class _ConversationTile extends StatelessWidget {
             const Icon(
               Icons.check_circle,
               size: 16,
-              color: AppColors.primaryYellow,
+              color: AppColors.accent,
             ),
           ],
           const SizedBox(width: 8),
           Text(
             _formatTime(conversation.lastMessageAt ?? conversation.createdAt),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.greyWarm,
+                  color: AppColors.textSecondary,
                 ),
           ),
         ],
@@ -336,7 +336,7 @@ class _ConversationTile extends StatelessWidget {
               Text(
                 'Offre : ${conversation.videoTitle}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.primaryOrange,
+                      color: AppColors.accent,
                       fontWeight: FontWeight.w500,
                     ),
                 maxLines: 1,
@@ -350,7 +350,7 @@ class _ConversationTile extends StatelessWidget {
                   child: Text(
                     conversation.lastMessagePreview ?? 'Nouvelle conversation',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isUnread ? AppColors.black : AppColors.greyWarm,
+                          color: isUnread ? AppColors.textPrimary : AppColors.textSecondary,
                           fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
                           fontStyle: conversation.lastMessagePreview == null
                               ? FontStyle.italic
@@ -368,7 +368,7 @@ class _ConversationTile extends StatelessWidget {
                       width: 10,
                       height: 10,
                       decoration: const BoxDecoration(
-                        color: AppColors.primaryYellow,
+                        color: AppColors.accent,
                         shape: BoxShape.circle,
                       ),
                     ),

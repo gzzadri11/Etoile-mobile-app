@@ -106,12 +106,12 @@ class VerificationQueuePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
             const SizedBox(height: AppTheme.spaceMd),
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.greyWarm,
+                    color: AppColors.textSecondary,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -143,7 +143,7 @@ class _RecruiterTile extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.greyMedium.withAlpha(60)),
+        side: BorderSide(color: AppColors.border.withAlpha(60)),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -180,7 +180,7 @@ class _RecruiterTile extends StatelessWidget {
                       Text(
                         'SIRET : ${recruiter.siret}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.greyWarm,
+                              color: AppColors.textSecondary,
                               fontFamily: 'monospace',
                             ),
                       ),
@@ -192,7 +192,7 @@ class _RecruiterTile extends StatelessWidget {
                       children: [
                         if (recruiter.sector != null) ...[
                           Icon(Icons.business_outlined,
-                              size: 14, color: AppColors.greyWarm),
+                              size: 14, color: AppColors.textSecondary),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -200,7 +200,7 @@ class _RecruiterTile extends StatelessWidget {
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
-                                  ?.copyWith(color: AppColors.greyWarm),
+                                  ?.copyWith(color: AppColors.textSecondary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -208,14 +208,14 @@ class _RecruiterTile extends StatelessWidget {
                           const SizedBox(width: AppTheme.spaceSm),
                         ],
                         Icon(Icons.schedule,
-                            size: 14, color: AppColors.greyWarm),
+                            size: 14, color: AppColors.textSecondary),
                         const SizedBox(width: 4),
                         Text(
                           _formatDate(recruiter.createdAt),
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
-                              ?.copyWith(color: AppColors.greyWarm),
+                              ?.copyWith(color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -234,13 +234,13 @@ class _RecruiterTile extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryOrange.withAlpha(25),
+                      color: AppColors.accent.withAlpha(25),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       'En attente',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.primaryOrange,
+                            color: AppColors.accent,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -248,7 +248,7 @@ class _RecruiterTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   const Icon(
                     Icons.chevron_right,
-                    color: AppColors.greyMedium,
+                    color: AppColors.border,
                   ),
                 ],
               ),
@@ -280,12 +280,12 @@ class _RecruiterTile extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: AppColors.primaryOrange.withAlpha(25),
+        color: AppColors.accent.withAlpha(25),
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Icon(
         Icons.business,
-        color: AppColors.primaryOrange,
+        color: AppColors.accent,
         size: 24,
       ),
     );

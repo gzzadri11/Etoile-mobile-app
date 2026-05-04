@@ -53,7 +53,7 @@ class _AdminAuthPageState extends State<AdminAuthPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Code incorrect'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.danger,
           ),
         );
       }
@@ -62,7 +62,7 @@ class _AdminAuthPageState extends State<AdminAuthPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Erreur de verification'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.danger,
         ),
       );
       debugPrint('[AdminAuth] Error: $e');
@@ -94,7 +94,7 @@ class _AdminAuthPageState extends State<AdminAuthPage> {
                 const Icon(
                   Icons.shield,
                   size: 64,
-                  color: AppColors.primaryOrange,
+                  color: AppColors.accent,
                 ),
                 const SizedBox(height: AppTheme.spaceLg),
                 Text(
@@ -107,7 +107,7 @@ class _AdminAuthPageState extends State<AdminAuthPage> {
                 Text(
                   'Entrez votre code d\'accès pour continuer',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.greyWarm,
+                        color: AppColors.textSecondary,
                       ),
                   textAlign: TextAlign.center,
                 ),

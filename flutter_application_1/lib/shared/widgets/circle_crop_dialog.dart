@@ -47,7 +47,7 @@ class _CircleCropDialogState extends State<CircleCropDialog> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        foregroundColor: AppColors.white,
+        foregroundColor: AppColors.bgPrimary,
         title: const Text('Recadrer la photo'),
         leading: IconButton(
           icon: const Icon(Icons.close),
@@ -62,13 +62,13 @@ class _CircleCropDialogState extends State<CircleCropDialog> {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppColors.primaryYellow,
+                      color: AppColors.accent,
                     ),
                   )
                 : const Text(
                     'Valider',
                     style: TextStyle(
-                      color: AppColors.primaryYellow,
+                      color: AppColors.accent,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -89,7 +89,7 @@ class _CircleCropDialogState extends State<CircleCropDialog> {
         interactive: true,
         fixCropRect: true,
         progressIndicator: const Center(
-          child: CircularProgressIndicator(color: AppColors.primaryYellow),
+          child: CircularProgressIndicator(color: AppColors.accent),
         ),
       ),
     );
