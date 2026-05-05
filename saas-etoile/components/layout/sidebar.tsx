@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Star, BarChart3, Users, Briefcase, Search, Settings } from "lucide-react";
+import { Star, BarChart3, Users, Briefcase, MessageSquare, Search, Settings } from "lucide-react";
 import { RecruiterAvatar } from "@/components/settings/RecruiterAvatar";
 
 interface SidebarProps {
@@ -20,6 +20,7 @@ export function Sidebar({ userInfo }: SidebarProps) {
     { href: "/home", label: "Dashboard", icon: BarChart3, badge: null },
     { href: "/candidates", label: "Candidats", icon: Users, badge: null },
     { href: "/offers", label: "Mes offres", icon: Briefcase, badge: null },
+    { href: "/messages", label: "Messagerie", icon: MessageSquare, badge: null },
   ];
 
   const toolsItems = [
