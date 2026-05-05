@@ -66,6 +66,7 @@ export interface Video {
   status: "processing" | "active" | "suspended" | "deleted";
   contract_type: string | null;
   sector: string | null;
+  address: string | null;
   keywords: string[];
   views_count: number;
   unique_viewers: number;

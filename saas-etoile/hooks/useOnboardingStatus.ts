@@ -42,7 +42,7 @@ export function useOnboardingStatus() {
 
       setSteps({
         accountCreated: true,
-        siretVerified: (profile as any)?.siret_verified ?? false,
+        siretVerified: (profile as any)?.verification_status === "verified",
         offerPublished: (offerCount ?? 0) > 0,
         candidateViewed: (evalCount ?? 0) > 0,
         firstContact: (convCount ?? 0) > 0,

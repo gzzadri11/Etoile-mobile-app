@@ -20,8 +20,8 @@ export const recruiterSettingsSchema = z.object({
     "transport_logistique",
     "agriculture_environnement",
   ]),
-  description: z.string().min(50, "La description doit contenir au moins 50 caractères"),
-  address: z.string().min(10, "L'adresse doit contenir au moins 10 caractères"),
+  description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
+  address: z.string().min(2, "Veuillez saisir une ville"),
   siret: z.string().length(14, "Le SIRET doit contenir exactement 14 chiffres").regex(/^\d{14}$/, "Le SIRET doit contenir uniquement des chiffres"),
   document_url: z.string().url().nullable().optional(),
 });

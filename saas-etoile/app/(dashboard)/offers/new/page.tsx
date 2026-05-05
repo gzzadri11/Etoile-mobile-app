@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/card";
 import { FileDropZone } from "@/components/offers/file-drop-zone";
 import { MobilePreview } from "@/components/offers/MobilePreview";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 
 type OfferType = "offer" | "poster";
 type Step = "type" | "upload" | "details" | "publishing";
@@ -59,6 +60,7 @@ export default function NewOfferPage() {
   const [sector, setSector] = useState("");
   const [contractType, setContractType] = useState("");
   const [description, setDescription] = useState("");
+  const [address, setAddress] = useState("");
 
   // Publishing
   const [progress, setProgress] = useState(0);
@@ -164,6 +166,7 @@ export default function NewOfferPage() {
         status: "active",
         contract_type: contractType || null,
         sector: sector || null,
+        address: address || null,
         published_at: new Date().toISOString(),
       });
 
@@ -440,6 +443,18 @@ export default function NewOfferPage() {
                   placeholder="Decrivez le poste, les missions, le profil recherche..."
                   rows={5}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">Adresse du lieu d'alternance</Label>
+                <AddressAutocomplete
+                  value={address}
+                  onValueChange={setAddress}
+                  placeholder="Ex: 12 Rue de la Paix, 75001 Paris"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Adresse où travaillera l&apos;alternant
+                </p>
               </div>
             </div>
 

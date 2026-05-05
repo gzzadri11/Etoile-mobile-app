@@ -14,7 +14,7 @@ import { DocumentUploadSection } from "@/components/settings/DocumentUploadSecti
 import { SECTORS } from "@/lib/constants/sectors";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
+import { CityAutocompleteInput } from "@/components/settings/city-autocomplete-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -297,12 +297,12 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Section 4: Adresse */}
+          {/* Section 4: Ville */}
           <Card>
             <CardHeader>
-              <CardTitle>Adresse de l'entreprise</CardTitle>
+              <CardTitle>Ville de l'entreprise</CardTitle>
               <CardDescription>
-                Adresse complète du siège social (rue, code postal, ville).
+                La ville où se trouve votre entreprise, visible par les candidats.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -311,16 +311,17 @@ export default function SettingsPage() {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Adresse complète</FormLabel>
+                    <FormLabel>Ville principale</FormLabel>
                     <FormControl>
-                      <AddressAutocomplete
+                      <CityAutocompleteInput
                         value={field.value || ""}
-                        onValueChange={field.onChange}
-                        placeholder="Commencez à taper votre adresse..."
+                        onCitySelected={field.onChange}
+                        clearOnSelect={false}
+                        placeholder="Ex: Paris, Lyon, Marseille..."
                       />
                     </FormControl>
                     <FormDescription>
-                      Cette adresse apparaîtra sur votre profil public. Tapez au moins 3 caractères pour voir les suggestions.
+                      Tapez au moins 2 caractères pour voir les suggestions de villes.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

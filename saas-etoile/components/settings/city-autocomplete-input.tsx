@@ -14,13 +14,22 @@ interface CitySuggestion {
 interface CityAutocompleteInputProps {
   onCitySelected: (cityLabel: string) => void;
   placeholder?: string;
+  value?: string;        // controlled mode: shows selected value in input
+  clearOnSelect?: boolean; // default true (list mode); false = single city mode
 }
 
 export function CityAutocompleteInput({
   onCitySelected,
   placeholder = "Tapez pour rechercher une ville...",
+  value,
+  clearOnSelect = true,
 }: CityAutocompleteInputProps) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(value ?? "");
+
+  // Sync controlled value
+  useEffect(() => {
+    if (value !== undefined) setQuery(value);
+  }, [value]);
   const [suggestions, setSuggestions] = useState<CitySuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -106,8 +115,12 @@ export function CityAutocompleteInput({
   }
 
   function handleSelectSuggestion(suggestion: CitySuggestion) {
-    onCitySelected(suggestion.label);
-    setQuery("");
+    onCitySelected(suggestion.city);
+    if (clearOnSelect) {
+      setQuery("");
+    } else {
+      setQuery(suggestion.city);
+    }
     setSuggestions([]);
     setShowSuggestions(false);
   }

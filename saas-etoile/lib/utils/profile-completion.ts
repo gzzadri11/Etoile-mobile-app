@@ -24,13 +24,13 @@ export function calculateRecruiterCompletion(profile: RecruiterProfile): number 
     completion += 20;
   }
 
-  // 3. Description (20%) — min 50 caractères
-  if (profile.description && profile.description.length >= 50) {
+  // 3. Description (20%) — min 10 caractères
+  if (profile.description && profile.description.length >= 10) {
     completion += 20;
   }
 
-  // 4. Adresse entreprise (20%) — min 10 caractères
-  if (profile.address && profile.address.length >= 10) {
+  // 4. Ville entreprise (20%) — min 2 caractères
+  if (profile.address && profile.address.length >= 2) {
     completion += 20;
   }
 
