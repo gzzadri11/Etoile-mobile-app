@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { CandidateWithProfile } from "@/lib/types/database";
 import { createClient } from "@/lib/supabase/client";
@@ -24,7 +23,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { X, ThumbsUp, Minus, ThumbsDown } from "lucide-react";
-import { MessageTab } from "@/components/messages/message-tab";
+import { ContactModal } from "@/components/candidates/ContactModal";
 
 interface CandidateModalProps {
   candidate: (CandidateWithProfile & { matchScore?: number }) | null;
@@ -39,8 +38,7 @@ export function CandidateModal({
   onOpenChange,
   onStatusChanged,
 }: CandidateModalProps) {
-  const router = useRouter();
-  const [contacting, setContacting] = useState(false);
+  const [showContact, setShowContact] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Task #2: Evaluation state (3-state rating + notes)
@@ -100,11 +98,7 @@ export function CandidateModal({
     {
       " ": toggleVideoPlay,
       Escape: () => onOpenChange(false),
-      c: () => {
-        if (candidate?.application.status === "pending" && !contacting) {
-          handleContact();
-        }
-      },
+      c: () => setShowContact(true),
     },
     open
   );
@@ -123,68 +117,6 @@ export function CandidateModal({
     : presentation_video?.video_key
     ? `${workerUrl}/video/${presentation_video.video_key}`
     : null;
-
-  async function handleContact() {
-    setContacting(true);
-
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setContacting(false);
-      return;
-    }
-
-    // Find or create conversation (fixed logic: both participants in same conversation)
-    const { data: existingConv } = await supabase
-      .from("conversations")
-      .select("id")
-      .or(
-        `and(participant_1.eq.${user.id},participant_2.eq.${seeker.user_id}),` +
-        `and(participant_1.eq.${seeker.user_id},participant_2.eq.${user.id})`
-      )
-      .limit(1)
-      .maybeSingle();
-
-    let conversationId = existingConv?.id;
-
-    if (!conversationId) {
-      const { data: newConv, error } = await supabase
-        .from("conversations")
-        .insert({
-          participant_1: user.id,
-          participant_2: seeker.user_id,
-          video_id: offer.id,
-        })
-        .select("id")
-        .single();
-
-      if (error) {
-        console.error('Failed to create conversation:', error);
-        setContacting(false);
-        return;
-      }
-
-      conversationId = newConv?.id;
-    }
-
-    // Mark application as contacted
-    await supabase
-      .from("applications")
-      .update({ status: "contacted" })
-      .eq("id", application.id);
-
-    setContacting(false);
-    onStatusChanged();
-
-    // Navigate to Messages page with this conversation
-    if (conversationId) {
-      router.push(`/messages?conversation=${conversationId}`);
-    }
-
-    onOpenChange(false);
-  }
 
   // Task #2: Save rating when button clicked
   async function handleRatingChange(newRating: "interested" | "neutral" | "not_interested") {
@@ -209,6 +141,18 @@ export function CandidateModal({
   const matchScore = candidate.matchScore ?? 0;
 
   return (
+    <>
+    {showContact && (
+      <ContactModal
+        seekerId={seeker.user_id}
+        seekerName={fullName}
+        seekerUsername={seeker.username}
+        videoId={offer.id}
+        applicationId={application.id}
+        onStatusChanged={onStatusChanged}
+        onClose={() => setShowContact(false)}
+      />
+    )}
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="!max-w-[96vw] !h-[92vh] !w-[96vw] p-0 gap-0"
@@ -285,10 +229,9 @@ export function CandidateModal({
 
             {/* Tabs */}
             <Tabs defaultValue="profil" className="flex-1 overflow-hidden flex flex-col">
-              <TabsList className="w-full grid grid-cols-3 shrink-0 h-12 sticky top-0 z-10 bg-background border-b">
+              <TabsList className="w-full grid grid-cols-2 shrink-0 h-12 sticky top-0 z-10 bg-background border-b">
                 <TabsTrigger value="profil" className="text-base">Profil</TabsTrigger>
                 <TabsTrigger value="evaluer" className="text-base">Évaluer</TabsTrigger>
-                <TabsTrigger value="messages" className="text-base">Messages</TabsTrigger>
               </TabsList>
 
               <div className="flex-1 overflow-y-auto bg-background">
@@ -469,46 +412,25 @@ export function CandidateModal({
                       <div>
                         <h3 className="text-base font-semibold mb-3">Actions</h3>
                         <div className="space-y-3">
-                          {application.status === "pending" && (
-                            <Button
-                              variant="default"
-                              className="w-full text-base h-11"
-                              onClick={handleContact}
-                              disabled={contacting}
-                            >
-                              {contacting ? "Ouverture..." : "Contacter ce candidat"}
-                            </Button>
-                          )}
-                          {application.status === "contacted" && (
-                            <div className="rounded-lg bg-muted p-4 text-center">
-                              <p className="text-base text-muted-foreground mb-3">
-                                Candidat déjà contacté
-                              </p>
-                              <Button variant="outline" className="w-full text-base h-11">
-                                Voir la conversation
-                              </Button>
-                            </div>
-                          )}
+                          <Button
+                            variant="default"
+                            className="w-full text-base h-11"
+                            onClick={() => setShowContact(true)}
+                          >
+                            {application.status === "contacted" ? "Voir la conversation" : "💬 Contacter ce candidat"}
+                          </Button>
                         </div>
                       </div>
                     </>
                   )}
                 </TabsContent>
 
-                {/* Tab: Messages - Epic 15 */}
-                <TabsContent value="messages" className="p-6 mt-0">
-                  <MessageTab
-                    seekerId={seeker.user_id}
-                    videoId={offer.id}
-                    applicationStatus={application.status}
-                    onConversationCreated={onStatusChanged}
-                  />
-                </TabsContent>
               </div>
             </Tabs>
           </div>
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

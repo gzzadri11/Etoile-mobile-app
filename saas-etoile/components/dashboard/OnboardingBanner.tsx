@@ -3,19 +3,24 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { X, Check, FileText, Users, MessageCircle } from "lucide-react";
+import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 
 export function OnboardingBanner() {
   const [dismissed, setDismissed] = useState(false);
+  const { steps, allDone, loading } = useOnboardingStatus();
 
-  const steps = [
-    { label: "Compte créé", status: "done", icon: Check },
-    { label: "SIRET vérifié", status: "done", icon: Check },
-    { label: "Publier une offre", status: "active", icon: FileText },
-    { label: "Voir vos candidats", status: "todo", icon: Users },
-    { label: "Premier contact", status: "todo", icon: MessageCircle },
+  if (dismissed || allDone) return null;
+
+  const stepConfig = [
+    { key: "accountCreated" as const, label: "Compte créé", icon: Check },
+    { key: "siretVerified" as const, label: "SIRET vérifié", icon: Check },
+    { key: "offerPublished" as const, label: "Publier une offre", icon: FileText },
+    { key: "candidateViewed" as const, label: "Voir vos candidats", icon: Users },
+    { key: "firstContact" as const, label: "Premier contact", icon: MessageCircle },
   ];
 
-  if (dismissed) return null;
+  // Active step = first incomplete one
+  const activeKey = stepConfig.find((s) => !steps[s.key])?.key;
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border bg-white p-6 shadow-sm">
@@ -31,23 +36,21 @@ export function OnboardingBanner() {
           ⭐
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-text-primary">
-            Complétez votre profil
-          </h3>
+          <h3 className="text-lg font-semibold text-text-primary">Complétez votre profil</h3>
           <p className="text-sm text-text-secondary">
-            Quelques étapes pour démarrer votre recrutement
+            {loading ? "Chargement…" : "Quelques étapes pour démarrer votre recrutement"}
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-3 overflow-x-auto pb-2">
-        {steps.map((step, i) => {
+        {stepConfig.map((step, i) => {
           const Icon = step.icon;
-          const isDone = step.status === "done";
-          const isActive = step.status === "active";
+          const isDone = steps[step.key];
+          const isActive = step.key === activeKey;
 
           return (
-            <div key={i} className="flex items-center">
+            <div key={step.key} className="flex items-center">
               <motion.div
                 animate={isActive ? { scale: [1, 1.02, 1] } : {}}
                 transition={{ repeat: Infinity, duration: 2 }}
@@ -66,23 +69,15 @@ export function OnboardingBanner() {
                 </div>
                 <span
                   className={`whitespace-nowrap text-sm font-medium ${
-                    isDone
-                      ? "text-success"
-                      : isActive
-                      ? "text-accent"
-                      : "text-text-tertiary"
+                    isDone ? "text-success" : isActive ? "text-accent" : "text-text-tertiary"
                   }`}
                 >
                   {step.label}
                 </span>
               </motion.div>
 
-              {i < steps.length - 1 && (
-                <div
-                  className={`mx-3 h-px w-8 ${
-                    isDone ? "bg-success" : "bg-border"
-                  }`}
-                />
+              {i < stepConfig.length - 1 && (
+                <div className={`mx-3 h-px w-8 ${isDone ? "bg-success" : "bg-border"}`} />
               )}
             </div>
           );
