@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Star, BarChart3, Users, Briefcase, MessageSquare, Search, Settings } from "lucide-react";
 import { RecruiterAvatar } from "@/components/settings/RecruiterAvatar";
+import { createClient } from "@/lib/supabase/client";
 
 interface SidebarProps {
   userInfo: {
@@ -15,12 +17,53 @@ interface SidebarProps {
 
 export function Sidebar({ userInfo }: SidebarProps) {
   const pathname = usePathname();
+  const supabase = useRef(createClient()).current;
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let userId: string | null = null;
+
+    async function fetchUnread() {
+      if (!userId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        userId = user.id;
+      }
+
+      const { data: convs } = await supabase
+        .from("conversations")
+        .select("id")
+        .or(`participant_1.eq.${userId},participant_2.eq.${userId}`);
+
+      const convIds = (convs ?? []).map((c: any) => c.id);
+      if (convIds.length === 0) { setUnreadCount(0); return; }
+
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .in("conversation_id", convIds)
+        .neq("sender_id", userId)
+        .eq("is_read", false);
+
+      setUnreadCount(count ?? 0);
+    }
+
+    fetchUnread();
+
+    const channel = supabase
+      .channel("sidebar-unread")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, fetchUnread)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, fetchUnread)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [supabase]);
 
   const navItems = [
     { href: "/home", label: "Dashboard", icon: BarChart3, badge: null },
     { href: "/candidates", label: "Candidats", icon: Users, badge: null },
     { href: "/offers", label: "Mes offres", icon: Briefcase, badge: null },
-    { href: "/messages", label: "Messagerie", icon: MessageSquare, badge: null },
+    { href: "/messages", label: "Messagerie", icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : null },
   ];
 
   const toolsItems = [

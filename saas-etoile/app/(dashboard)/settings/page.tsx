@@ -20,13 +20,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2, CheckCircle2, Clock, XCircle } from "lucide-react";
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<RecruiterProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   const form = useForm<RecruiterSettingsFormData>({
     resolver: zodResolver(recruiterSettingsSchema),
@@ -105,17 +104,13 @@ export default function SettingsPage() {
     const result = await updateRecruiterProfile(data);
 
     if (result.success) {
-      toast({
-        title: "Profil mis à jour",
+      toast.success("Profil mis à jour", {
         description: "Vos modifications ont été enregistrées avec succès.",
       });
-      // Reload profile
       await loadProfile();
     } else {
-      toast({
-        title: "Erreur",
+      toast.error("Erreur lors de la sauvegarde", {
         description: result.error || "Une erreur est survenue lors de la sauvegarde.",
-        variant: "destructive",
       });
     }
   };

@@ -34,7 +34,7 @@ export function useOnboardingStatus() {
         { count: evalCount },
         { count: convCount },
       ] = await Promise.all([
-        supabase.from("recruiter_profiles").select("siret_verified").eq("user_id", uid).maybeSingle(),
+        supabase.from("recruiter_profiles").select("verification_status").eq("user_id", uid).maybeSingle(),
         supabase.from("videos").select("*", { count: "exact", head: true }).eq("user_id", uid).neq("status", "deleted"),
         supabase.from("candidate_evaluations").select("*", { count: "exact", head: true }).eq("recruiter_id", uid),
         supabase.from("conversations").select("*", { count: "exact", head: true }).or(`participant_1.eq.${uid},participant_2.eq.${uid}`),
