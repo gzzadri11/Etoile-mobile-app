@@ -118,7 +118,7 @@ export function ContactModal({
     });
     await supabase
       .from("conversations")
-      .update({ updated_at: new Date().toISOString() })
+      .update({ last_message_at: new Date().toISOString(), last_message_preview: text.slice(0, 100) })
       .eq("id", conversationId);
   }
 
