@@ -1,7 +1,32 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-05-03
-**Statut** : **Session corrections UX + Compétences + Formulaire DONE**. 11 tasks terminées sur 12. Compétences chercheur ✅, Formulaire offre (boutons Annuler) ✅, Rythmes alternance, Évaluations candidats, Filtres recherche. **30/30 migrations** déployées. 85/85 tests Flutter ✅, Next.js build ✅.
+**Date de mise a jour** : 2026-05-10
+**Statut** : **Session onboarding UX + fixes router Flutter**. Onboarding nettoyé (widgets déco supprimés, images agrandies, textes agrandis). Timing onboarding corrigé (déclenché seulement après login/register, pas au lancement). Bug overflow OfferDetailPage en cours de correction. **31/31 migrations** déployées. 85/85 tests Flutter ✅.
+
+---
+
+## SESSION 2026-05-10 : Onboarding + Fixes Flutter
+
+### Tasks complétées
+
+- ✅ Onboarding — retrait cadre blanc offres (page 2) + bulle message (page 3)
+- ✅ Onboarding — suppression paramètre `decorativeWidget` + classes mortes (`_OffersList`, `_OfferRow`, `_MessageBubble`)
+- ✅ Onboarding — images agrandies (flex 6→7) + textes agrandis (titre 30, description 17)
+- ✅ Onboarding — fix timing : ajout flag `_isNewAuthSession` dans `AppRouter`
+  - L'onboarding ne se déclenche plus au lancement de l'app (session restaurée)
+  - `AppRouter.markFreshLogin()` appelé avant `emit(AuthAuthenticated)` dans `_onLoginRequested` et `_onRegisterRequested`
+  - `resetProfileCheck()` remet `_isNewAuthSession = false` au logout
+- ✅ Feed — fix overflow "bottom overflowed by 538 pixels" dans le bottom sheet "Voir la description"
+  - Cause : `Column(mainAxisSize: min)` sans contrainte de hauteur → dépasse l'écran si description longue
+  - Fix : `ConstrainedBox(maxHeight: 75% écran)` + `SingleChildScrollView` autour du contenu
+- ✅ `OfferDetailPage` — `AspectRatio(9/16)` (~700px) remplacé par `SizedBox(height: 300)` + `BoxFit.cover`
+
+### Fichiers modifiés
+- `flutter_application_1/lib/features/onboarding/presentation/pages/onboarding_page.dart`
+- `flutter_application_1/lib/core/router/app_router.dart`
+- `flutter_application_1/lib/features/auth/presentation/bloc/auth_bloc.dart`
+- `flutter_application_1/lib/features/offer/pages/offer_detail_page.dart`
+- `flutter_application_1/lib/features/feed/presentation/pages/feed_page.dart`
 
 ---
 

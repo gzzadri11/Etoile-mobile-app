@@ -95,6 +95,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
 
       final role = await _getUserRole(user);
+
+      // L'app mobile est reservee aux chercheurs — on deconnecte les recruteurs
+      if (role == 'recruiter') {
+        await _supabaseClient.auth.signOut();
+        emit(const AuthUnauthenticated());
+        return;
+      }
+
       final newState = AuthAuthenticated(
         userId: user.id,
         email: user.email ?? '',
@@ -136,11 +144,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
+      final role = await _getUserRole(response.user!);
+
+      // L'app mobile est reservee aux chercheurs
+      if (role == 'recruiter') {
+        await _supabaseClient.auth.signOut();
+        emit(const AuthError(
+          message: 'Ce compte est réservé aux recruteurs. Connectez-vous sur app.etoile-recrutement.fr',
+        ));
+        return;
+      }
+
       _registerPushToken();
+      AppRouter.markFreshLogin();
       emit(AuthAuthenticated(
         userId: response.user!.id,
         email: response.user!.email ?? '',
-        role: await _getUserRole(response.user!),
+        role: role,
       ));
     } on AuthException catch (e) {
       emit(AuthError(message: _mapAuthError(e)));
@@ -182,6 +202,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // Authentification immediate (pas de confirmation email)
       _registerPushToken();
+      AppRouter.markFreshLogin();
       emit(AuthAuthenticated(
         userId: response.user!.id,
         email: response.user!.email ?? '',

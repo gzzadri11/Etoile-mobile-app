@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/admin/data/repositories/admin_repository.dart';
 import '../../features/admin/presentation/bloc/admin_bloc.dart';
@@ -42,6 +43,7 @@ import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/offer/pages/offer_detail_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../../features/stats/presentation/pages/seeker_stats_page.dart';
 import '../../features/profile/data/models/recruiter_profile_model.dart';
 import '../../features/profile/data/repositories/profile_repository.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
@@ -115,6 +117,9 @@ abstract class AppRoutes {
   static const String companyProfile = '/company/:recruiterId';
   static const String offerDetail = '/offer/:offerId';
 
+  // Stats chercheur
+  static const String seekerStats = '/stats';
+
   // Helpers pour les routes parametrees
   static String chatWith(String id) => '/messages/$id';
   static String videoDetailFor(String id) => '/video/$id';
@@ -144,6 +149,25 @@ class AppRouter {
   static void verifyAdminSession() => _adminSessionVerified = true;
   static void resetAdminSession() => _adminSessionVerified = false;
 
+  // --- Onboarding : affiche une seule fois apres login/inscription explicite ---
+  static bool _onboardingDone = true; // true par defaut → evite de bloquer les utilisateurs existants
+  static bool _isNewAuthSession = false; // true uniquement apres login/inscription explicite (jamais au lancement)
+
+  static void setOnboardingDone() {
+    _onboardingDone = true;
+    _isNewAuthSession = false;
+  }
+
+  /// Declenche l'affichage de l'onboarding lors du prochain redirect.
+  /// Doit etre appele avant emit(AuthAuthenticated) dans le BLoC.
+  static void markFreshLogin() => _isNewAuthSession = true;
+
+  static Future<void> loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    _onboardingDone = prefs.getBool('onboarding_done') ?? false;
+    // _isNewAuthSession reste false : le lancement de l'app ne declenche pas l'onboarding
+  }
+
   // --- Etat profil : gate de completude ---
   static bool _profileComplete = true;
   static bool _profileChecked = false;
@@ -158,6 +182,7 @@ class AppRouter {
   static void resetProfileCheck() {
     _profileChecked = false;
     _profileComplete = true;
+    _isNewAuthSession = false;
   }
 
   /// Cree le router GoRouter. Appele une seule fois depuis [EtoileApp].
@@ -235,6 +260,13 @@ class AppRouter {
       return authState.isAdmin ? AppRoutes.adminAuth : AppRoutes.search;
     }
 
+    // 4.5. Premiere connexion → onboarding (chercheur uniquement, apres login/register explicite)
+    if (authState is AuthAuthenticated && !authState.isAdmin &&
+        _isNewAuthSession && !_onboardingDone &&
+        location != AppRoutes.onboardingSeeker) {
+      return AppRoutes.onboardingSeeker;
+    }
+
     // 5. Double auth admin
     if (authState is AuthAuthenticated && location.startsWith('/admin') &&
         location != AppRoutes.adminAuth) {
@@ -266,6 +298,8 @@ class AppRouter {
         location == AppRoutes.profile ||
         location == AppRoutes.onboardingSeeker ||
         location == AppRoutes.settings ||
+        location == AppRoutes.seekerStats ||
+        location == AppRoutes.seekerApplications ||
         location.startsWith('/settings/');
   }
 
@@ -300,7 +334,7 @@ class AppRouter {
   static List<GoRoute> _onboardingRoutes() => [
     GoRoute(
       path: AppRoutes.onboardingSeeker,
-      builder: (_, _) => const OnboardingPage(role: 'seeker'),
+      builder: (_, _) => const OnboardingPage(),
     ),
   ];
 
@@ -407,6 +441,10 @@ class AppRouter {
     GoRoute(
       path: AppRoutes.seekerApplications,
       builder: (_, _) => const SeekerApplicationsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.seekerStats,
+      builder: (_, _) => const SeekerStatsPage(),
     ),
   ];
 
@@ -665,6 +703,7 @@ class _CompanyProfileLoaderState extends State<_CompanyProfileLoader> {
                 contractType: v.contractType ?? 'alternance',
                 mediaUrl: v.videoUrl,
                 description: v.description,
+                recruiterId: profile.userId,
               ),
             )
             .toList(),
