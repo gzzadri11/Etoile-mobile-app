@@ -12,6 +12,8 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../video/data/repositories/video_repository.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/sector_constants.dart';
@@ -198,6 +200,20 @@ class _SeekerProfileView extends StatelessWidget {
 
               const SizedBox(height: AppTheme.spaceLg),
 
+              // Mes statistiques section
+              GestureDetector(
+                onTap: () => context.push(AppRoutes.seekerStats),
+                child: const _PublicationSectionCard(
+                  icon: Icons.bar_chart_rounded,
+                  title: 'Mes statistiques',
+                  subtitle: 'Recruteurs qui ont vu votre vidéo',
+                  count: 0,
+                  hideCount: true,
+                ),
+              ),
+
+              const SizedBox(height: AppTheme.spaceLg),
+
               // Mes candidatures section
               GestureDetector(
                 onTap: () => context.push(AppRoutes.seekerApplications),
@@ -213,14 +229,6 @@ class _SeekerProfileView extends StatelessWidget {
               const SizedBox(height: AppTheme.spaceLg),
 
               // Action buttons
-              EtoileButton(
-                label: AppStrings.editVideo,
-                icon: Icons.videocam_outlined,
-                onPressed: () => context.push(AppRoutes.record),
-              ),
-
-              const SizedBox(height: AppTheme.spaceMd),
-
               EtoileButton.outlined(
                 label: AppStrings.editProfile,
                 icon: Icons.edit_outlined,
@@ -348,50 +356,134 @@ class _ProfileCompletionCard extends StatelessWidget {
 
 /// Video preview card for seekers — affiche la thumbnail si une video existe,
 /// sinon un placeholder invitant a enregistrer.
-class _VideoPreviewCard extends StatelessWidget {
+class _VideoPreviewCard extends StatefulWidget {
   final Video? video;
 
   const _VideoPreviewCard({this.video});
 
   @override
-  Widget build(BuildContext context) {
-    final hasVideo = video != null && video!.status == 'active';
+  State<_VideoPreviewCard> createState() => _VideoPreviewCardState();
+}
 
-    return GestureDetector(
-      onTap: () {
-        if (hasVideo && video!.videoUrl != null) {
-          _showVideoPlayer(context, video!.videoUrl!);
-        } else {
-          context.push(AppRoutes.record);
-        }
-      },
-      child: Semantics(
-        label: hasVideo
-            ? 'Vidéo de présentation — appuyez pour visionner'
-            : 'Aucune vidéo enregistrée — appuyez pour enregistrer',
-        child: Container(
-          width: double.infinity,
-          height: 200,
-          decoration: BoxDecoration(
-            color: AppColors.textPrimary,
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: hasVideo ? _buildVideoPreview(context) : _buildPlaceholder(context),
+class _VideoPreviewCardState extends State<_VideoPreviewCard> {
+  bool _deleting = false;
+
+  bool get _hasVideo => widget.video != null && widget.video!.status == 'active';
+
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer la vidéo ?'),
+        content: const Text(
+          'Votre vidéo de présentation sera supprimée. Les recruteurs ne pourront plus la voir.',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            child: const Text('Supprimer'),
+          ),
+        ],
       ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deleting = true);
+    try {
+      await GetIt.I<VideoRepository>().deleteVideo(widget.video!.id);
+      if (mounted) {
+        context.read<ProfileBloc>().add(const ProfileRefreshRequested());
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _deleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la suppression : $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () {
+            if (_hasVideo && widget.video!.videoUrl != null) {
+              _showVideoPlayer(context, widget.video!.videoUrl!);
+            } else {
+              context.push(AppRoutes.record);
+            }
+          },
+          child: Semantics(
+            label: _hasVideo
+                ? 'Vidéo de présentation — appuyez pour visionner'
+                : 'Aucune vidéo enregistrée — appuyez pour enregistrer',
+            child: Container(
+              width: double.infinity,
+              height: 200,
+              decoration: BoxDecoration(
+                color: AppColors.textPrimary,
+                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: _deleting
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : _hasVideo
+                      ? _buildVideoPreview(context)
+                      : _buildPlaceholder(context),
+            ),
+          ),
+        ),
+        if (_hasVideo) ...[
+          const SizedBox(height: AppTheme.spaceSm),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.videocam_outlined, size: 16),
+                  label: const Text('Remplacer'),
+                  onPressed: () => context.push(AppRoutes.record),
+                ),
+              ),
+              const SizedBox(width: AppTheme.spaceSm),
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: const Text('Supprimer'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: AppColors.danger),
+                  ),
+                  onPressed: _deleting ? null : _confirmDelete,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 
   Widget _buildVideoPreview(BuildContext context) {
-    final hasThumbnail = video!.thumbnailUrl != null && video!.thumbnailUrl!.isNotEmpty;
+    final hasThumbnail =
+        widget.video!.thumbnailUrl != null && widget.video!.thumbnailUrl!.isNotEmpty;
 
     return Stack(
       fit: StackFit.expand,
       children: [
         if (hasThumbnail)
           Image.network(
-            video!.thumbnailUrl!,
+            widget.video!.thumbnailUrl!,
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => const ColoredBox(
               color: AppColors.textPrimary,

@@ -69,6 +69,9 @@ class _EtoileAppState extends State<EtoileApp> {
     _authBloc!.add(const AuthCheckRequested());
     await _waitForAuthResolution();
 
+    // Charge les preferences locales (onboarding vu, etc.)
+    await AppRouter.loadPreferences();
+
     // Le router est cree apres resolution de l'auth car les redirections
     // (admin → /verify-admin, profil incomplet → /profile/edit) en dependent.
     _router = AppRouter.createRouter(_authBloc!);

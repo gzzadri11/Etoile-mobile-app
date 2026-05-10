@@ -50,6 +50,7 @@ class OfferModel {
   final String contractType;
   final String? mediaUrl;
   final String? description;
+  final String? recruiterId;
 
   const OfferModel({
     required this.id,
@@ -60,6 +61,7 @@ class OfferModel {
     required this.contractType,
     this.mediaUrl,
     this.description,
+    this.recruiterId,
   });
 
   factory OfferModel.fromJson(Map<String, dynamic> json) {
@@ -72,6 +74,7 @@ class OfferModel {
       contractType: json['contract_type'] as String,
       mediaUrl: json['media_url'] as String?,
       description: json['description'] as String?,
+      recruiterId: json['recruiter_id'] as String?,
     );
   }
 }
