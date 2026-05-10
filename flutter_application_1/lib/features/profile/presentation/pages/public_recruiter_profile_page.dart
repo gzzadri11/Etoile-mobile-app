@@ -182,6 +182,22 @@ class _PublicRecruiterProfilePageState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Accès à la page entreprise complète
+                Center(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push(
+                      AppRoutes.companyProfileFor(profile.userId),
+                    ),
+                    icon: const Icon(Icons.business_outlined, size: 16),
+                    label: const Text('Page entreprise complète'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accent,
+                      side: const BorderSide(color: AppColors.accent),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spaceMd),
+
                 // 2. Description
                 if (profile.description != null &&
                     profile.description!.isNotEmpty) ...[

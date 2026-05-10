@@ -34,11 +34,15 @@ import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
+import '../../features/company/models/company_model.dart';
+import '../../features/company/pages/company_profile_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
 import '../../features/feed/presentation/pages/search_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
+import '../../features/offer/pages/offer_detail_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../../features/profile/data/models/recruiter_profile_model.dart';
 import '../../features/profile/data/repositories/profile_repository.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/profile/presentation/pages/edit_seeker_profile_page.dart';
@@ -50,6 +54,8 @@ import '../../features/settings/presentation/pages/contact_support_page.dart';
 import '../../features/settings/presentation/pages/faq_page.dart';
 import '../../features/settings/presentation/pages/legal_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/video/data/models/video_model.dart';
+import '../../features/video/data/repositories/video_repository.dart';
 import '../../features/video/presentation/bloc/video_bloc.dart';
 import '../../features/video/presentation/pages/video_record_page.dart';
 import '../../shared/widgets/main_scaffold.dart';
@@ -105,10 +111,16 @@ abstract class AppRoutes {
   // Candidatures
   static const String seekerApplications = '/my-applications';
 
+  // Entreprise
+  static const String companyProfile = '/company/:recruiterId';
+  static const String offerDetail = '/offer/:offerId';
+
   // Helpers pour les routes parametrees
   static String chatWith(String id) => '/messages/$id';
   static String videoDetailFor(String id) => '/video/$id';
   static String publicProfileFor(String id) => '/profile/$id';
+  static String companyProfileFor(String id) => '/company/$id';
+  static String offerDetailFor(String id) => '/offer/$id';
 }
 
 // =============================================================================
@@ -364,6 +376,20 @@ class AppRouter {
         userId: state.pathParameters['userId']!,
       ),
     ),
+    // Page entreprise complète (depuis profil recruteur ou feed)
+    GoRoute(
+      path: AppRoutes.companyProfile,
+      builder: (_, state) => _CompanyProfileLoader(
+        recruiterId: state.pathParameters['recruiterId']!,
+      ),
+    ),
+    // Détail d'une offre (objet passé via extra)
+    GoRoute(
+      path: AppRoutes.offerDetail,
+      builder: (_, state) => OfferDetailPage(
+        offer: state.extra! as OfferModel,
+      ),
+    ),
   ];
 
   static List<GoRoute> _profileRoutes() => [
@@ -576,6 +602,99 @@ class _PublicProfileRouterState extends State<_PublicProfileRouter> {
       return PublicSeekerProfilePage(userId: widget.userId);
     }
     return PublicRecruiterProfilePage(userId: widget.userId);
+  }
+}
+
+/// Charge les données d'une entreprise depuis Supabase et affiche [CompanyProfilePage].
+class _CompanyProfileLoader extends StatefulWidget {
+  final String recruiterId;
+  const _CompanyProfileLoader({required this.recruiterId});
+
+  @override
+  State<_CompanyProfileLoader> createState() => _CompanyProfileLoaderState();
+}
+
+class _CompanyProfileLoaderState extends State<_CompanyProfileLoader> {
+  CompanyModel? _company;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final profileRepo = GetIt.I<ProfileRepository>();
+      final videoRepo = GetIt.I<VideoRepository>();
+
+      final results = await Future.wait([
+        profileRepo.getRecruiterProfileById(widget.recruiterId),
+        videoRepo.getVideosForUser(widget.recruiterId),
+      ]);
+
+      final profile = results[0] as RecruiterProfile?;
+      final videos = results[1] as List<Video>;
+
+      if (profile == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final city =
+          profile.locations.isNotEmpty ? profile.locations.first : '';
+      final offerVideos =
+          videos.where((v) => v.type != 'presentation' && v.isActive).toList();
+
+      final company = CompanyModel(
+        id: profile.userId,
+        name: profile.companyName,
+        sector: profile.sector ?? '',
+        city: city,
+        description: profile.description ?? '',
+        logoUrl: profile.logoUrl,
+        offers: offerVideos
+            .map(
+              (v) => OfferModel(
+                id: v.id,
+                title: v.title ?? 'Offre',
+                companyName: profile.companyName,
+                sector: profile.sector ?? '',
+                city: city,
+                contractType: v.contractType ?? 'alternance',
+                mediaUrl: v.videoUrl,
+                description: v.description,
+              ),
+            )
+            .toList(),
+      );
+
+      if (mounted) {
+        setState(() {
+          _company = company;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_company == null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: const Center(child: Text('Entreprise introuvable')),
+      );
+    }
+    return CompanyProfilePage(company: _company!);
   }
 }
 

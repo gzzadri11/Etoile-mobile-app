@@ -3,11 +3,12 @@ library;
 /// Page de profil d'une entreprise recruteuse.
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_widgets.dart';
-import '../../offer/pages/offer_detail_page.dart';
 import '../models/company_model.dart';
 
 class CompanyProfilePage extends StatelessWidget {
@@ -168,11 +169,9 @@ class CompanyProfilePage extends StatelessWidget {
                   final offer = company.offers[index];
                   return _OfferCarouselCard(
                     offer: offer,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => OfferDetailPage(offer: offer),
-                      ),
+                    onTap: () => context.push(
+                      AppRoutes.offerDetailFor(offer.id),
+                      extra: offer,
                     ),
                   );
                 },
