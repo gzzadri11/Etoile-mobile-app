@@ -132,13 +132,14 @@ npx --prefix supabase supabase db push --workdir "D:\gzzad\Documents\IDEES\Etoil
 - Enregistrement vidéo in-app uniquement (pas d'import externe)
 - Charte graphique unifiée violet #635BFF entre mobile et SaaS
 
-## État du projet (2026-05-05)
+## État du projet (2026-05-16)
 
 ### Statut technique
 - **Flutter** : `flutter analyze` → 0 erreurs ✅ | `flutter run` → OK sur téléphone (SM S721B) ✅
 - **Next.js** : `npm run dev` → OK sur localhost:3000 ✅ | build production ✅
-- **Supabase** : 30/30 migrations déployées ✅
+- **Supabase** : 32/32 migrations déployées ✅
 - **Tests Flutter** : 85/85 passent ✅
+- **Push notifications** : FCM fonctionnel ✅ (testé sur SM S721B)
 
 ### ⚠️ Migration disque C: → D: (2026-05-04) — EFFECTUÉE ET VALIDÉE
 - Projet Flutter : `D:\gzzad\Documents\IDEES\Etoile\Etoile-mobile-app\flutter_application_1`
@@ -161,7 +162,9 @@ npx --prefix supabase supabase db push --workdir "D:\gzzad\Documents\IDEES\Etoil
 - Type contrat → Alternance uniquement (Stage/Pro supprimés)
 - Filtres recherche globaux (6 filtres : secteur, spécialité, niveau, ville, rythme, proximité)
 - Splash screen violet + Messagerie bulles violet/gris
-- Page profil entreprise + Page détail offre (créées, non encore intégrées au router)
+- `CompanyProfilePage` : 3 sections (header, à propos, carousel avec thumbnails vidéo) ✅ intégrée au router
+- `OfferDetailPage` : thumbnail vidéo + bouton Postuler ✅ intégrée au router
+- Notifications push FCM : fonctionnelles ✅ (trigger → Edge Function → Firebase)
 
 ### Fonctionnalités SaaS récentes (mai 2026)
 - Settings recruteur complet (7 sections, photo, document, SIRET)
@@ -173,12 +176,13 @@ npx --prefix supabase supabase db push --workdir "D:\gzzad\Documents\IDEES\Etoil
 secteur (30%) + ville (25%) + niveau (25%) + spécialité (20%) — ANCIENNE formule
 secteur (25%) + ville (20%) + niveau (20%) + spécialité (15%) + compétences (20%) — NOUVELLE formule avec skills
 
-### Fichiers non commités (présents dans le working tree, fonctionnels)
-**Flutter :** `app_constants.dart`, `app_widgets.dart`, `features/company/`, `features/offer/`
-**SaaS :** settings/, candidates/, messages/, offers/new, dashboard/, components/settings/, components/messages/
+### Notes architecture push notifications
+- Trigger `on_new_message` + `on_new_conversation` → `net.http_post` → Edge Function `send-push`
+- Payload trigger : `{"type":"INSERT","table":"messages",...}` — vérifier `"table"` AVANT `"type"` dans la fonction
+- `notification_log` : table de déduplication (1 notif/minute par conversation)
+- `device_tokens` : tokens FCM par user_id
 
 ## Prochaines étapes
 
-**Track 1 (mobile)** : Brancher `CompanyProfilePage` + `OfferDetailPage` au router Flutter
-**Track 2 (SaaS)** : Epic 6 (Paiements Stripe) ou Epic 7 (Admin) ← **À DÉFINIR**
+**Track SaaS** : Epic 6 (Paiements Stripe) ou Epic 7 (Admin) ← **À DÉFINIR**
 **Infra** : Soumission stores (App Store + Google Play), déploiement Vercel, config Stripe

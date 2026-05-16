@@ -1,7 +1,50 @@
 # Session BMAD - Etoile Mobile App
 
-**Date de mise a jour** : 2026-05-10
-**Statut** : **Session onboarding UX + fixes router Flutter**. Onboarding nettoyé (widgets déco supprimés, images agrandies, textes agrandis). Timing onboarding corrigé (déclenché seulement après login/register, pas au lancement). Bug overflow OfferDetailPage en cours de correction. **31/31 migrations** déployées. 85/85 tests Flutter ✅.
+**Date de mise a jour** : 2026-05-16
+**Statut** : **Session profil entreprise + thumbnails vidéo + notifications push**. CompanyProfilePage restructurée (3 sections, carousel, bottom sheet). OfferDetailPage avec thumbnail vidéo. Notifications push entièrement fonctionnelles (bug routing Edge Function corrigé). **32/32 migrations** déployées. 85/85 tests Flutter ✅.
+
+---
+
+## SESSION 2026-05-16 : Profil entreprise + Push notifications
+
+### Tasks complétées
+
+- ✅ Rythme alternance — dropdown overflow corrigé (`isExpanded: true` + `TextOverflow.ellipsis`)
+- ✅ Feed — pause vidéo avant navigation vers profil entreprise
+- ✅ Feed — navigation directe vers `CompanyProfilePage` (skip `PublicRecruiterProfilePage`)
+- ✅ CompanyProfilePage — restructuration complète en 3 sections :
+  - En-tête : logo/initiales (radius 44) + badge "Entreprise vérifiée"
+  - À propos : description texte
+  - Nos offres : carousel horizontal (height 320), tap → bottom sheet titre + description
+- ✅ Carousel — miniatures correctes : `image` → `Image.network`, `video` → `VideoThumbnail.thumbnailData()`
+- ✅ `OfferDetailPage` — thumbnail vidéo (même logique `video_thumbnail`) pour la zone média 300px
+- ✅ `pubspec.yaml` — ajout `video_thumbnail: ^0.5.3`
+- ✅ `OfferModel` — ajout champ `mediaType` ('image' | 'video') + mapping dans `app_router.dart`
+- ✅ Push notifications — correction complète :
+  - Migration `20260516000001_recreate_notification_log.sql` (table supprimée par erreur)
+  - `send-push/index.ts` — try/catch sur `shouldSendNotification` + `logNotification` (fail-open)
+  - Bug routing : payload trigger contient `"type":"INSERT"` ET `"table"` → vérifier `"table"` en premier
+  - Résultat : notifications reçues ✅ testé sur SM S721B
+
+### Fichiers modifiés
+- `flutter_application_1/lib/features/profile/presentation/pages/edit_seeker_profile_page.dart`
+- `flutter_application_1/lib/features/feed/presentation/pages/feed_page.dart`
+- `flutter_application_1/lib/features/company/pages/company_profile_page.dart`
+- `flutter_application_1/lib/features/company/models/company_model.dart`
+- `flutter_application_1/lib/features/offer/pages/offer_detail_page.dart`
+- `flutter_application_1/lib/core/router/app_router.dart`
+- `flutter_application_1/pubspec.yaml`
+- `supabase/functions/send-push/index.ts`
+- `supabase/migrations/20260516000001_recreate_notification_log.sql` (nouveau)
+
+### Migration déployée ✅
+- `20260516000001_recreate_notification_log.sql` — table pour déduplication notifications push
+
+**Total migrations** : 32/32
+
+### Prochaines étapes
+- **Track SaaS** : Epic 6 (Paiements Stripe) ou Epic 7 (Admin) — à définir
+- **Infra** : Soumission stores (App Store + Google Play), déploiement Vercel, config Stripe
 
 ---
 
