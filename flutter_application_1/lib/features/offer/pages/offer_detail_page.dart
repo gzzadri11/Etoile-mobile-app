@@ -2,8 +2,11 @@ library;
 
 /// Page de detail d'une offre d'emploi avec bouton Postuler.
 
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -26,12 +29,95 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   bool _hasApplied = false;
   bool _isApplying = false;
   bool _loadingStatus = true;
+  Uint8List? _videoThumb;
+  bool _thumbLoading = true;
 
   @override
   void initState() {
     super.initState();
     _checkApplicationStatus();
+    _loadThumbnail();
   }
+
+  Future<void> _loadThumbnail() async {
+    if (widget.offer.mediaType == 'video' && widget.offer.mediaUrl != null) {
+      try {
+        final thumb = await VideoThumbnail.thumbnailData(
+          video: widget.offer.mediaUrl!,
+          imageFormat: ImageFormat.JPEG,
+          timeMs: 0,
+          quality: 85,
+        );
+        if (!mounted) return;
+        setState(() {
+          _videoThumb = thumb;
+          _thumbLoading = false;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _thumbLoading = false);
+      }
+    } else {
+      if (!mounted) return;
+      setState(() => _thumbLoading = false);
+    }
+  }
+
+  Widget _buildMedia() {
+    final offer = widget.offer;
+
+    if (offer.mediaType == 'image' && offer.mediaUrl != null) {
+      return Image.network(
+        offer.mediaUrl!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        loadingBuilder: (_, child, progress) {
+          if (progress == null) return child;
+          return _mediaSkeleton();
+        },
+        errorBuilder: (_, _, _) => _mediaPlaceholder(),
+      );
+    }
+
+    if (offer.mediaType == 'video') {
+      if (_thumbLoading) return _mediaSkeleton();
+      if (_videoThumb != null) {
+        return Image.memory(
+          _videoThumb!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+        );
+      }
+      return _mediaPlaceholder();
+    }
+
+    return _mediaPlaceholder();
+  }
+
+  Widget _mediaSkeleton() => Container(
+        color: AppColors.bgMuted,
+        child: const Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.accent,
+            ),
+          ),
+        ),
+      );
+
+  Widget _mediaPlaceholder() => Container(
+        color: AppColors.accentBg,
+        child: const Center(
+          child: Icon(
+            Icons.image_not_supported_outlined,
+            color: AppColors.accent,
+            size: 48,
+          ),
+        ),
+      );
 
   Future<void> _checkApplicationStatus() async {
     final recruiterId = widget.offer.recruiterId;
@@ -150,21 +236,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                   SizedBox(
                     height: 300,
                     width: double.infinity,
-                    child: offer.mediaUrl != null
-                        ? Image.network(
-                            offer.mediaUrl!,
-                            fit: BoxFit.cover,
-                          )
-                        : Container(
-                            color: AppColors.accentBg,
-                            child: const Center(
-                              child: Icon(
-                                Icons.play_circle_outline,
-                                color: AppColors.accent,
-                                size: 48,
-                              ),
-                            ),
-                          ),
+                    child: _buildMedia(),
                   ),
 
                   // Details

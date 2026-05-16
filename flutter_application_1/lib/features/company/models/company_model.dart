@@ -49,6 +49,7 @@ class OfferModel {
   final String city;
   final String contractType;
   final String? mediaUrl;
+  final String mediaType; // 'image' ou 'video'
   final String? description;
   final String? recruiterId;
 
@@ -60,6 +61,7 @@ class OfferModel {
     required this.city,
     required this.contractType,
     this.mediaUrl,
+    this.mediaType = 'video',
     this.description,
     this.recruiterId,
   });
@@ -73,6 +75,7 @@ class OfferModel {
       city: json['city'] as String,
       contractType: json['contract_type'] as String,
       mediaUrl: json['media_url'] as String?,
+      mediaType: json['media_type'] as String? ?? 'video',
       description: json['description'] as String?,
       recruiterId: json['recruiter_id'] as String?,
     );
