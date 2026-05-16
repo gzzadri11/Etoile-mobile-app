@@ -148,22 +148,30 @@ async function shouldSendNotification(
   type: string,
   referenceId?: string
 ): Promise<boolean> {
-  // Check if a notification was sent for this type + reference in the last minute
-  const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+  try {
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
 
-  let query = supabase
-    .from("notification_log")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("type", type)
-    .gte("created_at", oneMinuteAgo);
+    let query = supabase
+      .from("notification_log")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("type", type)
+      .gte("created_at", oneMinuteAgo);
 
-  if (referenceId) {
-    query = query.eq("reference_id", referenceId);
+    if (referenceId) {
+      query = query.eq("reference_id", referenceId);
+    }
+
+    const { data, error } = await query.limit(1);
+    if (error) {
+      console.warn("[send-push] notification_log read error (table missing?):", error.message);
+      return true; // fail open — send the notification
+    }
+    return !data || data.length === 0;
+  } catch (e) {
+    console.warn("[send-push] shouldSendNotification failed:", e);
+    return true;
   }
-
-  const { data } = await query.limit(1);
-  return !data || data.length === 0;
 }
 
 async function logNotification(
@@ -172,11 +180,18 @@ async function logNotification(
   type: string,
   referenceId?: string
 ): Promise<void> {
-  await supabase.from("notification_log").insert({
-    user_id: userId,
-    type,
-    reference_id: referenceId || null,
-  });
+  try {
+    const { error } = await supabase.from("notification_log").insert({
+      user_id: userId,
+      type,
+      reference_id: referenceId || null,
+    });
+    if (error) {
+      console.warn("[send-push] notification_log write error (table missing?):", error.message);
+    }
+  } catch (e) {
+    console.warn("[send-push] logNotification failed:", e);
+  }
 }
 
 // =============================================================================
@@ -456,15 +471,15 @@ serve(async (req: Request) => {
     let type: string;
     let record: Record<string, unknown> | undefined;
 
-    if ("type" in body && typeof body.type === "string") {
-      // Direct call (from cron or manual)
-      type = body.type;
-      record = (body as RequestBody).record;
-    } else if ("table" in body) {
-      // Webhook call
+    if ("table" in body) {
+      // Webhook call from trigger
       const webhook = body as WebhookPayload;
       record = webhook.record;
       type = webhook.table === "messages" ? "new_message" : "new_conversation";
+    } else if ("type" in body && typeof body.type === "string") {
+      // Direct call (from cron or manual)
+      type = body.type;
+      record = (body as RequestBody).record;
     } else {
       return new Response(JSON.stringify({ error: "Invalid payload" }), {
         status: 400,
