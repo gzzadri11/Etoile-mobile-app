@@ -671,9 +671,10 @@ class _VideoCard extends StatelessWidget {
     );
   }
 
-  /// Navigate to public recruiter profile
+  /// Navigate to company profile page
   void _onProfileTap(BuildContext context) {
-    context.push(AppRoutes.publicProfileFor(feedItem.video.userId));
+    preloadedController?.pause();
+    context.push(AppRoutes.companyProfileFor(feedItem.video.userId));
   }
 
   /// Apply to offer (seeker only, decoupled from conversations)
