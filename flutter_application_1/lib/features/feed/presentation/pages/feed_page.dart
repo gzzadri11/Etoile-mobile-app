@@ -97,6 +97,7 @@ class _FeedViewState extends State<_FeedView> {
   final VideoPreloadManager _preloadManager = VideoPreloadManager();
   int _currentPage = 0;
   bool _isRefreshing = false;
+  bool _preloadInitialized = false;
   List<String?> _videoUrls = [];
 
   @override
@@ -153,8 +154,8 @@ class _FeedViewState extends State<_FeedView> {
     setState(() => _isRefreshing = true);
     context.read<FeedBloc>().add(const FeedRefreshRequested());
 
-    // Wait for state change
     await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
     setState(() => _isRefreshing = false);
   }
 
@@ -271,10 +272,13 @@ class _FeedViewState extends State<_FeedView> {
         return item.video.videoUrl;
       }).toList();
 
-      // Notify preload manager of initial/current page
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _onPageChangedPreload(_currentPage);
-      });
+      // Kick off preloading once on first successful load
+      if (!_preloadInitialized) {
+        _preloadInitialized = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _onPageChangedPreload(_currentPage);
+        });
+      }
 
       return PageView.builder(
         controller: _pageController,

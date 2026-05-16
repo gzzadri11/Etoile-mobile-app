@@ -103,6 +103,7 @@ abstract class AppRoutes {
   static const String termsOfService = '/settings/terms';
   static const String privacyPolicy = '/settings/privacy';
 
+
   // Admin
   static const String admin = '/admin';
   static const String adminAuth = '/verify-admin';

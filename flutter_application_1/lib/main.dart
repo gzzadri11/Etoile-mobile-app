@@ -24,6 +24,16 @@ import 'di/injection_container.dart' as di;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // En debug : log les erreurs Flutter sans afficher l'écran rouge.
+  // En production : géré par Crashlytics via _setupCrashlytics().
+  if (kDebugMode) {
+    FlutterError.onError = (FlutterErrorDetails details) {
+      debugPrint('=== FLUTTER ERROR ===');
+      debugPrint(details.exceptionAsString());
+      debugPrint(details.stack?.toString() ?? '');
+    };
+  }
+
   // Verrouiller l'orientation portrait — le feed video TikTok-style
   // n'est pas concu pour le paysage.
   if (!kIsWeb) {

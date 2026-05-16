@@ -53,7 +53,6 @@ class _ConversationsPageState extends State<ConversationsPage> {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      debugPrint('[ConversationsPage] Subscribing to realtime conversations...');
       _conversationsChannel = supabase
           .channel('conversations:list:$userId')
           .onPostgresChanges(
@@ -61,8 +60,6 @@ class _ConversationsPageState extends State<ConversationsPage> {
             schema: 'public',
             table: 'conversations',
             callback: (payload) {
-              debugPrint('[ConversationsPage] Realtime event: ${payload.eventType}');
-              // Reload full list to get enriched data
               _loadConversations(silent: true);
             },
           )
@@ -80,7 +77,6 @@ class _ConversationsPageState extends State<ConversationsPage> {
   }
 
   Future<void> _loadConversations({bool silent = false}) async {
-    debugPrint('[ConversationsPage] Loading conversations...');
     if (!silent) {
       setState(() {
         _isLoading = true;
@@ -91,10 +87,8 @@ class _ConversationsPageState extends State<ConversationsPage> {
     try {
       final messageRepository = GetIt.I<MessageRepository>();
       final blockRepository = GetIt.I<BlockRepository>();
-      debugPrint('[ConversationsPage] Repository obtained, fetching...');
       final conversations = await messageRepository.getConversations();
       final blockedIds = await blockRepository.getBlockedUserIds();
-      debugPrint('[ConversationsPage] Got ${conversations.length} conversations, ${blockedIds.length} blocked');
 
       final currentUserId = messageRepository.currentUserId ?? '';
       final filtered = blockedIds.isEmpty
@@ -110,9 +104,8 @@ class _ConversationsPageState extends State<ConversationsPage> {
           _isLoading = false;
         });
       }
-    } catch (e, stackTrace) {
-      debugPrint('[ConversationsPage] Error: $e');
-      debugPrint('[ConversationsPage] Stack: $stackTrace');
+    } catch (e) {
+      debugPrint('[ConversationsPage] Erreur chargement conversations: $e');
       if (mounted && !silent) {
         setState(() {
           _error = e.toString();

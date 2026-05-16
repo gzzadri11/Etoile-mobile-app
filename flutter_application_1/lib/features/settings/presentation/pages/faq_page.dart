@@ -331,37 +331,6 @@ final _allSections = [
     ],
   ),
   const _FaqSection(
-    title: 'Paiements & Premium',
-    icon: Icons.star_outline,
-    items: [
-      _FaqItem(
-        question: 'Quels sont les avantages Premium ?',
-        answer:
-            'En tant que chercheur Premium (4,99 EUR/mois), vous voyez qui a consulté votre vidéo, '
-            'accès aux statistiques détaillées et un badge Premium visible. '
-            'Les recruteurs Premium (499 EUR/mois) ont des publications incluses et un accès prioritaire.',
-      ),
-      _FaqItem(
-        question: 'Comment m\'abonner à Premium ?',
-        answer:
-            'Rendez-vous dans Paramètres > Premium, puis appuyez sur "S\'abonner". '
-            'Le paiement est sécurisé via Stripe. Vous pouvez annuler à tout moment.',
-      ),
-      _FaqItem(
-        question: 'Comment annuler mon abonnement ?',
-        answer:
-            'Dans Paramètres > Premium, appuyez sur "Gérer mon abonnement". '
-            'Votre accès Premium reste actif jusqu\'à la fin de la période en cours.',
-      ),
-      _FaqItem(
-        question: 'Les credits sont-ils remboursables ?',
-        answer:
-            'Les crédits achetés à l\'unité (vidéo ou affiche) ne sont pas remboursables '
-            'une fois utilisés. Les crédits non utilisés restent sur votre compte sans expiration.',
-      ),
-    ],
-  ),
-  const _FaqSection(
     title: 'Technique',
     icon: Icons.build_outlined,
     items: [

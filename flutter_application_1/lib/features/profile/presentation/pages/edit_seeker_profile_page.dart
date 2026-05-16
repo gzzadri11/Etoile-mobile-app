@@ -682,6 +682,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
 
                   DropdownButtonFormField<String>(
                     initialValue: _selectedDomain,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Domaine',
                       prefixIcon: const Icon(Icons.work_outline),
@@ -692,7 +693,10 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                     items: SectorConstants.sectorOptions.map((domain) {
                       return DropdownMenuItem(
                         value: domain,
-                        child: Text(SectorConstants.sectorLabels[domain]!),
+                        child: Text(
+                          SectorConstants.sectorLabels[domain]!,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       );
                     }).toList(),
                     onChanged: isSaving
@@ -737,6 +741,7 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
 
                   DropdownButtonFormField<String>(
                     initialValue: _selectedRhythm,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Rythme souhaité (optionnel)',
                       prefixIcon: const Icon(Icons.schedule_outlined),
@@ -747,7 +752,10 @@ class _EditSeekerProfilePageState extends State<EditSeekerProfilePage> {
                     items: rhythmShortToFull.entries.map((entry) {
                       return DropdownMenuItem(
                         value: entry.key,
-                        child: Text(entry.value),
+                        child: Text(
+                          entry.value,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       );
                     }).toList(),
                     onChanged: isSaving

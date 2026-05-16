@@ -40,6 +40,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
   VideoPlayerController? _ownController;
   bool _isOwnInitialized = false;
   bool _isPlaying = false;
+  bool _wasBuffering = false;
   bool _showControls = false;
   bool _hasError = false;
   bool _hasNotifiedPlaying = false;
@@ -161,11 +162,7 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
     if (controller == null) return;
 
     final isPlaying = controller.value.isPlaying;
-    if (isPlaying != _isPlaying && mounted) {
-      setState(() {
-        _isPlaying = isPlaying;
-      });
-    }
+    final isBuffering = controller.value.isBuffering;
 
     // Notify parent that video is playing (for preload trigger)
     if (isPlaying && !_hasNotifiedPlaying) {
@@ -173,16 +170,19 @@ class _FeedVideoPlayerState extends State<FeedVideoPlayer> {
       widget.onVideoPlaying?.call();
     }
 
-    // Trigger rebuild for buffering progress updates
-    if (mounted) {
-      setState(() {});
-    }
-
     // Detect video end
     final position = controller.value.position;
     final duration = controller.value.duration;
     if (duration > Duration.zero && position >= duration) {
       widget.onVideoEnd?.call();
+    }
+
+    // Rebuild only when playing state or buffering state actually changes
+    if (mounted && (isPlaying != _isPlaying || isBuffering != _wasBuffering)) {
+      setState(() {
+        _isPlaying = isPlaying;
+        _wasBuffering = isBuffering;
+      });
     }
   }
 
