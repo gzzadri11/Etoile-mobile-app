@@ -615,7 +615,7 @@ class _VideoCard extends StatelessWidget {
             final uid = authState is AuthAuthenticated ? authState.userId : null;
             if (uid == null) return const SizedBox.shrink();
             return Positioned(
-              top: MediaQuery.of(ctx).padding.top + kToolbarHeight + 2,
+              top: MediaQuery.of(ctx).padding.top + kToolbarHeight - 14,
               left: AppTheme.spaceMd,
               child: FavoriteButton(
                 videoId: feedItem.video.id,
