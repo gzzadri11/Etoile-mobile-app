@@ -576,13 +576,34 @@ class _VideoCard extends StatelessWidget {
 
               // Title or bio
               if (feedItem.userTitle != null)
-                Text(
-                  feedItem.userTitle!,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.bgPrimary.withValues(alpha: 0.9),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        feedItem.userTitle!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.bgPrimary.withValues(alpha: 0.9),
+                            ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                    ),
+                    if (userRole == 'seeker') ...[
+                      const SizedBox(width: 8),
+                      Builder(builder: (ctx) {
+                        final authState = ctx.read<AuthBloc>().state;
+                        final uid = authState is AuthAuthenticated ? authState.userId : null;
+                        if (uid == null) return const SizedBox.shrink();
+                        return FavoriteButton(
+                          videoId: feedItem.video.id,
+                          seekerId: uid,
+                          iconColor: AppColors.bgPrimary.withValues(alpha: 0.7),
+                          size: 22,
+                        );
+                      }),
+                    ],
+                  ],
                 ),
               const SizedBox(height: AppTheme.spaceXs),
 
@@ -607,23 +628,6 @@ class _VideoCard extends StatelessWidget {
             ],
           ),
         ),
-
-        // Bouton favori (chercheur uniquement, haut droit)
-        if (userRole == 'seeker') ...[
-          Builder(builder: (ctx) {
-            final authState = ctx.read<AuthBloc>().state;
-            final uid = authState is AuthAuthenticated ? authState.userId : null;
-            if (uid == null) return const SizedBox.shrink();
-            return Positioned(
-              top: MediaQuery.of(ctx).padding.top + kToolbarHeight - 14,
-              left: AppTheme.spaceMd,
-              child: FavoriteButton(
-                videoId: feedItem.video.id,
-                seekerId: uid,
-              ),
-            );
-          }),
-        ],
 
         // Action buttons - role-specific
         Positioned(
