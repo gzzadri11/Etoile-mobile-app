@@ -41,6 +41,28 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- URL scheme pour OAuth Supabase (Google, Apple) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>io.supabase.etoile</string>
+			</array>
+		</dict>
+		<!-- Google Sign-In : remplacer TON_CLIENT_ID_IOS par le vrai client ID -->
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.TON_CLIENT_ID_IOS</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Sign in with Apple -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Etoile utilise votre position pour trouver les offres proches de vous.</string>
 	<key>NSCameraUsageDescription</key>

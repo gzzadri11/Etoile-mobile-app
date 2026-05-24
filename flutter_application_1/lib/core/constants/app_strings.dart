@@ -11,14 +11,14 @@ abstract class AppStrings {
   // APP GENERAL
   // ============================================
   static const String appName = 'Etoile';
-  static const String appTagline = '40 secondes pour briller';
+  static const String appTagline = '60 secondes pour briller';
 
   // ============================================
   // ONBOARDING
   // ============================================
   static const String welcomeTitle = 'Bienvenue sur Etoile';
   static const String welcomeSubtitle =
-      '40 secondes pour montrer qui vous êtes vraiment';
+      '60 secondes pour montrer qui vous êtes vraiment';
   static const String iAmSeeker = 'Je cherche un emploi';
   static const String iAmRecruiter = 'Je recrute';
 

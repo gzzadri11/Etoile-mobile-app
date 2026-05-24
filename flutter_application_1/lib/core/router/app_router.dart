@@ -30,6 +30,7 @@ import '../../features/admin/presentation/pages/reports_page.dart';
 import '../../features/admin/presentation/pages/verification_queue_page.dart';
 import '../../features/admin/presentation/widgets/admin_scaffold.dart';
 import '../../features/applications/presentation/pages/seeker_applications_page.dart';
+import '../../features/favorites/presentation/pages/seeker_favorites_page.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -120,6 +121,9 @@ abstract class AppRoutes {
 
   // Stats chercheur
   static const String seekerStats = '/stats';
+
+  // Favoris chercheur
+  static const String seekerFavorites = '/favorites';
 
   // Helpers pour les routes parametrees
   static String chatWith(String id) => '/messages/$id';
@@ -301,6 +305,7 @@ class AppRouter {
         location == AppRoutes.settings ||
         location == AppRoutes.seekerStats ||
         location == AppRoutes.seekerApplications ||
+        location == AppRoutes.seekerFavorites ||
         location.startsWith('/settings/');
   }
 
@@ -446,6 +451,12 @@ class AppRouter {
     GoRoute(
       path: AppRoutes.seekerStats,
       builder: (_, _) => const SeekerStatsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.seekerFavorites,
+      builder: (_, state) => SeekerFavoritesPage(
+        seekerId: state.extra as String? ?? '',
+      ),
     ),
   ];
 

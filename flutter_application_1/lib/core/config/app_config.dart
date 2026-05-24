@@ -106,14 +106,14 @@ class AppConfig {
   // Constantes metier
   // ===========================================================================
 
-  /// Duree max d'une video en secondes (format Etoile : 40s)
-  static const int videoDurationSeconds = 40;
+  /// Duree max d'une video en secondes (format Etoile : 60s)
+  static const int videoDurationSeconds = 60;
 
   /// Taille max d'une video en MB (limite MVP, ffmpeg Phase 2)
   static const int videoMaxSizeMB = 100;
 
-  /// Phases de la video : intro (10s) + contenu principal (20s) + conclusion (10s)
-  static const List<int> videoPhases = [10, 20, 10];
+  /// Phases de la video : intro (15s) + contenu principal (30s) + conclusion (15s)
+  static const List<int> videoPhases = [15, 30, 15];
 
   /// Nombre de videos a precharger dans le feed
   static const int feedPreloadCount = 3;

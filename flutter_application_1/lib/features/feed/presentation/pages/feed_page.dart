@@ -22,6 +22,7 @@ import '../../../messages/data/repositories/conversation_repository.dart';
 import '../../../report/presentation/widgets/report_dialog.dart';
 import '../../data/models/feed_item_model.dart';
 import '../bloc/feed_bloc.dart';
+import '../widgets/favorite_button.dart';
 import '../widgets/feed_video_player.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../../shared/widgets/etoile_badge.dart';
@@ -606,6 +607,23 @@ class _VideoCard extends StatelessWidget {
             ],
           ),
         ),
+
+        // Bouton favori (chercheur uniquement, haut droit)
+        if (userRole == 'seeker') ...[
+          Builder(builder: (ctx) {
+            final authState = ctx.read<AuthBloc>().state;
+            final uid = authState is AuthAuthenticated ? authState.userId : null;
+            if (uid == null) return const SizedBox.shrink();
+            return Positioned(
+              top: AppTheme.spaceMd,
+              right: AppTheme.spaceMd,
+              child: FavoriteButton(
+                videoId: feedItem.video.id,
+                seekerId: uid,
+              ),
+            );
+          }),
+        ],
 
         // Action buttons - role-specific
         Positioned(

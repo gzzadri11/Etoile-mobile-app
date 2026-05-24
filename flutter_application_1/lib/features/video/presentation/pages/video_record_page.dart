@@ -1,9 +1,9 @@
 library;
 
-/// Page d'enregistrement video guide en 40 secondes.
+/// Page d'enregistrement video guide en 60 secondes.
 ///
-/// Flux en 3 phases : presentation (0-10s), competences (10-30s),
-/// conclusion (30-40s). Utilise la camera frontale du device.
+/// Flux en 3 phases : presentation (0-15s), competences (15-45s),
+/// conclusion (45-60s). Utilise la camera frontale du device.
 
 import 'dart:io';
 
@@ -23,7 +23,7 @@ import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/profile_gate.dart';
 import '../bloc/video_bloc.dart';
 
-/// Page d'enregistrement video (3 phases, 40 secondes).
+/// Page d'enregistrement video (3 phases, 60 secondes).
 class VideoRecordPage extends StatefulWidget {
   const VideoRecordPage({super.key});
 

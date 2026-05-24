@@ -1,5 +1,5 @@
 name: etoile
-description: "Etoile - Application de recrutement par video de 40 secondes"
+description: "Etoile - Application de recrutement par video de 60 secondes"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -60,6 +60,10 @@ dependencies:
   intl: ^0.19.0
   url_launcher: ^6.3.1
   flutter_dotenv: ^5.1.0
+
+  # OAuth social
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.0
 
   # Push Notifications & Monitoring
   firebase_core: ^3.12.1

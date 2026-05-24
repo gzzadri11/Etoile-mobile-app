@@ -4,7 +4,7 @@ library;
 
 import 'package:equatable/equatable.dart';
 
-/// Video : presentation (40s), offre video, ou poster (image statique).
+/// Video : presentation (60s), offre video, ou poster (image statique).
 class Video extends Equatable {
   final String id;
   final String userId;
@@ -40,7 +40,7 @@ class Video extends Equatable {
     this.videoUrl,
     this.thumbnailKey,
     this.thumbnailUrl,
-    this.durationSeconds = 40,
+    this.durationSeconds = 60,
     this.fileSizeBytes,
     this.resolution,
     this.status = 'processing',
@@ -76,7 +76,7 @@ class Video extends Equatable {
       videoUrl: json['video_url'] as String?,
       thumbnailKey: json['thumbnail_key'] as String?,
       thumbnailUrl: json['thumbnail_url'] as String?,
-      durationSeconds: json['duration_seconds'] as int? ?? 40,
+      durationSeconds: json['duration_seconds'] as int? ?? 60,
       fileSizeBytes: json['file_size_bytes'] as int?,
       resolution: json['resolution'] as String?,
       status: json['status'] as String? ?? 'processing',

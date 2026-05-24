@@ -200,6 +200,25 @@ class _SeekerProfileView extends StatelessWidget {
 
               const SizedBox(height: AppTheme.spaceLg),
 
+              // Mes favoris section
+              GestureDetector(
+                onTap: () {
+                  final authState = context.read<AuthBloc>().state;
+                  if (authState is AuthAuthenticated) {
+                    context.push(AppRoutes.seekerFavorites, extra: authState.userId);
+                  }
+                },
+                child: const _PublicationSectionCard(
+                  icon: Icons.favorite_rounded,
+                  title: 'Mes favoris',
+                  subtitle: 'Offres sauvegardées',
+                  count: 0,
+                  hideCount: true,
+                ),
+              ),
+
+              const SizedBox(height: AppTheme.spaceLg),
+
               // Mes statistiques section
               GestureDetector(
                 onTap: () => context.push(AppRoutes.seekerStats),

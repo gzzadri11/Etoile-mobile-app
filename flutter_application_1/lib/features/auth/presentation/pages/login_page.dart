@@ -14,6 +14,7 @@ import '../../../../shared/validators.dart';
 import '../../../../shared/widgets/etoile_button.dart';
 import '../../../../shared/widgets/etoile_text_field.dart';
 import '../bloc/auth_bloc.dart';
+import '../widgets/social_auth_buttons.dart';
 
 /// Page de connexion par email/mot de passe.
 class LoginPage extends StatefulWidget {
@@ -146,6 +147,9 @@ class _LoginPageState extends State<LoginPage> {
                       isLoading: isLoading,
                       label: AppStrings.login,
                     ),
+                    const SizedBox(height: AppTheme.spaceLg),
+
+                    const SocialAuthButtons(),
                     const SizedBox(height: AppTheme.spaceLg),
 
                     Row(
