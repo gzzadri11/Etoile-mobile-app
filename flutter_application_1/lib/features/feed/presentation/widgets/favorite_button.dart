@@ -98,18 +98,10 @@ class _FavoriteButtonState extends State<FavoriteButton>
       onTap: _toggle,
       child: ScaleTransition(
         scale: _scale,
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.3),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            _isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-            color: _isFav ? AppColors.danger : widget.iconColor,
-            size: widget.size,
-          ),
+        child: Icon(
+          _isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          color: _isFav ? AppColors.danger : widget.iconColor,
+          size: widget.size,
         ),
       ),
     );
