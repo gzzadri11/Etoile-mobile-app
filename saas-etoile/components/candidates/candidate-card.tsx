@@ -15,19 +15,12 @@ import {
 interface CandidateCardProps {
   candidate: CandidateWithProfile;
   onClick: () => void;
-  onPass?: () => void;
+  onHide?: () => void;
   matchScore?: number;
 }
 
-const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
-  pending: { label: "En attente", variant: "secondary" },
-  contacted: { label: "Contacte", variant: "default" },
-  withdrawn: { label: "Retire", variant: "outline" },
-};
-
-export function CandidateCard({ candidate, onClick, onPass, matchScore }: CandidateCardProps) {
+export function CandidateCard({ candidate, onClick, onHide, matchScore }: CandidateCardProps) {
   const { seeker, offer, application, presentation_video } = candidate;
-  const statusInfo = STATUS_LABELS[application.status] ?? { label: application.status, variant: "outline" as const };
   const [isHovering, setIsHovering] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -42,18 +35,10 @@ export function CandidateCard({ candidate, onClick, onPass, matchScore }: Candid
     ? `${workerUrl}/video/${presentation_video.video_key}`
     : null;
 
-  const thumbnailSrc = presentation_video?.thumbnail_url
-    ? presentation_video.thumbnail_url
-    : presentation_video?.thumbnail_key
-    ? `${workerUrl}/thumbnail/${presentation_video.thumbnail_key}`
-    : null;
-
   // Play video on hover
   useEffect(() => {
     if (isHovering && videoRef.current && videoSrc) {
-      videoRef.current.play().catch(() => {
-        // Ignore autoplay errors
-      });
+      videoRef.current.play().catch(() => {});
     } else if (!isHovering && videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
@@ -67,7 +52,18 @@ export function CandidateCard({ candidate, onClick, onPass, matchScore }: Candid
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      {/* Match score badge - always visible */}
+      {/* Bouton masquer — croix discrète, visible au hover */}
+      {onHide && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onHide(); }}
+          title="Masquer ce candidat"
+          className="absolute left-2 top-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-black/10 text-xs text-text-tertiary opacity-0 transition-opacity hover:bg-black/20 hover:text-text-primary group-hover:opacity-100"
+        >
+          ×
+        </button>
+      )}
+
+      {/* Score badge */}
       {matchScore !== undefined && (
         <div className="absolute right-2 top-2 z-10">
           <Badge variant={getScoreBadgeVariant(matchScore)} className="text-xs font-bold shadow-md">
@@ -126,9 +122,9 @@ export function CandidateCard({ candidate, onClick, onPass, matchScore }: Candid
 
         {/* Badges */}
         <div className="flex flex-wrap gap-1">
-          <Badge variant={statusInfo.variant} className="text-xs">
-            {statusInfo.label}
-          </Badge>
+          {application.status === "contacted" && (
+            <Badge variant="default" className="text-xs">Contacté</Badge>
+          )}
           {seeker.domain && (
             <Badge variant="secondary" className="text-xs">
               {getSectorLabel(seeker.domain)}
@@ -150,16 +146,6 @@ export function CandidateCard({ candidate, onClick, onPass, matchScore }: Candid
             year: "numeric",
           })}
         </p>
-
-        {/* Passer button */}
-        {onPass && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onPass(); }}
-            className="mt-1 w-full rounded-md border border-border py-1.5 text-xs text-text-tertiary transition-colors hover:border-destructive hover:text-destructive"
-          >
-            Passer
-          </button>
-        )}
       </CardContent>
     </Card>
   );

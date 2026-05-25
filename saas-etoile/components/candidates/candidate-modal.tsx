@@ -22,7 +22,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { X, ThumbsUp, Minus, ThumbsDown } from "lucide-react";
+import { X } from "lucide-react";
 import { ContactModal } from "@/components/candidates/ContactModal";
 
 interface CandidateModalProps {
@@ -41,11 +41,9 @@ export function CandidateModal({
   const [showContact, setShowContact] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Task #2: Evaluation state (3-state rating + notes)
-  const [rating, setRating] = useState<"interested" | "neutral" | "not_interested" | null>(null);
   const [notes, setNotes] = useState<string>("");
   const [loadingEvaluation, setLoadingEvaluation] = useState(false);
-  const [savingEvaluation, setSavingEvaluation] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
 
   // DEBUG: Log candidate data when modal opens
   useEffect(() => {
@@ -67,16 +65,10 @@ export function CandidateModal({
     if (!candidate || !open) return;
 
     async function loadExistingEvaluation() {
-      if (!candidate) return; // TypeScript guard
+      if (!candidate) return;
       setLoadingEvaluation(true);
       const evaluation = await getEvaluation(candidate.application.id);
-      if (evaluation) {
-        setRating(evaluation.rating);
-        setNotes(evaluation.notes || "");
-      } else {
-        setRating(null);
-        setNotes("");
-      }
+      setNotes(evaluation?.notes || "");
       setLoadingEvaluation(false);
     }
 
@@ -118,24 +110,11 @@ export function CandidateModal({
     ? `${workerUrl}/video/${presentation_video.video_key}`
     : null;
 
-  // Task #2: Save rating when button clicked
-  async function handleRatingChange(newRating: "interested" | "neutral" | "not_interested") {
-    if (!candidate) return; // TypeScript guard
-    setSavingEvaluation(true);
-    const result = await saveEvaluation(candidate.application.id, newRating, notes);
-    if (result) {
-      setRating(newRating);
-    }
-    setSavingEvaluation(false);
-  }
-
-  // Task #2: Save notes on blur
   async function handleNotesBlur() {
-    if (!candidate) return; // TypeScript guard
-    if (notes.trim() === "" && rating === null) return; // Don't save empty evaluation
-    setSavingEvaluation(true);
-    await saveEvaluation(candidate.application.id, rating, notes.trim() || null);
-    setSavingEvaluation(false);
+    if (!candidate || !notes.trim()) return;
+    setSavingNotes(true);
+    await saveEvaluation(candidate.application.id, null, notes.trim());
+    setSavingNotes(false);
   }
 
   const matchScore = candidate.matchScore ?? 0;
@@ -340,52 +319,20 @@ export function CandidateModal({
                   </div>
                 </TabsContent>
 
-                {/* Tab: Évaluer - Task #2 */}
+                {/* Tab: Évaluer */}
                 <TabsContent value="evaluer" className="p-6 space-y-5 mt-0">
                   {loadingEvaluation ? (
                     <div className="text-center text-muted-foreground py-8">Chargement...</div>
                   ) : (
                     <>
-                      {/* Rating: 3-state system */}
-                      <div>
-                        <h3 className="text-base font-semibold mb-3">Votre évaluation</h3>
-                        <div className="grid grid-cols-3 gap-3">
-                          <Button
-                            variant={rating === "interested" ? "default" : "outline"}
-                            className="h-20 flex flex-col gap-2"
-                            onClick={() => handleRatingChange("interested")}
-                            disabled={savingEvaluation}
-                          >
-                            <ThumbsUp className="h-5 w-5" />
-                            <span className="text-sm font-medium">Intéressé</span>
-                          </Button>
-                          <Button
-                            variant={rating === "neutral" ? "default" : "outline"}
-                            className="h-20 flex flex-col gap-2"
-                            onClick={() => handleRatingChange("neutral")}
-                            disabled={savingEvaluation}
-                          >
-                            <Minus className="h-5 w-5" />
-                            <span className="text-sm font-medium">Peut-être</span>
-                          </Button>
-                          <Button
-                            variant={rating === "not_interested" ? "default" : "outline"}
-                            className="h-20 flex flex-col gap-2"
-                            onClick={() => handleRatingChange("not_interested")}
-                            disabled={savingEvaluation}
-                          >
-                            <ThumbsDown className="h-5 w-5" />
-                            <span className="text-sm font-medium">Pas intéressé</span>
-                          </Button>
-                        </div>
-                        {rating && (
-                          <p className="text-sm text-muted-foreground mt-3 text-center">
-                            {rating === "interested" && "✓ Candidat marqué comme intéressant"}
-                            {rating === "neutral" && "~ Candidat à revoir plus tard"}
-                            {rating === "not_interested" && "✗ Candidat écarté"}
-                          </p>
-                        )}
-                      </div>
+                      {/* Bouton principal : Contacter */}
+                      <Button
+                        variant="default"
+                        className="w-full text-base h-12"
+                        onClick={() => setShowContact(true)}
+                      >
+                        {application.status === "contacted" ? "Voir la conversation" : "💬 Contacter ce candidat"}
+                      </Button>
 
                       <Separator />
 
@@ -398,28 +345,12 @@ export function CandidateModal({
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
                           onBlur={handleNotesBlur}
-                          disabled={savingEvaluation}
+                          disabled={savingNotes}
                         />
                         <p className="text-sm text-muted-foreground mt-2">
                           Ces notes sont privées et visibles uniquement par vous.
-                          {savingEvaluation && " Enregistrement..."}
+                          {savingNotes && " Enregistrement…"}
                         </p>
-                      </div>
-
-                      <Separator />
-
-                      {/* Actions */}
-                      <div>
-                        <h3 className="text-base font-semibold mb-3">Actions</h3>
-                        <div className="space-y-3">
-                          <Button
-                            variant="default"
-                            className="w-full text-base h-11"
-                            onClick={() => setShowContact(true)}
-                          >
-                            {application.status === "contacted" ? "Voir la conversation" : "💬 Contacter ce candidat"}
-                          </Button>
-                        </div>
                       </div>
                     </>
                   )}

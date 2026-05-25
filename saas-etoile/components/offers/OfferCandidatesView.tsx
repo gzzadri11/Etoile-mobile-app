@@ -127,7 +127,7 @@ export function OfferCandidatesView({ offer, onBack }: OfferCandidatesViewProps)
     }));
   }, [scoreFilter, candidates]);
 
-  function handlePass(candidate: CandidateWithScore) {
+  function handleHide(candidate: CandidateWithScore) {
     setCandidates(prev => prev.filter(c => c.application.id !== candidate.application.id));
     const supabase = createClient();
     supabase
@@ -211,7 +211,7 @@ export function OfferCandidatesView({ offer, onBack }: OfferCandidatesViewProps)
                 candidate={candidate}
                 matchScore={candidate.matchScore}
                 onClick={() => setSelected(candidate)}
-                onPass={() => handlePass(candidate)}
+                onHide={() => handleHide(candidate)}
               />
             ))}
           </div>

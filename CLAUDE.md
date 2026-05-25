@@ -197,3 +197,11 @@ secteur (25%) + ville (20%) + niveau (20%) + spécialité (15%) + compétences (
 | Paramètres | Profil recruteur complet |
 
 **Onglet "Candidats" : SUPPRIMÉ définitivement (2026-05-25).** Ne pas recréer. Le recruteur accède aux candidats via Mes offres → offre → candidatures.
+
+## Évaluation candidat (SaaS) — simplifié (2026-05-25)
+
+Une seule action positive : **Contacter** (ouvre la modale de messagerie).
+Masquer un candidat : croix × discrète sur la carte, visible au hover (top-left), mise à jour optimiste.
+Pas de boutons "Intéressé" / "Peut-être" / "Pas intéressé" — supprimés car sans impact réel.
+Notes privées conservées dans l'onglet Évaluer.
+Statuts en base : `contacted` | `withdrawn` uniquement.
