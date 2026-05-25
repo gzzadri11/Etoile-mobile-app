@@ -1,3 +1,7 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+
 export function ActivityFeed({
   activities,
 }: {
@@ -8,8 +12,11 @@ export function ActivityFeed({
     timestamp: string;
     initials: string;
     color: string;
+    videoId: string;
   }[];
 }) {
+  const router = useRouter();
+
   return (
     <div className="space-y-4">
       {activities.map((activity, i) => (
@@ -40,7 +47,17 @@ export function ActivityFeed({
             </div>
             <div className="text-sm text-text-secondary">{activity.meta}</div>
           </div>
-          <div className="text-xs text-text-tertiary">{activity.timestamp}</div>
+          <div className="flex flex-col items-end gap-1">
+            <div className="text-xs text-text-tertiary">{activity.timestamp}</div>
+            {activity.videoId && (
+              <button
+                onClick={() => router.push(`/offers?offer=${activity.videoId}`)}
+                className="text-xs font-medium text-accent hover:underline"
+              >
+                Voir →
+              </button>
+            )}
+          </div>
         </div>
       ))}
     </div>

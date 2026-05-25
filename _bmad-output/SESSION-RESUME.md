@@ -48,6 +48,40 @@
 
 ---
 
+## SESSION 2026-05-25 : Améliorations SaaS + Pivot navigation
+
+### Pivot navigation SaaS (décision définitive)
+**L'onglet "Candidats" est supprimé.** Le recruteur accède aux candidatures via Mes offres → clic sur une offre → liste des candidats de cette offre. Mental model = par poste, pas par candidat. **Ne pas recréer cet onglet.**
+
+Navigation post-pivot :
+- Dashboard → KPIs, nouvelles candidatures (lien vers offre concernée)
+- Mes offres → Liste des offres → Clic → Candidatures de cette offre → Modal candidat
+- Rechercher → Recherche globale @username / nom / filtres
+- Paramètres → Profil recruteur
+
+### Améliorations UX appliquées (session précédente)
+- Score dashboard : fetché depuis `match_scores` (était hardcodé à 0)
+- CandidateCard : photo de profil par défaut (pas la thumbnail vidéo)
+- Bouton "Passer" avec retrait optimiste + update `withdrawn` en base
+- Déduplication par `seeker_id` dans la grille candidats
+- OfferCard : icône play ▶ superposée sur les offres vidéo
+- Page Recherche : implémentation complète (texte libre + 3 filtres + debounce 400ms)
+
+### Fichiers modifiés (pivot navigation)
+- `components/layout/sidebar.tsx` — Candidats supprimé
+- `app/(dashboard)/offers/page.tsx` — deux états : liste / candidatures
+- `components/offers/offer-card.tsx` — cliquable + chevron + compteur
+- `components/offers/OfferCandidatesView.tsx` — nouveau composant
+- `hooks/useDashboardData.ts` — videoId dans RecentActivity
+- `components/dashboard/ActivityFeed.tsx` — lien vers offre concernée
+- Supprimé : `app/(dashboard)/candidates/page.tsx`
+
+### Prochaines étapes
+- **Track SaaS** : Epic 6 (Paiements Stripe) — PRIORITÉ
+- **Infra** : Déploiement Vercel + config Stripe + soumission stores
+
+---
+
 ## SESSION 2026-05-10 : Onboarding + Fixes Flutter
 
 ### Tasks complétées

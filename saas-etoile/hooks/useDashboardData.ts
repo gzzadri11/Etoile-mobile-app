@@ -16,6 +16,7 @@ export interface RecentActivity {
   timestamp: string;
   initials: string;
   color: string;
+  videoId: string;
 }
 
 export interface AlertsData {
@@ -112,6 +113,7 @@ export function useDashboardData() {
           timestamp: diffH < 1 ? "Il y a moins d'1h" : diffH < 24 ? `Il y a ${diffH}h` : "Hier",
           initials: `${fn[0]}${ln[0]}`.toUpperCase(),
           color: COLORS[i % COLORS.length],
+          videoId: app.video_id,
         };
       })
     );

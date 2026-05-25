@@ -184,5 +184,16 @@ secteur (25%) + ville (20%) + niveau (20%) + spécialité (15%) + compétences (
 
 ## Prochaines étapes
 
-**Track SaaS** : Epic 6 (Paiements Stripe) ou Epic 7 (Admin) ← **À DÉFINIR**
+**Track SaaS** : Epic 6 (Paiements Stripe) — PRIORITÉ
 **Infra** : Soumission stores (App Store + Google Play), déploiement Vercel, config Stripe
+
+## Navigation SaaS (post-pivot 2026-05-25)
+
+| Onglet | Rôle |
+|--------|------|
+| Dashboard | KPIs, nouvelles candidatures (lien vers offre concernée) |
+| Mes offres | Liste des offres → clic → candidatures de cette offre → modal candidat |
+| Rechercher | Recherche globale @username / nom / filtres |
+| Paramètres | Profil recruteur complet |
+
+**Onglet "Candidats" : SUPPRIMÉ définitivement (2026-05-25).** Ne pas recréer. Le recruteur accède aux candidats via Mes offres → offre → candidatures.

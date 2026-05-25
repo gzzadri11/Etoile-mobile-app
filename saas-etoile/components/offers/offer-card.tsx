@@ -24,6 +24,7 @@ interface OfferCardProps {
   applicationCount: number;
   onEdit: (video: Video) => void;
   onDelete: (video: Video) => void;
+  onViewCandidates?: () => void;
 }
 
 const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -32,7 +33,7 @@ const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secon
   suspended: { label: "Suspendue", variant: "destructive" },
 };
 
-export function OfferCard({ video, applicationCount, onEdit, onDelete }: OfferCardProps) {
+export function OfferCard({ video, applicationCount, onEdit, onDelete, onViewCandidates }: OfferCardProps) {
   const statusInfo = STATUS_LABELS[video.status] ?? { label: video.status, variant: "outline" as const };
   const workerUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_WORKER_URL;
   const thumbnailSrc = video.thumbnail_key
@@ -41,7 +42,10 @@ export function OfferCard({ video, applicationCount, onEdit, onDelete }: OfferCa
   const isVideo = video.type === "offer";
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+    <Card
+      className={`overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${onViewCandidates ? "cursor-pointer" : ""}`}
+      onClick={onViewCandidates}
+    >
       <div className="relative aspect-video bg-muted">
         {thumbnailSrc ? (
           <>
@@ -79,7 +83,10 @@ export function OfferCard({ video, applicationCount, onEdit, onDelete }: OfferCa
             {video.title || "Sans titre"}
           </CardTitle>
           <DropdownMenu>
-            <DropdownMenuTrigger className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground">
+            <DropdownMenuTrigger
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+              onClick={(e) => e.stopPropagation()}
+            >
               ...
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -109,9 +116,15 @@ export function OfferCard({ video, applicationCount, onEdit, onDelete }: OfferCa
             </Badge>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">
-          {applicationCount} candidature{applicationCount !== 1 ? "s" : ""}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-accent">{applicationCount}</span>{" "}
+            candidature{applicationCount !== 1 ? "s" : ""}
+          </p>
+          {onViewCandidates && (
+            <span className="text-lg font-light text-accent">›</span>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

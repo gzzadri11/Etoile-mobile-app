@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Star, BarChart3, Users, Briefcase, MessageSquare, Search, Settings } from "lucide-react";
+import { Star, BarChart3, Briefcase, MessageSquare, Search, Settings } from "lucide-react";
 import { RecruiterAvatar } from "@/components/settings/RecruiterAvatar";
 import { createClient } from "@/lib/supabase/client";
 
@@ -61,7 +61,6 @@ export function Sidebar({ userInfo }: SidebarProps) {
 
   const navItems = [
     { href: "/home", label: "Dashboard", icon: BarChart3, badge: null },
-    { href: "/candidates", label: "Candidats", icon: Users, badge: null },
     { href: "/offers", label: "Mes offres", icon: Briefcase, badge: null },
     { href: "/messages", label: "Messagerie", icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : null },
   ];
