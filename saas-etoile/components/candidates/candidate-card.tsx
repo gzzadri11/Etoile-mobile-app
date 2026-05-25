@@ -15,6 +15,7 @@ import {
 interface CandidateCardProps {
   candidate: CandidateWithProfile;
   onClick: () => void;
+  onPass?: () => void;
   matchScore?: number;
 }
 
@@ -24,7 +25,7 @@ const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secon
   withdrawn: { label: "Retire", variant: "outline" },
 };
 
-export function CandidateCard({ candidate, onClick, matchScore }: CandidateCardProps) {
+export function CandidateCard({ candidate, onClick, onPass, matchScore }: CandidateCardProps) {
   const { seeker, offer, application, presentation_video } = candidate;
   const statusInfo = STATUS_LABELS[application.status] ?? { label: application.status, variant: "outline" as const };
   const [isHovering, setIsHovering] = useState(false);
@@ -77,7 +78,7 @@ export function CandidateCard({ candidate, onClick, matchScore }: CandidateCardP
 
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
-          {/* Photo with video preview overlay */}
+          {/* Photo (default) with video preview on hover */}
           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-muted">
             {isHovering && videoSrc ? (
               <video
@@ -87,14 +88,6 @@ export function CandidateCard({ candidate, onClick, matchScore }: CandidateCardP
                 loop
                 playsInline
                 className="h-full w-full object-cover"
-              />
-            ) : thumbnailSrc ? (
-              <Image
-                src={thumbnailSrc}
-                alt={fullName}
-                fill
-                className="object-cover"
-                sizes="64px"
               />
             ) : seeker.photo_url ? (
               <Image
@@ -150,13 +143,23 @@ export function CandidateCard({ candidate, onClick, matchScore }: CandidateCardP
 
         {/* Applied date */}
         <p className="text-xs text-muted-foreground">
-          Postule le{" "}
+          Postulé le{" "}
           {new Date(application.applied_at).toLocaleDateString("fr-FR", {
             day: "numeric",
             month: "short",
             year: "numeric",
           })}
         </p>
+
+        {/* Passer button */}
+        {onPass && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPass(); }}
+            className="mt-1 w-full rounded-md border border-border py-1.5 text-xs text-text-tertiary transition-colors hover:border-destructive hover:text-destructive"
+          >
+            Passer
+          </button>
+        )}
       </CardContent>
     </Card>
   );

@@ -44,16 +44,28 @@ export function OfferCard({ video, applicationCount, onEdit, onDelete }: OfferCa
     <Card className="overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
       <div className="relative aspect-video bg-muted">
         {thumbnailSrc ? (
-          <Image
-            src={thumbnailSrc}
-            alt={video.title ?? "Offre"}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 33vw"
-          />
+          <>
+            <Image
+              src={thumbnailSrc}
+              alt={video.title ?? "Offre"}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 33vw"
+            />
+            {isVideo && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md">
+                  <svg className="ml-0.5 h-4 w-4 text-gray-800" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M6.79 5.093L11 8 6.79 10.907V5.093z" />
+                    <path fillRule="evenodd" d="M0 8a8 8 0 1116 0A8 8 0 010 8zm8-7a7 7 0 100 14A7 7 0 008 1z" />
+                  </svg>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">
-            {isVideo ? "Video" : "Affiche"}
+            {isVideo ? "Vidéo" : "Affiche"}
           </div>
         )}
         <div className="absolute right-2 top-2">

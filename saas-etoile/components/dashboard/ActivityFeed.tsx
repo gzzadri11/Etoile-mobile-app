@@ -24,15 +24,19 @@ export function ActivityFeed({
               <span className="font-semibold text-text-primary">
                 {activity.name}
               </span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                  activity.score >= 80
-                    ? "bg-success/10 text-success"
-                    : "bg-warning/10 text-warning"
-                }`}
-              >
-                {activity.score}%
-              </span>
+              {activity.score > 0 ? (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+                    activity.score >= 80
+                      ? "bg-success/10 text-success"
+                      : "bg-warning/10 text-warning"
+                  }`}
+                >
+                  {activity.score}%
+                </span>
+              ) : (
+                <span className="text-xs text-text-tertiary italic">Calcul en cours…</span>
+              )}
             </div>
             <div className="text-sm text-text-secondary">{activity.meta}</div>
           </div>

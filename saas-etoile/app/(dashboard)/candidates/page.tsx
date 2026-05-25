@@ -139,8 +139,16 @@ export default function CandidatesPage() {
     // Sort by match score descending
     enriched.sort((a, b) => b.matchScore - a.matchScore);
 
-    setCandidates(enriched);
-    setFilteredCandidates(enriched);
+    // Deduplicate by seeker_id (keep highest score)
+    const seen = new Set<string>();
+    const unique = enriched.filter(c => {
+      if (seen.has(c.seeker.user_id)) return false;
+      seen.add(c.seeker.user_id);
+      return true;
+    });
+
+    setCandidates(unique);
+    setFilteredCandidates(unique);
     setLoading(false);
   }, []);
 
@@ -183,6 +191,21 @@ export default function CandidatesPage() {
 
     setFilteredCandidates(filtered);
   }, [candidates, filters]);
+
+  // Optimistic "Passer" — retire immédiatement de la grille et met le statut withdrawn en base
+  function handlePass(candidate: CandidateWithScore) {
+    setCandidates(prev => prev.filter(c => c.application.id !== candidate.application.id));
+    const supabase = createClient();
+    supabase
+      .from("applications")
+      .update({ status: "withdrawn" })
+      .eq("id", candidate.application.id)
+      .then(({ error }) => {
+        if (error) {
+          setCandidates(prev => [...prev, candidate].sort((a, b) => b.matchScore - a.matchScore));
+        }
+      });
+  }
 
   // Get unique offers for filter dropdown
   const uniqueOffers = Array.from(
@@ -237,6 +260,7 @@ export default function CandidatesPage() {
                 candidate={candidate}
                 matchScore={candidate.matchScore}
                 onClick={() => setSelectedCandidate(candidate)}
+                onPass={() => handlePass(candidate)}
               />
             ))}
           </div>

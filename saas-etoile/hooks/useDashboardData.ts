@@ -87,8 +87,15 @@ export function useDashboardData() {
       .select("id, sector")
       .in("id", videoIds);
 
+    // Step 4: fetch match scores
+    const { data: matchScores } = await supabase
+      .from("match_scores")
+      .select("seeker_id, video_id, score")
+      .in("video_id", videoIds);
+
     const seekerMap = Object.fromEntries((seekers ?? []).map((s: any) => [s.user_id, s]));
     const videoMap = Object.fromEntries((videos ?? []).map((v: any) => [v.id, v]));
+    const scoreMap = Object.fromEntries((matchScores ?? []).map((s: any) => [`${s.seeker_id}_${s.video_id}`, s.score]));
     const now = new Date();
 
     setRecentActivities(
@@ -101,7 +108,7 @@ export function useDashboardData() {
         return {
           name: `${fn} ${ln}`,
           meta: `${v?.sector || s?.domain || "?"} · ${s?.city || "?"}`,
-          score: 0,
+          score: scoreMap[`${app.seeker_id}_${app.video_id}`] ?? 0,
           timestamp: diffH < 1 ? "Il y a moins d'1h" : diffH < 24 ? `Il y a ${diffH}h` : "Hier",
           initials: `${fn[0]}${ln[0]}`.toUpperCase(),
           color: COLORS[i % COLORS.length],
